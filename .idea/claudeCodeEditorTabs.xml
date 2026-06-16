@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ClaudeCodeEditorTabs">
+    <option name="activeSessionId" value="8ef380e3-b5e8-4399-8666-616576adbb4f" />
+    <option name="openSessionIds">
+      <list>
+        <option value="12ca286d-c500-462f-9a3a-62b47b490cf6" />
+        <option value="2e96659a-32b4-4c05-95e7-1ee3a170ca3d" />
+        <option value="fdce394b-1536-4669-9fe6-7c880c388338" />
+        <option value="8ef380e3-b5e8-4399-8666-616576adbb4f" />
+      </list>
+    </option>
+    <option name="sessionPaths">
+      <map>
+        <entry key="12ca286d-c500-462f-9a3a-62b47b490cf6" value="/sessions/6d8fae5a-c138-46b7-8cb0-c7c3c8960092" />
+        <entry key="2e96659a-32b4-4c05-95e7-1ee3a170ca3d" value="/sessions/new" />
+        <entry key="8ef380e3-b5e8-4399-8666-616576adbb4f" value="/sessions/new" />
+        <entry key="fdce394b-1536-4669-9fe6-7c880c388338" value="/settings/account" />
+      </map>
+    </option>
+    <option name="sessionTitles">
+      <map>
+        <entry key="12ca286d-c500-462f-9a3a-62b47b490cf6" value="hi" />
+        <entry key="2e96659a-32b4-4c05-95e7-1ee3a170ca3d" value="Claude Code" />
+        <entry key="8ef380e3-b5e8-4399-8666-616576adbb4f" value="Claude Code" />
+        <entry key="fdce394b-1536-4669-9fe6-7c880c388338" value="Settings" />
+      </map>
+    </option>
+  </component>
+</project>
