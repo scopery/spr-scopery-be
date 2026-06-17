@@ -22,6 +22,7 @@ import com.company.scopery.modules.workspace.workspace.application.response.Work
 import com.company.scopery.modules.workspace.workspace.application.response.WorkspaceResponse;
 import com.company.scopery.modules.workspace.workspace.domain.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
@@ -83,8 +84,15 @@ public class WorkspaceApplicationService {
             visibility = WorkspaceVisibility.PRIVATE;
         }
 
+        WorkspaceJoinPolicy joinPolicy = WorkspaceEnumParser.parseOptional(
+                WorkspaceJoinPolicy.class, command.joinPolicy(),
+                WorkspaceErrorCatalog.INVALID_WORKSPACE_JOIN_POLICY.code(), "joinPolicy");
+        if (joinPolicy == null) {
+            joinPolicy = WorkspaceJoinPolicy.INVITE_ONLY;
+        }
+
         Workspace ws = Workspace.create(command.organizationId(), command.name(), code,
-                command.description(), ownerUserId, visibility);
+                command.description(), ownerUserId, visibility, joinPolicy);
         Workspace saved = workspaceRepository.save(ws);
 
         // Bootstrap owner membership in the same transaction
@@ -122,7 +130,14 @@ public class WorkspaceApplicationService {
             visibility = ws.defaultVisibility();
         }
 
-        Workspace updated = ws.update(command.name(), command.description(), visibility);
+        WorkspaceJoinPolicy joinPolicy = WorkspaceEnumParser.parseOptional(
+                WorkspaceJoinPolicy.class, command.joinPolicy(),
+                WorkspaceErrorCatalog.INVALID_WORKSPACE_JOIN_POLICY.code(), "joinPolicy");
+        if (joinPolicy == null) {
+            joinPolicy = ws.joinPolicy();
+        }
+
+        Workspace updated = ws.update(command.name(), command.description(), visibility, joinPolicy);
         Workspace saved = workspaceRepository.save(updated);
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE, saved.id(),

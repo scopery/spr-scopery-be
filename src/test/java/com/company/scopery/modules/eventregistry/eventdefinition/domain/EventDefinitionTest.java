@@ -47,6 +47,7 @@ class EventDefinitionTest {
                 EventKey.of("OLD_THING"),
                 null, null, null,
                 EventDefinitionStatus.DEPRECATED,
+                EventDefinition.INITIAL_VERSION, null,
                 java.time.Instant.now(), java.time.Instant.now());
 
         assertThatThrownBy(deprecated::activate)

@@ -13,6 +13,7 @@ public record WorkspaceResponse(
         String description,
         UUID ownerUserId,
         String defaultVisibility,
+        String joinPolicy,
         String status,
         Instant createdAt,
         Instant updatedAt) {
@@ -26,6 +27,7 @@ public record WorkspaceResponse(
                 ws.description(),
                 ws.ownerUserId(),
                 ws.defaultVisibility().name(),
+                ws.joinPolicy() != null ? ws.joinPolicy().name() : "INVITE_ONLY",
                 ws.status().name(),
                 ws.createdAt(),
                 ws.updatedAt());

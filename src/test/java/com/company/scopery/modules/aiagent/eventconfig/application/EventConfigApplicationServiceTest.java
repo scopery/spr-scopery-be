@@ -71,7 +71,8 @@ class EventConfigApplicationServiceTest {
         EventDefinition ed = EventDefinition.reconstitute(eventDefId,
                 EventDefinitionCode.of("HRM_CV_UPLOADED"), "CV Uploaded",
                 SourceSystemCode.of("HRM"), EventKey.of("CV_UPLOADED"),
-                null, null, null, EventDefinitionStatus.ACTIVE, Instant.now(), Instant.now());
+                null, null, null, EventDefinitionStatus.ACTIVE,
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "My Agent", AgentCode.of("MY_AGENT"),
@@ -146,7 +147,8 @@ class EventConfigApplicationServiceTest {
         EventDefinition inactive = EventDefinition.reconstitute(eventDefId,
                 EventDefinitionCode.of("HRM_CV"), "CV",
                 SourceSystemCode.of("HRM"), EventKey.of("CV"),
-                null, null, null, EventDefinitionStatus.INACTIVE, Instant.now(), Instant.now());
+                null, null, null, EventDefinitionStatus.INACTIVE,
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(inactive));
 
         assertThatThrownBy(() -> service.createEventConfig(createCommand()))
@@ -167,7 +169,7 @@ class EventConfigApplicationServiceTest {
         EventDefinition ed = EventDefinition.reconstitute(eventDefId,
                 EventDefinitionCode.of("HRM_CV"), "CV", SourceSystemCode.of("HRM"),
                 EventKey.of("CV"), null, null, null, EventDefinitionStatus.ACTIVE,
-                Instant.now(), Instant.now());
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent inactive = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
@@ -189,7 +191,7 @@ class EventConfigApplicationServiceTest {
         EventDefinition ed = EventDefinition.reconstitute(eventDefId,
                 EventDefinitionCode.of("HRM_CV"), "CV", SourceSystemCode.of("HRM"),
                 EventKey.of("CV"), null, null, null, EventDefinitionStatus.ACTIVE,
-                Instant.now(), Instant.now());
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
@@ -216,7 +218,7 @@ class EventConfigApplicationServiceTest {
         EventDefinition ed = EventDefinition.reconstitute(eventDefId,
                 EventDefinitionCode.of("HRM_CV"), "CV", SourceSystemCode.of("HRM"),
                 EventKey.of("CV"), null, null, null, EventDefinitionStatus.ACTIVE,
-                Instant.now(), Instant.now());
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
@@ -249,7 +251,7 @@ class EventConfigApplicationServiceTest {
         EventDefinition ed = EventDefinition.reconstitute(eventDefId,
                 EventDefinitionCode.of("HRM_CV"), "CV", SourceSystemCode.of("HRM"),
                 EventKey.of("CV"), null, null, null, EventDefinitionStatus.ACTIVE,
-                Instant.now(), Instant.now());
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),

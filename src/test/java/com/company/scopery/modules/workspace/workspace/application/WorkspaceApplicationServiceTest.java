@@ -20,6 +20,7 @@ import com.company.scopery.modules.workspace.workspace.application.command.Updat
 import com.company.scopery.modules.workspace.workspace.application.response.WorkspaceDetailResponse;
 import com.company.scopery.modules.workspace.workspace.domain.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
@@ -65,7 +66,7 @@ class WorkspaceApplicationServiceTest {
     @Test
     void createWorkspace_success_ownerMemberBootstrapped() {
         UUID orgId = UUID.randomUUID();
-        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", "Development", null);
+        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", "Development", null, null);
 
         Organization org = activeOrganization(orgId);
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(org));
@@ -87,7 +88,7 @@ class WorkspaceApplicationServiceTest {
     @Test
     void createWorkspace_defaultVisibilityIsPrivate_whenNotSpecified() {
         UUID orgId = UUID.randomUUID();
-        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", null, null);
+        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", null, null, null);
 
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(activeOrganization(orgId)));
         when(workspaceRepository.existsByOrganizationIdAndCode(any(), any())).thenReturn(false);
@@ -103,7 +104,7 @@ class WorkspaceApplicationServiceTest {
     @Test
     void createWorkspace_duplicateCode_throwsConflict() {
         UUID orgId = UUID.randomUUID();
-        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", null, null);
+        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", null, null, null);
 
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(activeOrganization(orgId)));
         when(workspaceRepository.existsByOrganizationIdAndCode(any(), any())).thenReturn(true);
@@ -124,7 +125,7 @@ class WorkspaceApplicationServiceTest {
     void createWorkspace_inactiveOrganization_throwsUnprocessable() {
         UUID orgId = UUID.randomUUID();
         Organization inactiveOrg = inactiveOrganization(orgId);
-        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", null, null);
+        CreateWorkspaceCommand command = new CreateWorkspaceCommand(orgId, "Dev Workspace", "DEV_WS", null, null, null);
 
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(inactiveOrg));
 
@@ -142,7 +143,7 @@ class WorkspaceApplicationServiceTest {
     void updateWorkspace_archivedWorkspace_throwsUnprocessable() {
         UUID id = UUID.randomUUID();
         Workspace archived = existingWorkspace(id, UUID.randomUUID(), WorkspaceStatus.ARCHIVED);
-        UpdateWorkspaceCommand command = new UpdateWorkspaceCommand(id, "New Name", null, null);
+        UpdateWorkspaceCommand command = new UpdateWorkspaceCommand(id, "New Name", null, null, null);
 
         when(workspaceRepository.findById(id)).thenReturn(Optional.of(archived));
 
@@ -173,6 +174,6 @@ class WorkspaceApplicationServiceTest {
     private Workspace existingWorkspace(UUID id, UUID orgId, WorkspaceStatus status) {
         Instant now = Instant.now();
         return new Workspace(id, orgId, WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
-                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, status, now, now);
+                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, status, now, now);
     }
 }

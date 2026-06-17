@@ -85,7 +85,7 @@ public class JpaEventDefinitionRepository implements EventDefinitionRepository {
     @Override
     @Transactional
     public void deleteVariablesByEventDefinitionId(UUID eventDefinitionId) {
-        variableRepository.deleteByEventDefinitionId(eventDefinitionId);
+        variableRepository.deleteByEventDefinitionIdBulk(eventDefinitionId);
     }
 
     private Specification<EventDefinitionJpaEntity> buildSearchSpec(String keyword, String sourceSystem,

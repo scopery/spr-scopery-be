@@ -121,7 +121,8 @@ class EventDefinitionApplicationServiceTest {
         UUID id = UUID.randomUUID();
         EventDefinition deprecated = EventDefinition.reconstitute(id,
                 EventDefinitionCode.of("OLD"), "Old", SourceSystemCode.of("SYS"), EventKey.of("OLD"),
-                null, null, null, EventDefinitionStatus.DEPRECATED, Instant.now(), Instant.now());
+                null, null, null, EventDefinitionStatus.DEPRECATED,
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
 
         when(repository.findById(id)).thenReturn(Optional.of(deprecated));
 
@@ -140,7 +141,8 @@ class EventDefinitionApplicationServiceTest {
         UUID id = UUID.randomUUID();
         EventDefinition active = EventDefinition.reconstitute(id,
                 EventDefinitionCode.of("CODE"), "Name", SourceSystemCode.of("SYS"), EventKey.of("KEY"),
-                null, null, null, EventDefinitionStatus.ACTIVE, Instant.now(), Instant.now());
+                null, null, null, EventDefinitionStatus.ACTIVE,
+                EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
 
         when(repository.findById(id)).thenReturn(Optional.of(active));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));

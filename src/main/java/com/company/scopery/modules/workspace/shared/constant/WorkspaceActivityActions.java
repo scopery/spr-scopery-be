@@ -30,4 +30,19 @@ public final class WorkspaceActivityActions {
     // Team member actions
     public static final String ADD_TEAM_MEMBER    = "ADD_TEAM_MEMBER";
     public static final String REMOVE_TEAM_MEMBER = "REMOVE_TEAM_MEMBER";
+
+    // Invitation actions
+    public static final String CREATE_INVITATION = "CREATE_INVITATION";
+    public static final String ACCEPT_INVITATION = "ACCEPT_INVITATION";
+    public static final String REVOKE_INVITATION = "REVOKE_INVITATION";
+
+    // Join request actions
+    public static final String CREATE_JOIN_REQUEST  = "CREATE_JOIN_REQUEST";
+    public static final String APPROVE_JOIN_REQUEST = "APPROVE_JOIN_REQUEST";
+    public static final String REJECT_JOIN_REQUEST  = "REJECT_JOIN_REQUEST";
+    public static final String CANCEL_JOIN_REQUEST  = "CANCEL_JOIN_REQUEST";
+
+    // Context / onboarding actions
+    public static final String SWITCH_WORKSPACE     = "SWITCH_WORKSPACE";
+    public static final String COMPLETE_ONBOARDING  = "COMPLETE_ONBOARDING";
 }

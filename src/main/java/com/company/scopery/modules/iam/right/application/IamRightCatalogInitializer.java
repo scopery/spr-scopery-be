@@ -103,6 +103,11 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
                 new RightDef("CREATE_DOCUMENT_BY_TYPE", "Create Document by Type", "Create documents of a specific document type", "DOCUMENT"),
                 new RightDef("UPDATE_DOCUMENT_BY_TYPE", "Update Document by Type", "Update documents of a specific document type", "DOCUMENT"),
                 new RightDef("DELETE_DOCUMENT_BY_TYPE", "Delete Document by Type", "Delete documents of a specific document type", "DOCUMENT"),
+                // WORKSPACE INVITATION / JOIN REQUEST
+                new RightDef("WORKSPACE_INVITE_MEMBER",       "Invite Member",        "Create workspace invitation links",     "WORKSPACE"),
+                new RightDef("WORKSPACE_MANAGE_INVITATION",   "Manage Invitations",   "View and revoke workspace invitations", "WORKSPACE"),
+                new RightDef("WORKSPACE_REQUEST_JOIN",        "Request to Join",      "Submit a join request to a workspace",  "WORKSPACE"),
+                new RightDef("WORKSPACE_MANAGE_JOIN_REQUEST", "Manage Join Requests", "Approve or reject join requests",       "WORKSPACE"),
                 // SYSTEM NOTIFICATION
                 new RightDef("SYSTEM_VIEW_NOTIFICATION",          "System View Notification",          "View notification templates, rules, and deliveries", "NOTIFICATION"),
                 new RightDef("SYSTEM_MANAGE_NOTIFICATION",        "System Manage Notification",        "Full notification management access",                "NOTIFICATION"),

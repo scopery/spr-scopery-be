@@ -9,6 +9,7 @@ import java.util.UUID;
 public interface IamRoleRepository {
     IamRole save(IamRole role);
     Optional<IamRole> findById(UUID id);
+    Optional<IamRole> findByCode(IamRoleCode code);
     boolean existsByCode(IamRoleCode code);
     boolean existsByCodeAndWorkspaceId(IamRoleCode code, UUID workspaceId);
     Page<IamRole> findAll(String keyword, UUID workspaceId, IamRoleScope roleScope,

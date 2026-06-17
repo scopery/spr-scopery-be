@@ -41,8 +41,18 @@ public class JpaWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
+    public Optional<Workspace> findByCode(WorkspaceCode code) {
+        return springDataRepository.findByCode(code.value()).map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsByOrganizationIdAndCode(UUID organizationId, WorkspaceCode code) {
         return springDataRepository.existsByOrganizationIdAndCode(organizationId, code.value());
+    }
+
+    @Override
+    public List<Workspace> findActiveByMemberId(UUID userId) {
+        return springDataRepository.findActiveByMemberId(userId).stream().map(mapper::toDomain).toList();
     }
 
     @Override

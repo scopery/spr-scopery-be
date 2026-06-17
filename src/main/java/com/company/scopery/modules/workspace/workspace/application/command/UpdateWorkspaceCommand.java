@@ -6,5 +6,6 @@ public record UpdateWorkspaceCommand(
         UUID id,
         String name,
         String description,
-        String defaultVisibility) {
+        String defaultVisibility,
+        String joinPolicy) {
 }

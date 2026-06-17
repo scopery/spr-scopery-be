@@ -2,6 +2,7 @@ package com.company.scopery.modules.workspace.workspace.infrastructure.mapper;
 
 import com.company.scopery.modules.workspace.workspace.domain.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
 import com.company.scopery.modules.workspace.workspace.infrastructure.persistence.WorkspaceJpaEntity;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Component;
 public class WorkspacePersistenceMapper {
 
     public Workspace toDomain(WorkspaceJpaEntity entity) {
+        WorkspaceJoinPolicy joinPolicy = entity.getJoinPolicy() != null
+                ? WorkspaceJoinPolicy.valueOf(entity.getJoinPolicy())
+                : WorkspaceJoinPolicy.INVITE_ONLY;
         return new Workspace(
                 entity.getId(),
                 entity.getOrganizationId(),
@@ -19,6 +23,7 @@ public class WorkspacePersistenceMapper {
                 entity.getDescription(),
                 entity.getOwnerUserId(),
                 WorkspaceVisibility.valueOf(entity.getDefaultVisibility()),
+                joinPolicy,
                 WorkspaceStatus.valueOf(entity.getStatus()),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt());
@@ -33,6 +38,7 @@ public class WorkspacePersistenceMapper {
         entity.setDescription(domain.description());
         entity.setOwnerUserId(domain.ownerUserId());
         entity.setDefaultVisibility(domain.defaultVisibility().name());
+        entity.setJoinPolicy(domain.joinPolicy() != null ? domain.joinPolicy().name() : WorkspaceJoinPolicy.INVITE_ONLY.name());
         entity.setStatus(domain.status().name());
         entity.setCreatedAt(domain.createdAt()); // required for Spring Data merge()
         return entity;

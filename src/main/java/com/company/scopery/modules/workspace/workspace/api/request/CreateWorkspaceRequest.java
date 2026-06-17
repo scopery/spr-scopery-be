@@ -10,5 +10,6 @@ public record CreateWorkspaceRequest(
         @NotBlank String name,
         @NotBlank String code,
         String description,
-        String defaultVisibility) {
+        String defaultVisibility,
+        String joinPolicy) {
 }

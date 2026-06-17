@@ -5,6 +5,8 @@ import java.util.UUID;
 
 public class EventDefinition {
 
+    public static final int INITIAL_VERSION = 1;
+
     private final UUID id;
     private final EventDefinitionCode code;
     private String name;
@@ -45,7 +47,7 @@ public class EventDefinition {
         validateName(name);
         Instant now = Instant.now();
         return new EventDefinition(UUID.randomUUID(), code, name, sourceSystem, eventKey,
-                description, inputSchema, outputSchema, EventDefinitionStatus.ACTIVE, 1, null, now, now);
+                description, inputSchema, outputSchema, EventDefinitionStatus.ACTIVE, INITIAL_VERSION, null, now, now);
     }
 
     public static EventDefinition reconstitute(UUID id, EventDefinitionCode code, String name,

@@ -43,6 +43,11 @@ public class JpaIamRoleRepository implements IamRoleRepository {
     }
 
     @Override
+    public Optional<IamRole> findByCode(IamRoleCode code) {
+        return springDataRepository.findByCode(code.value()).map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsByCode(IamRoleCode code) {
         return springDataRepository.existsByCode(code.value());
     }

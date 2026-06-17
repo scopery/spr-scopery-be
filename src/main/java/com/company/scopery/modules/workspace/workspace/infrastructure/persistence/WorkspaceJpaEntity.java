@@ -46,6 +46,9 @@ public class WorkspaceJpaEntity extends AuditableJpaEntity {
     @Column(name = "default_visibility", nullable = false, length = 50)
     private String defaultVisibility;
 
+    @Column(name = "join_policy", nullable = false, length = 50)
+    private String joinPolicy;
+
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 

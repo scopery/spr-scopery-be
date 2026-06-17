@@ -115,6 +115,86 @@ public enum WorkspaceErrorCatalog implements ErrorCatalog {
             "Invalid workspace visibility value",
             HttpStatus.BAD_REQUEST),
 
+    INVALID_WORKSPACE_JOIN_POLICY(
+            "INVALID_WORKSPACE_JOIN_POLICY",
+            "Invalid workspace join policy value",
+            HttpStatus.BAD_REQUEST),
+
+    WORKSPACE_INVITATION_NOT_FOUND(
+            "WORKSPACE_INVITATION_NOT_FOUND",
+            "Workspace invitation not found",
+            HttpStatus.NOT_FOUND),
+
+    WORKSPACE_INVITATION_EXPIRED(
+            "WORKSPACE_INVITATION_EXPIRED",
+            "This invitation has expired",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_INVITATION_REVOKED(
+            "WORKSPACE_INVITATION_REVOKED",
+            "This invitation has been revoked",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_INVITATION_MAX_USES_REACHED(
+            "WORKSPACE_INVITATION_MAX_USES_REACHED",
+            "This invitation has reached its maximum usage limit",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_INVITATION_ALREADY_MEMBER(
+            "WORKSPACE_INVITATION_ALREADY_MEMBER",
+            "You are already a member of this workspace",
+            HttpStatus.CONFLICT),
+
+    WORKSPACE_JOIN_REQUEST_NOT_FOUND(
+            "WORKSPACE_JOIN_REQUEST_NOT_FOUND",
+            "Workspace join request not found",
+            HttpStatus.NOT_FOUND),
+
+    WORKSPACE_JOIN_REQUEST_ALREADY_PENDING(
+            "WORKSPACE_JOIN_REQUEST_ALREADY_PENDING",
+            "You already have a pending join request for this workspace",
+            HttpStatus.CONFLICT),
+
+    WORKSPACE_JOIN_REQUEST_ALREADY_MEMBER(
+            "WORKSPACE_JOIN_REQUEST_ALREADY_MEMBER",
+            "You are already a member of this workspace",
+            HttpStatus.CONFLICT),
+
+    WORKSPACE_JOIN_REQUIRES_INVITATION(
+            "WORKSPACE_JOIN_REQUIRES_INVITATION",
+            "This workspace only accepts members via invitation",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_JOIN_DISABLED(
+            "WORKSPACE_JOIN_DISABLED",
+            "This workspace is not accepting new members",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_JOIN_REQUEST_NOT_PENDING(
+            "WORKSPACE_JOIN_REQUEST_NOT_PENDING",
+            "This join request is no longer pending",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_JOIN_REQUEST_FORBIDDEN(
+            "WORKSPACE_JOIN_REQUEST_FORBIDDEN",
+            "You can only cancel your own join request",
+            HttpStatus.FORBIDDEN),
+
+    WORKSPACE_CONTEXT_NOT_MEMBER(
+            "WORKSPACE_CONTEXT_NOT_MEMBER",
+            "You are not an active member of the selected workspace",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    WORKSPACE_ONBOARDING_ALREADY_COMPLETED(
+            "WORKSPACE_ONBOARDING_ALREADY_COMPLETED",
+            "Your workspace onboarding is already completed",
+            HttpStatus.CONFLICT),
+
+    WORKSPACE_ONBOARDING_INVALID_STEP(
+            "WORKSPACE_ONBOARDING_INVALID_STEP",
+            "Cannot perform this action at the current onboarding step",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
     INVALID_WORKSPACE_MEMBER_STATUS(
             "INVALID_WORKSPACE_MEMBER_STATUS",
             "Invalid workspace member status value",

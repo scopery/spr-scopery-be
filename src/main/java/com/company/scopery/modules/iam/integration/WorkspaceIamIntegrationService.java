@@ -41,7 +41,9 @@ public class WorkspaceIamIntegrationService {
                     "MANAGE_PERMISSION",
                     "VIEW_ROLE", "CREATE_ROLE", "UPDATE_ROLE", "DELETE_ROLE", "ASSIGN_ROLE",
                     "VIEW_DOCUMENT_TYPE", "CREATE_DOCUMENT_TYPE", "UPDATE_DOCUMENT_TYPE",
-                    "DELETE_DOCUMENT_TYPE", "MANAGE_DOCUMENT_TYPE");
+                    "DELETE_DOCUMENT_TYPE", "MANAGE_DOCUMENT_TYPE",
+                    "WORKSPACE_INVITE_MEMBER", "WORKSPACE_MANAGE_INVITATION",
+                    "WORKSPACE_MANAGE_JOIN_REQUEST");
     private static final List<String> TEAM_OWNER_RIGHTS =
             List.of("VIEW_TEAM", "MANAGE_TEAM");
 

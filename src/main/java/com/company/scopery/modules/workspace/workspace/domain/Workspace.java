@@ -11,29 +11,32 @@ public record Workspace(
         String description,
         UUID ownerUserId,
         WorkspaceVisibility defaultVisibility,
+        WorkspaceJoinPolicy joinPolicy,
         WorkspaceStatus status,
         Instant createdAt,
         Instant updatedAt) {
 
     public static Workspace create(UUID organizationId, String name, WorkspaceCode code, String description,
-                                   UUID ownerUserId, WorkspaceVisibility defaultVisibility) {
+                                   UUID ownerUserId, WorkspaceVisibility defaultVisibility,
+                                   WorkspaceJoinPolicy joinPolicy) {
         Instant now = Instant.now();
         return new Workspace(UUID.randomUUID(), organizationId, code, name, description,
-                ownerUserId, defaultVisibility, WorkspaceStatus.ACTIVE, now, now);
+                ownerUserId, defaultVisibility, joinPolicy, WorkspaceStatus.ACTIVE, now, now);
     }
 
-    public Workspace update(String name, String description, WorkspaceVisibility defaultVisibility) {
+    public Workspace update(String name, String description, WorkspaceVisibility defaultVisibility,
+                            WorkspaceJoinPolicy joinPolicy) {
         return new Workspace(id, organizationId, code, name, description,
-                ownerUserId, defaultVisibility, status, createdAt, Instant.now());
+                ownerUserId, defaultVisibility, joinPolicy, status, createdAt, Instant.now());
     }
 
     public Workspace activate() {
         return new Workspace(id, organizationId, code, name, description,
-                ownerUserId, defaultVisibility, WorkspaceStatus.ACTIVE, createdAt, Instant.now());
+                ownerUserId, defaultVisibility, joinPolicy, WorkspaceStatus.ACTIVE, createdAt, Instant.now());
     }
 
     public Workspace archive() {
         return new Workspace(id, organizationId, code, name, description,
-                ownerUserId, defaultVisibility, WorkspaceStatus.ARCHIVED, createdAt, Instant.now());
+                ownerUserId, defaultVisibility, joinPolicy, WorkspaceStatus.ARCHIVED, createdAt, Instant.now());
     }
 }

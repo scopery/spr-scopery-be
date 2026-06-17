@@ -7,5 +7,6 @@ public record CreateWorkspaceCommand(
         String name,
         String code,
         String description,
-        String defaultVisibility) {
+        String defaultVisibility,
+        String joinPolicy) {
 }

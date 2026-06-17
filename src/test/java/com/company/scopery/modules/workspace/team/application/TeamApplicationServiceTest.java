@@ -18,6 +18,7 @@ import com.company.scopery.modules.workspace.team.domain.TeamStatus;
 import com.company.scopery.modules.workspace.team.domain.WorkspaceTeam;
 import com.company.scopery.modules.workspace.workspace.domain.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
@@ -121,7 +122,7 @@ class TeamApplicationServiceTest {
     private Workspace activeWorkspace(UUID id) {
         Instant now = Instant.now();
         return new Workspace(id, UUID.randomUUID(), WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
-                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceStatus.ACTIVE, now, now);
+                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, WorkspaceStatus.ACTIVE, now, now);
     }
 
     private WorkspaceTeam archivedTeam(UUID teamId, UUID workspaceId) {

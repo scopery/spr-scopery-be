@@ -37,7 +37,7 @@ public class WorkspaceController {
             @Valid @RequestBody CreateWorkspaceRequest request) {
         CreateWorkspaceCommand command = new CreateWorkspaceCommand(
                 request.organizationId(), request.name(), request.code(),
-                request.description(), request.defaultVisibility());
+                request.description(), request.defaultVisibility(), request.joinPolicy());
         WorkspaceDetailResponse response = workspaceApplicationService.createWorkspace(command);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -48,7 +48,7 @@ public class WorkspaceController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateWorkspaceRequest request) {
         UpdateWorkspaceCommand command = new UpdateWorkspaceCommand(
-                id, request.name(), request.description(), request.defaultVisibility());
+                id, request.name(), request.description(), request.defaultVisibility(), request.joinPolicy());
         WorkspaceResponse response = workspaceApplicationService.updateWorkspace(command);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

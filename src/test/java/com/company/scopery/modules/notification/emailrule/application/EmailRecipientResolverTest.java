@@ -1,0 +1,73 @@
+package com.company.scopery.modules.notification.emailrule.application;
+
+import com.company.scopery.modules.notification.emailrule.domain.EmailRecipientStrategy;
+import com.company.scopery.modules.notification.emailrule.domain.EmailRule;
+import com.company.scopery.modules.notification.emailrule.domain.EmailRuleScope;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+
+class EmailRecipientResolverTest {
+
+    private EmailRecipientResolver resolver;
+
+    @BeforeEach
+    void setUp() {
+        resolver = new EmailRecipientResolver();
+    }
+
+    @Test
+    void resolve_eventActor_returnsActorEmail() {
+        var rule = makeRule(EmailRecipientStrategy.EVENT_ACTOR, null);
+        var payload = Map.<String, Object>of("actor", Map.of("email", "actor@example.com"));
+        var result = resolver.resolve(rule, payload);
+        assertThat(result.skipped()).isFalse();
+        assertThat(result.email()).isEqualTo("actor@example.com");
+    }
+
+    @Test
+    void resolve_staticEmail_parsesFromConfig() {
+        var rule = makeRule(EmailRecipientStrategy.STATIC_EMAIL, "{\"email\":\"static@example.com\"}");
+        var result = resolver.resolve(rule, Map.of());
+        assertThat(result.skipped()).isFalse();
+        assertThat(result.email()).isEqualTo("static@example.com");
+    }
+
+    @Test
+    void resolve_staticEmail_noConfig_skips() {
+        var rule = makeRule(EmailRecipientStrategy.STATIC_EMAIL, null);
+        var result = resolver.resolve(rule, Map.of());
+        assertThat(result.skipped()).isTrue();
+    }
+
+    @Test
+    void resolve_missingPayloadPath_skips() {
+        var rule = makeRule(EmailRecipientStrategy.INVITEE_EMAIL, null);
+        var result = resolver.resolve(rule, Map.of());
+        assertThat(result.skipped()).isTrue();
+        assertThat(result.skipReason()).contains("invitee.email");
+    }
+
+    @Test
+    void resolve_workspaceUsersWithRight_skipsWithExplanation() {
+        var rule = makeRule(EmailRecipientStrategy.WORKSPACE_USERS_WITH_RIGHT, "{\"rightCode\":\"MANAGE_MEMBER\"}");
+        var result = resolver.resolve(rule, Map.of());
+        assertThat(result.skipped()).isTrue();
+        assertThat(result.skipReason()).contains("Phase 1");
+    }
+
+    private EmailRule makeRule(EmailRecipientStrategy strategy, String configJson) {
+        return EmailRule.reconstitute(
+                UUID.randomUUID(), "TEST_RULE", "Test Rule", null,
+                EmailRuleScope.SYSTEM, null,
+                UUID.randomUUID(), UUID.randomUUID(),
+                strategy, configJson,
+                10, true,
+                com.company.scopery.modules.notification.emailrule.domain.EmailRuleStatus.ACTIVE,
+                java.time.Instant.now(), java.time.Instant.now(), null);
+    }
+}
