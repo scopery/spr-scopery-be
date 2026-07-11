@@ -1,0 +1,6 @@
+package com.company.scopery.modules.iam.user.application.command;
+
+import java.util.UUID;
+
+public record SuspendIamUserCommand(UUID id) {
+}

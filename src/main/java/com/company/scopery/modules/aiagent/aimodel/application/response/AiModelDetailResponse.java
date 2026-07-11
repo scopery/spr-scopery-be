@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.aimodel.application.response;
 
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModel;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
 
 import java.time.Instant;
 import java.util.UUID;

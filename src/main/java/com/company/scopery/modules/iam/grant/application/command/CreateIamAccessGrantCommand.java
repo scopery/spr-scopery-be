@@ -10,6 +10,5 @@ public record CreateIamAccessGrantCommand(
         String effect,
         String scopeType,
         UUID scopeRefId,
-        UUID workspaceId,
-        UUID grantedBy) {
+        UUID workspaceId) {
 }

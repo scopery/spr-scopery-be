@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.usagepolicy.application.response;
 
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicy;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicy;
 
 import java.math.BigDecimal;
 import java.time.Instant;

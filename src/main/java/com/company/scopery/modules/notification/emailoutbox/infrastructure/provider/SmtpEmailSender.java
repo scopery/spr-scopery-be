@@ -1,6 +1,6 @@
 package com.company.scopery.modules.notification.emailoutbox.infrastructure.provider;
 
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailMessage;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailMessage;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

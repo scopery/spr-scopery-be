@@ -1,8 +1,8 @@
 package com.company.scopery.modules.workspace.team.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.team.domain.TeamCode;
-import com.company.scopery.modules.workspace.team.domain.TeamStatus;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeam;
+import com.company.scopery.modules.workspace.team.domain.valueobject.TeamCode;
+import com.company.scopery.modules.workspace.team.domain.enums.TeamStatus;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeam;
 import com.company.scopery.modules.workspace.team.infrastructure.persistence.WorkspaceTeamJpaEntity;
 import org.springframework.stereotype.Component;
 

@@ -1,8 +1,8 @@
 package com.company.scopery.modules.notification.emaildelivery.infrastructure.persistence;
 
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDelivery;
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDeliveryRepository;
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDeliverySearchCriteria;
+import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDelivery;
+import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDeliveryRepository;
+import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDeliverySearchCriteria;
 import com.company.scopery.modules.notification.emaildelivery.infrastructure.mapper.EmailDeliveryPersistenceMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

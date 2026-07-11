@@ -1,27 +1,29 @@
 package com.company.scopery.modules.workspace.team.application;
+import com.company.scopery.modules.workspace.team.application.action.CreateTeamAction;
+import com.company.scopery.modules.workspace.team.application.action.UpdateTeamAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.iam.authorization.application.CurrentUserAuthorizationService;
-import com.company.scopery.modules.iam.integration.WorkspaceIamIntegrationService;
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
 import com.company.scopery.modules.workspace.team.application.command.CreateTeamCommand;
 import com.company.scopery.modules.workspace.team.application.command.UpdateTeamCommand;
 import com.company.scopery.modules.workspace.team.application.response.TeamResponse;
-import com.company.scopery.modules.workspace.team.domain.TeamCode;
-import com.company.scopery.modules.workspace.team.domain.TeamRepository;
-import com.company.scopery.modules.workspace.team.domain.TeamStatus;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeam;
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
+import com.company.scopery.modules.workspace.team.domain.valueobject.TeamCode;
+import com.company.scopery.modules.workspace.team.domain.model.TeamRepository;
+import com.company.scopery.modules.workspace.team.domain.enums.TeamStatus;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeam;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceVisibility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class TeamApplicationServiceTest {
+class TeamActionTest {
 
     @Mock private TeamRepository teamRepository;
     @Mock private WorkspaceRepository workspaceRepository;
@@ -46,13 +48,15 @@ class TeamApplicationServiceTest {
     @Mock private CurrentUserAuthorizationService currentUserService;
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
 
-    private TeamApplicationService service;
     private IamUser currentUser;
+
+    private CreateTeamAction createTeamAction;
+    private UpdateTeamAction updateTeamAction;
 
     @BeforeEach
     void setUp() {
-        service = new TeamApplicationService(
-                teamRepository, workspaceRepository, activityLogger, currentUserService, iamIntegrationService);
+        createTeamAction = new CreateTeamAction(teamRepository, workspaceRepository, activityLogger, currentUserService, iamIntegrationService);
+        updateTeamAction = new UpdateTeamAction(teamRepository, activityLogger);
         Instant now = Instant.now();
         currentUser = new IamUser(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
@@ -69,7 +73,7 @@ class TeamApplicationServiceTest {
         when(teamRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(iamIntegrationService.bootstrapTeamAccess(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
 
-        TeamResponse response = service.createTeam(command);
+        TeamResponse response = createTeamAction.execute(command);
 
         assertThat(response.code()).isEqualTo("BACKEND");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -87,7 +91,7 @@ class TeamApplicationServiceTest {
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(activeWorkspace(workspaceId)));
         when(teamRepository.existsByWorkspaceIdAndCode(any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createTeam(command))
+        assertThatThrownBy(() -> createTeamAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -107,7 +111,7 @@ class TeamApplicationServiceTest {
 
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(archived));
 
-        assertThatThrownBy(() -> service.updateTeam(command))
+        assertThatThrownBy(() -> updateTeamAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -122,7 +126,7 @@ class TeamApplicationServiceTest {
     private Workspace activeWorkspace(UUID id) {
         Instant now = Instant.now();
         return new Workspace(id, UUID.randomUUID(), WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
-                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, WorkspaceStatus.ACTIVE, now, now);
+                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, WorkspaceStatus.ACTIVE, 0, now, now);
     }
 
     private WorkspaceTeam archivedTeam(UUID teamId, UUID workspaceId) {

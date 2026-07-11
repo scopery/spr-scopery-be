@@ -1,6 +1,11 @@
 package com.company.scopery.modules.notification.emailtemplate.infrastructure.mapper;
 
-import com.company.scopery.modules.notification.emailtemplate.domain.*;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplate;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplateVersion;
+import com.company.scopery.modules.notification.emailtemplate.domain.valueobject.EmailTemplateCode;
+import com.company.scopery.modules.notification.emailtemplate.domain.enums.EmailTemplateScope;
+import com.company.scopery.modules.notification.emailtemplate.domain.enums.EmailTemplateStatus;
+import com.company.scopery.modules.notification.emailtemplate.domain.enums.EmailTemplateVersionStatus;
 import com.company.scopery.modules.notification.emailtemplate.infrastructure.persistence.EmailTemplateJpaEntity;
 import com.company.scopery.modules.notification.emailtemplate.infrastructure.persistence.EmailTemplateVersionJpaEntity;
 import org.springframework.stereotype.Component;

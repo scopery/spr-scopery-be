@@ -1,7 +1,12 @@
 package com.company.scopery.modules.knowledge.shared.constant;
 
-public final class KnowledgeApiPaths {
-    private KnowledgeApiPaths() {}
+import com.company.scopery.common.constant.ApiPaths;
 
-    public static final String DOCUMENT_TYPES = "/api/v1/knowledge/document-types";
+public final class KnowledgeApiPaths {
+
+    private static final String BASE = ApiPaths.BASE_PATH + "/knowledge";
+
+    public static final String DOCUMENT_TYPES = BASE + "/document-types";
+
+    private KnowledgeApiPaths() {}
 }

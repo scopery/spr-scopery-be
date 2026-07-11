@@ -1,7 +1,10 @@
 package com.company.scopery.modules.aiagent.execution.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.execution.domain.*;
-import com.company.scopery.modules.aiagent.execution.infrastructure.persistence.ExecutionLogJpaEntity;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionStatus;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionTriggerSource;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLog;
+import com.company.scopery.modules.aiagent.execution.domain.valueobject.ExecutionRequestId;
+import com.company.scopery.modules.aiagent.execution.infrastructure.persistence.entity.ExecutionLogJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

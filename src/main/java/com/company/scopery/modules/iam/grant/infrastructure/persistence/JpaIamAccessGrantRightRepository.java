@@ -1,7 +1,7 @@
 package com.company.scopery.modules.iam.grant.infrastructure.persistence;
 
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantRight;
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantRightRepository;
+import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrantRight;
+import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrantRightRepository;
 import com.company.scopery.modules.iam.grant.infrastructure.mapper.IamAccessGrantRightPersistenceMapper;
 import org.springframework.stereotype.Repository;
 
@@ -49,11 +49,5 @@ public class JpaIamAccessGrantRightRepository implements IamAccessGrantRightRepo
     public Set<UUID> findGrantIdsHavingRight(List<UUID> grantIds, UUID rightId) {
         if (grantIds.isEmpty()) return Set.of();
         return springDataRepository.findGrantIdsHavingRight(grantIds, rightId);
-    }
-
-    @Override
-    public Set<UUID> findGrantIdsHavingAnyRight(List<UUID> grantIds) {
-        if (grantIds.isEmpty()) return Set.of();
-        return springDataRepository.findGrantIdsHavingAnyRight(grantIds);
     }
 }

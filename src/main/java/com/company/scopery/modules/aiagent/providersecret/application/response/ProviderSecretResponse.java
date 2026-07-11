@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.providersecret.application.response;
 
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecret;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecret;
 
 import java.time.Instant;
 import java.util.UUID;

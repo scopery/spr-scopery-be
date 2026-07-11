@@ -1,10 +1,10 @@
 package com.company.scopery.modules.iam.role.infrastructure.mapper;
 
-import com.company.scopery.modules.iam.role.domain.IamRole;
-import com.company.scopery.modules.iam.role.domain.IamRoleCode;
-import com.company.scopery.modules.iam.role.domain.IamRoleScope;
-import com.company.scopery.modules.iam.role.domain.IamRoleSource;
-import com.company.scopery.modules.iam.role.domain.IamRoleStatus;
+import com.company.scopery.modules.iam.role.domain.model.IamRole;
+import com.company.scopery.modules.iam.role.domain.valueobject.IamRoleCode;
+import com.company.scopery.modules.iam.role.domain.enums.IamRoleScope;
+import com.company.scopery.modules.iam.role.domain.enums.IamRoleSource;
+import com.company.scopery.modules.iam.role.domain.enums.IamRoleStatus;
 import com.company.scopery.modules.iam.role.infrastructure.persistence.IamRoleJpaEntity;
 import org.springframework.stereotype.Component;
 

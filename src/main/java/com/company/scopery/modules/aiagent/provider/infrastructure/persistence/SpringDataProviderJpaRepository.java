@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.provider.infrastructure.persistence;
 
+import com.company.scopery.modules.aiagent.provider.infrastructure.persistence.entity.ProviderJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

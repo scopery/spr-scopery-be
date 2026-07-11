@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class RefreshTokenService {
 
     private static final String KEY_PREFIX = "scopery:refresh_token:";
+    private static final String USER_KEY_PREFIX = "scopery:user_refresh_tokens:";
 
     private final StringRedisTemplate redisTemplate;
     private final JwtProperties       jwtProperties;
@@ -27,6 +28,8 @@ public class RefreshTokenService {
                 userId.toString(),
                 jwtProperties.getRefreshExpirationMs(),
                 TimeUnit.MILLISECONDS);
+        redisTemplate.opsForSet().add(USER_KEY_PREFIX + userId, token);
+        redisTemplate.expire(USER_KEY_PREFIX + userId, jwtProperties.getRefreshExpirationMs(), TimeUnit.MILLISECONDS);
         return token;
     }
 
@@ -37,7 +40,16 @@ public class RefreshTokenService {
 
     public void revoke(String token) {
         if (token != null && !token.isBlank()) {
+            validate(token).ifPresent(userId -> redisTemplate.opsForSet().remove(USER_KEY_PREFIX + userId, token));
             redisTemplate.delete(KEY_PREFIX + token);
         }
+    }
+
+    public void revokeAll(UUID userId) {
+        var tokens = redisTemplate.opsForSet().members(USER_KEY_PREFIX + userId);
+        if (tokens != null && !tokens.isEmpty()) {
+            redisTemplate.delete(tokens.stream().map(token -> KEY_PREFIX + token).toList());
+        }
+        redisTemplate.delete(USER_KEY_PREFIX + userId);
     }
 }

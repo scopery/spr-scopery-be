@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.onboarding.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingState;
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingStateRepository;
+import com.company.scopery.modules.workspace.onboarding.domain.model.WorkspaceOnboardingState;
+import com.company.scopery.modules.workspace.onboarding.domain.model.WorkspaceOnboardingStateRepository;
 import com.company.scopery.modules.workspace.onboarding.infrastructure.mapper.WorkspaceOnboardingStatePersistenceMapper;
 import org.springframework.stereotype.Repository;
 

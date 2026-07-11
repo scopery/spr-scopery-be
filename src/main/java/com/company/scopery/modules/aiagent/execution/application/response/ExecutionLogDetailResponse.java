@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.execution.application.response;
 
-import com.company.scopery.modules.aiagent.execution.domain.ExecutionLog;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLog;
 
 import java.math.BigDecimal;
 import java.time.Instant;

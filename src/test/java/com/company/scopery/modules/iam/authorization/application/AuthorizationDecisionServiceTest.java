@@ -1,39 +1,33 @@
 package com.company.scopery.modules.iam.authorization.application;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.iam.authorization.domain.AuthorizationDecision;
-import com.company.scopery.modules.iam.authorization.domain.AuthorizationDecisionReason;
-import com.company.scopery.modules.iam.authorization.domain.AuthorizationRequest;
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrant;
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantRightRepository;
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantRepository;
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantStatus;
-import com.company.scopery.modules.iam.grant.domain.IamGrantEffect;
-import com.company.scopery.modules.iam.grant.domain.IamSubjectType;
-import com.company.scopery.modules.iam.resource.domain.IamAuthResource;
-import com.company.scopery.modules.iam.resource.domain.IamAuthResourceRepository;
-import com.company.scopery.modules.iam.resource.domain.IamResourceCode;
-import com.company.scopery.modules.iam.resource.domain.IamResourceStatus;
-import com.company.scopery.modules.iam.resource.domain.IamResourceType;
-import com.company.scopery.modules.iam.resource.domain.IamResourceVisibility;
-import com.company.scopery.modules.iam.right.domain.IamRight;
-import com.company.scopery.modules.iam.right.domain.IamRightCode;
-import com.company.scopery.modules.iam.right.domain.IamRightRepository;
-import com.company.scopery.modules.iam.right.domain.IamRightStatus;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignment;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignmentRepository;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignmentStatus;
-import com.company.scopery.modules.iam.roleassignment.domain.RoleAssigneeType;
+import com.company.scopery.modules.iam.authorization.application.service.AuthorizationDecisionService;
+import com.company.scopery.modules.iam.authorization.domain.model.AuthorizationDecision;
+import com.company.scopery.modules.iam.authorization.domain.enums.AuthorizationDecisionReason;
+import com.company.scopery.modules.iam.authorization.domain.model.AuthorizationRequest;
+import com.company.scopery.modules.iam.authorization.domain.model.AuthorizationReadRepository;
+import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrant;
+import com.company.scopery.modules.iam.grant.domain.enums.IamAccessGrantStatus;
+import com.company.scopery.modules.iam.grant.domain.enums.IamGrantEffect;
+import com.company.scopery.modules.iam.grant.domain.enums.IamSubjectType;
+import com.company.scopery.modules.iam.resource.domain.model.IamAuthResource;
+import com.company.scopery.modules.iam.resource.domain.valueobject.IamResourceCode;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceStatus;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceType;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceVisibility;
+import com.company.scopery.modules.iam.right.domain.model.IamRight;
+import com.company.scopery.modules.iam.right.domain.valueobject.IamRightCode;
+import com.company.scopery.modules.iam.right.domain.enums.IamRightStatus;
+import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignment;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.IamRoleAssignmentStatus;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.RoleAssigneeType;
 import com.company.scopery.modules.iam.shared.activity.IamActivityLogger;
 import com.company.scopery.modules.iam.shared.error.IamErrorCatalog;
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserRepository;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberRepository;
-import com.company.scopery.modules.workspace.team.domain.TeamMemberRepository;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeamMember;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
+import com.company.scopery.common.audit.ImmutableAuditEventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,15 +48,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AuthorizationDecisionServiceTest {
 
-    @Mock IamUserRepository userRepository;
-    @Mock IamRightRepository rightRepository;
-    @Mock IamAuthResourceRepository resourceRepository;
-    @Mock IamAccessGrantRepository grantRepository;
-    @Mock IamAccessGrantRightRepository grantRightRepository;
-    @Mock IamRoleAssignmentRepository roleAssignmentRepository;
-    @Mock TeamMemberRepository teamMemberRepository;
-    @Mock WorkspaceMemberRepository workspaceMemberRepository;
+    @Mock AuthorizationReadRepository readRepository;
     @Mock IamActivityLogger activityLogger;
+    @Mock ImmutableAuditEventService auditEventService;
 
     private AuthorizationDecisionService service;
 
@@ -75,18 +63,15 @@ class AuthorizationDecisionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AuthorizationDecisionService(
-                userRepository, rightRepository, resourceRepository,
-                grantRepository, grantRightRepository,
-                roleAssignmentRepository, teamMemberRepository,
-                workspaceMemberRepository, activityLogger);
+        service = new AuthorizationDecisionService(readRepository, activityLogger, auditEventService);
+        lenient().when(readRepository.findOrgTeamIdsByUserId(any(UUID.class))).thenReturn(List.of());
     }
 
     // ── Validation guards ──────────────────────────────────────────────────────
 
     @Test
     void canAccess_userNotFound_returnsDenyUserNotFound() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+        when(readRepository.findUserById(USER_ID)).thenReturn(Optional.empty());
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -96,7 +81,7 @@ class AuthorizationDecisionServiceTest {
 
     @Test
     void canAccess_userInactive_returnsDenyUserInactive() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(IamUserStatus.INACTIVE)));
+        when(readRepository.findUserById(USER_ID)).thenReturn(Optional.of(user(IamUserStatus.INACTIVE)));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -106,8 +91,8 @@ class AuthorizationDecisionServiceTest {
 
     @Test
     void canAccess_rightNotFound_returnsDenyRightNotFound() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(activeUser()));
-        when(rightRepository.findByCode(new IamRightCode("VIEW"))).thenReturn(Optional.empty());
+        when(readRepository.findUserById(USER_ID)).thenReturn(Optional.of(activeUser()));
+        when(readRepository.findRightByCode(IamRightCode.of("VIEW"))).thenReturn(Optional.empty());
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -117,8 +102,8 @@ class AuthorizationDecisionServiceTest {
 
     @Test
     void canAccess_rightInactive_returnsDenyRightNotFound() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(activeUser()));
-        when(rightRepository.findByCode(new IamRightCode("VIEW"))).thenReturn(Optional.of(right(IamRightStatus.INACTIVE)));
+        when(readRepository.findUserById(USER_ID)).thenReturn(Optional.of(activeUser()));
+        when(readRepository.findRightByCode(IamRightCode.of("VIEW"))).thenReturn(Optional.of(right(IamRightStatus.INACTIVE)));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -129,7 +114,7 @@ class AuthorizationDecisionServiceTest {
     @Test
     void canAccess_resourceNotFound_returnsDenyResourceNotFound() {
         stubUserAndRight("VIEW");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(Optional.empty());
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(Optional.empty());
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -139,7 +124,7 @@ class AuthorizationDecisionServiceTest {
     @Test
     void canAccess_resourceInactive_returnsDenyResourceInactive() {
         stubUserAndRight("VIEW");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(Optional.of(resource(IamResourceStatus.INACTIVE, null, null)));
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(Optional.of(resource(IamResourceStatus.INACTIVE, null, null)));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -149,33 +134,43 @@ class AuthorizationDecisionServiceTest {
     // ── Owner implicit rights ──────────────────────────────────────────────────
 
     @Test
-    void canAccess_ownerWithViewRight_returnsAllowOwner() {
+    void canAccess_ownerGrantWithViewRight_returnsAllowUserGrant() {
+        UUID grantId = UUID.randomUUID();
         stubUserAndRight("VIEW");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, USER_ID, null)));
+        stubNoTeamsNoRoles();
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+                .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
         assertThat(result.allowed()).isTrue();
-        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.OWNER_IMPLICIT_ALLOW);
+        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.USER_GRANT_ALLOW);
     }
 
     @Test
-    void canAccess_ownerWithManagePermission_returnsAllowOwner() {
+    void canAccess_ownerGrantWithManagePermission_returnsAllowUserGrant() {
+        UUID grantId = UUID.randomUUID();
         stubUserAndRight("MANAGE_PERMISSION");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, USER_ID, null)));
+        stubNoTeamsNoRoles();
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+                .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("MANAGE_PERMISSION"));
 
         assertThat(result.allowed()).isTrue();
-        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.OWNER_IMPLICIT_ALLOW);
+        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.USER_GRANT_ALLOW);
     }
 
     @Test
     void canAccess_ownerWithNonImplicitRight_proceedsToGrantCheck() {
         stubUserAndRight("PUBLISH");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, USER_ID, null)));
         stubNoGrantsNoTeamsNoRoles();
 
@@ -189,21 +184,19 @@ class AuthorizationDecisionServiceTest {
     // ── Direct user grant ──────────────────────────────────────────────────────
 
     @Test
-    void canAccess_userDirectBlanketAllowGrant_returnsAllowUser() {
+    void canAccess_userDirectGrantWithoutRights_returnsDefaultDeny() {
         UUID grantId = UUID.randomUUID();
         stubUserAndRight("VIEW");
         stubActiveResource();
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
-        // Blanket grant: has no rights attached
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
-        assertThat(result.allowed()).isTrue();
-        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.USER_GRANT_ALLOW);
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.DEFAULT_DENY);
     }
 
     @Test
@@ -212,10 +205,9 @@ class AuthorizationDecisionServiceTest {
         stubUserAndRight("VIEW");
         stubActiveResource();
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of(grantId));
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -229,11 +221,10 @@ class AuthorizationDecisionServiceTest {
         stubUserAndRight("VIEW");
         stubActiveResource();
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
         // Grant has rights, but not the VIEW right
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of(grantId));
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -248,13 +239,12 @@ class AuthorizationDecisionServiceTest {
         UUID grantId = UUID.randomUUID();
         stubUserAndRight("VIEW");
         stubActiveResource();
-        when(teamMemberRepository.findByUserId(USER_ID))
-                .thenReturn(List.of(new WorkspaceTeamMember(TEAM_ID, USER_ID, Instant.now())));
-        when(roleAssignmentRepository.findActiveByAssigneeId(USER_ID)).thenReturn(List.of());
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findWorkspaceTeamIdsByUserId(USER_ID))
+                .thenReturn(List.of(TEAM_ID));
+        when(readRepository.findActiveRoleAssignmentsByAssigneeId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.TEAM, TEAM_ID, IamGrantEffect.ALLOW)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -267,13 +257,12 @@ class AuthorizationDecisionServiceTest {
         UUID grantId = UUID.randomUUID();
         stubUserAndRight("VIEW");
         stubActiveResource();
-        when(teamMemberRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(roleAssignmentRepository.findActiveByAssigneeId(USER_ID))
+        when(readRepository.findWorkspaceTeamIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findActiveRoleAssignmentsByAssigneeId(USER_ID))
                 .thenReturn(List.of(roleAssignment(ROLE_ID)));
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.ROLE, ROLE_ID, IamGrantEffect.ALLOW)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -284,15 +273,14 @@ class AuthorizationDecisionServiceTest {
     // ── DENY wins ─────────────────────────────────────────────────────────────
 
     @Test
-    void canAccess_denyGrantBlanket_returnsExplicitDeny() {
+    void canAccess_denyGrantWithSpecificRight_returnsExplicitDeny() {
         UUID grantId = UUID.randomUUID();
         stubUserAndRight("VIEW");
         stubActiveResource();
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.DENY)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -307,12 +295,11 @@ class AuthorizationDecisionServiceTest {
         stubUserAndRight("VIEW");
         stubActiveResource();
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(
                         grant(denyGrantId,  IamSubjectType.USER, USER_ID, IamGrantEffect.DENY),
                         grant(allowGrantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(denyGrantId, allowGrantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -323,28 +310,27 @@ class AuthorizationDecisionServiceTest {
     // ── Visibility fallback ────────────────────────────────────────────────────
 
     @Test
-    void canAccess_workspaceVisibilityMember_returnsAllowVisibility() {
+    void canAccess_workspaceVisibilityMember_noLongerGrantsAccess_returnsDeny() {
         stubUserAndRight("VIEW");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, null, WORKSPACE_ID)));
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of());
-        when(workspaceMemberRepository.isActiveMember(WORKSPACE_ID, USER_ID)).thenReturn(true);
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
-        assertThat(result.allowed()).isTrue();
-        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.VISIBILITY_ALLOW);
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.DEFAULT_DENY);
     }
 
     @Test
     void canAccess_workspaceVisibilityNonViewRight_returnsDeny() {
         stubUserAndRight("DELETE");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, null, WORKSPACE_ID)));
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of());
 
         AuthorizationDecision result = service.canAccess(req("DELETE"));
@@ -356,12 +342,11 @@ class AuthorizationDecisionServiceTest {
     @Test
     void canAccess_workspaceVisibilityNotMember_returnsDeny() {
         stubUserAndRight("VIEW");
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, null, WORKSPACE_ID)));
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of());
-        when(workspaceMemberRepository.isActiveMember(WORKSPACE_ID, USER_ID)).thenReturn(false);
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -389,17 +374,16 @@ class AuthorizationDecisionServiceTest {
         stubUserAndRight("VIEW");
         stubActiveResource();
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         assertThatNoException().isThrownBy(() -> service.requireAccess(req("VIEW")));
     }
 
     @Test
     void requireAccess_denied_throwsAccessDenied() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+        when(readRepository.findUserById(USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.requireAccess(req("VIEW")))
                 .isInstanceOf(AppException.class)
@@ -418,14 +402,11 @@ class AuthorizationDecisionServiceTest {
         UUID grantId  = UUID.randomUUID();
         stubUserAndRight("VIEW");
         stubActiveResource();
-        when(teamMemberRepository.findByUserId(USER_ID)).thenReturn(List.of(
-                new WorkspaceTeamMember(TEAM_ID, USER_ID, Instant.now()),
-                new WorkspaceTeamMember(team2Id, USER_ID, Instant.now())));
-        when(roleAssignmentRepository.findActiveByAssigneeId(USER_ID)).thenReturn(List.of());
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findWorkspaceTeamIdsByUserId(USER_ID)).thenReturn(List.of(TEAM_ID, team2Id));
+        when(readRepository.findActiveRoleAssignmentsByAssigneeId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of(grant(grantId, IamSubjectType.TEAM, team2Id, IamGrantEffect.ALLOW)));
-        when(grantRightRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of());
-        when(grantRightRepository.findGrantIdsHavingAnyRight(anyList())).thenReturn(Set.of());
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID))).thenReturn(Set.of(grantId));
 
         AuthorizationDecision result = service.canAccess(req("VIEW"));
 
@@ -442,27 +423,29 @@ class AuthorizationDecisionServiceTest {
     private IamUser activeUser() { return user(IamUserStatus.ACTIVE); }
 
     private IamUser user(IamUserStatus status) {
-        return new IamUser(USER_ID, new Username("testuser"), new EmailAddress("test@example.com"),
+        return new IamUser(USER_ID, Username.of("testuser"), EmailAddress.of("test@example.com"),
                 "Test User", null, status, Instant.now(), Instant.now());
     }
 
     private IamRight right(IamRightStatus status) {
-        return new IamRight(RIGHT_ID, new IamRightCode("VIEW"), "View", null, "IAM", status,
+        return new IamRight(RIGHT_ID, IamRightCode.of("VIEW"), "View", null, "IAM", status,
                 Instant.now(), Instant.now());
     }
 
     private IamAuthResource resource(IamResourceStatus status, UUID ownerUserId, UUID workspaceId) {
         return new IamAuthResource(RESOURCE_ID,
-                new IamResourceCode("RES_001"), IamResourceType.WORKSPACE,
-                "Test Resource", null, null, ownerUserId, workspaceId,
-                workspaceId != null ? IamResourceVisibility.WORKSPACE : null,
-                null, status, Instant.now(), Instant.now());
+                IamResourceCode.of("RES_001"), IamResourceType.WORKSPACE,
+                "Test Resource", null, null, ownerUserId, null, workspaceId,
+                workspaceId != null ? IamResourceVisibility.PRIVATE : null,
+                null, status, 0, Instant.now(), Instant.now());
     }
 
     private IamAccessGrant grant(UUID id, IamSubjectType subjectType, UUID subjectId, IamGrantEffect effect) {
+        Instant now = Instant.now();
         return new IamAccessGrant(id, subjectType, subjectId, RESOURCE_ID, null,
                 effect, null, null, null,
-                IamAccessGrantStatus.ACTIVE, null, Instant.now(), Instant.now(), Instant.now());
+                null, null, false, 0, null, null, null,
+                IamAccessGrantStatus.ACTIVE, null, now, 0, now, now);
     }
 
     private IamRoleAssignment roleAssignment(UUID roleId) {
@@ -472,23 +455,24 @@ class AuthorizationDecisionServiceTest {
     }
 
     private void stubUserAndRight(String rightCode) {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(activeUser()));
-        when(rightRepository.findByCode(new IamRightCode(rightCode))).thenReturn(Optional.of(right(IamRightStatus.ACTIVE)));
+        when(readRepository.findUserById(USER_ID)).thenReturn(Optional.of(activeUser()));
+        when(readRepository.findRightByCode(IamRightCode.of(rightCode))).thenReturn(Optional.of(right(IamRightStatus.ACTIVE)));
     }
 
     private void stubActiveResource() {
-        when(resourceRepository.findById(RESOURCE_ID)).thenReturn(
+        when(readRepository.findResourceById(RESOURCE_ID)).thenReturn(
                 Optional.of(resource(IamResourceStatus.ACTIVE, null, null)));
     }
 
     private void stubNoTeamsNoRoles() {
-        when(teamMemberRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(roleAssignmentRepository.findActiveByAssigneeId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findWorkspaceTeamIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findOrgTeamIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findActiveRoleAssignmentsByAssigneeId(USER_ID)).thenReturn(List.of());
     }
 
     private void stubNoGrantsNoTeamsNoRoles() {
         stubNoTeamsNoRoles();
-        when(grantRepository.findActiveBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
                 .thenReturn(List.of());
     }
 }

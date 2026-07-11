@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.joinrequest.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequest;
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequestStatus;
+import com.company.scopery.modules.workspace.joinrequest.domain.model.WorkspaceJoinRequest;
+import com.company.scopery.modules.workspace.joinrequest.domain.enums.WorkspaceJoinRequestStatus;
 import com.company.scopery.modules.workspace.joinrequest.infrastructure.persistence.WorkspaceJoinRequestJpaEntity;
 import org.springframework.stereotype.Component;
 

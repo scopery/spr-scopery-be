@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.capability.application.response;
 
-import com.company.scopery.modules.aiagent.capability.domain.ModelParameterCapability;
+import com.company.scopery.modules.aiagent.capability.domain.model.ModelParameterCapability;
 
 import java.math.BigDecimal;
 import java.time.Instant;

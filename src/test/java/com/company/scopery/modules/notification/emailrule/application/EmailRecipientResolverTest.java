@@ -1,8 +1,9 @@
 package com.company.scopery.modules.notification.emailrule.application;
 
-import com.company.scopery.modules.notification.emailrule.domain.EmailRecipientStrategy;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRule;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRuleScope;
+import com.company.scopery.modules.notification.emailrule.application.service.EmailRecipientResolver;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRecipientStrategy;
+import com.company.scopery.modules.notification.emailrule.domain.model.EmailRule;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleScope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +68,7 @@ class EmailRecipientResolverTest {
                 UUID.randomUUID(), UUID.randomUUID(),
                 strategy, configJson,
                 10, true,
-                com.company.scopery.modules.notification.emailrule.domain.EmailRuleStatus.ACTIVE,
+                com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleStatus.ACTIVE,
                 java.time.Instant.now(), java.time.Instant.now(), null);
     }
 }

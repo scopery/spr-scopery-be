@@ -1,5 +1,8 @@
 package com.company.scopery.modules.aiagent.prompt.domain;
 
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
+import com.company.scopery.modules.aiagent.prompt.domain.valueobject.PromptTemplateCode;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptTemplateStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

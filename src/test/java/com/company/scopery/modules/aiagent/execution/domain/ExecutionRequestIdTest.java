@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.execution.domain;
 
+import com.company.scopery.modules.aiagent.execution.domain.valueobject.ExecutionRequestId;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

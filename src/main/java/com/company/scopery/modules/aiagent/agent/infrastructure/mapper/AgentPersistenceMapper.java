@@ -1,7 +1,11 @@
 package com.company.scopery.modules.aiagent.agent.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.agent.domain.*;
-import com.company.scopery.modules.aiagent.agent.infrastructure.persistence.AgentJpaEntity;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
+import com.company.scopery.modules.aiagent.agent.infrastructure.persistence.entity.AgentJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

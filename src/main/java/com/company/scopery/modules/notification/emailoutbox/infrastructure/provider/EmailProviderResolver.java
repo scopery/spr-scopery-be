@@ -1,6 +1,6 @@
 package com.company.scopery.modules.notification.emailoutbox.infrastructure.provider;
 
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailProviderType;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailProviderType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 

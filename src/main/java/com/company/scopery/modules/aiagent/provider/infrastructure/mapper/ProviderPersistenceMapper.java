@@ -1,9 +1,10 @@
 package com.company.scopery.modules.aiagent.provider.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.provider.domain.Provider;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderCode;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderStatus;
-import com.company.scopery.modules.aiagent.provider.infrastructure.persistence.ProviderJpaEntity;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderStatus;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderType;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.valueobject.ProviderCode;
+import com.company.scopery.modules.aiagent.provider.infrastructure.persistence.entity.ProviderJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class ProviderPersistenceMapper {
         entity.setId(provider.id());
         entity.setName(provider.name());
         entity.setCode(provider.code().value());
-        entity.setType(provider.type());
+        entity.setType(provider.type().name());
         entity.setApiBaseUrl(provider.apiBaseUrl());
         entity.setDescription(provider.description());
         entity.setStatus(provider.status().name());
@@ -31,7 +32,7 @@ public class ProviderPersistenceMapper {
                 entity.getId(),
                 entity.getName(),
                 ProviderCode.of(entity.getCode()),
-                entity.getType(),
+                ProviderType.valueOf(entity.getType()),
                 entity.getApiBaseUrl(),
                 entity.getDescription(),
                 ProviderStatus.valueOf(entity.getStatus()),

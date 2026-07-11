@@ -1,26 +1,26 @@
 package com.company.scopery.modules.workspace.team.application;
+import com.company.scopery.modules.workspace.team.application.action.AddTeamMemberAction;
+import com.company.scopery.modules.workspace.team.application.action.RemoveTeamMemberAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.iam.authorization.application.CurrentUserAuthorizationService;
-import com.company.scopery.modules.iam.integration.WorkspaceIamIntegrationService;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
 import com.company.scopery.modules.workspace.team.application.command.AddTeamMemberCommand;
 import com.company.scopery.modules.workspace.team.application.command.RemoveTeamMemberCommand;
 import com.company.scopery.modules.workspace.team.application.response.TeamMemberResponse;
-import com.company.scopery.modules.workspace.team.domain.TeamCode;
-import com.company.scopery.modules.workspace.team.domain.TeamMemberRepository;
-import com.company.scopery.modules.workspace.team.domain.TeamRepository;
-import com.company.scopery.modules.workspace.team.domain.TeamStatus;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeam;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeamMember;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
+import com.company.scopery.modules.workspace.team.domain.valueobject.TeamCode;
+import com.company.scopery.modules.workspace.team.domain.model.TeamMemberRepository;
+import com.company.scopery.modules.workspace.team.domain.model.TeamRepository;
+import com.company.scopery.modules.workspace.team.domain.enums.TeamStatus;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeam;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeamMember;
+import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceVisibility;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class TeamMemberApplicationServiceTest {
+class TeamMemberActionTest {
 
     @Mock
     private TeamRepository teamRepository;
@@ -52,18 +52,14 @@ class TeamMemberApplicationServiceTest {
     private WorkspaceRepository workspaceRepository;
 
     @Mock private WorkspaceActivityLogger activityLogger;
-    @Mock private CurrentUserAuthorizationService currentUserService;
-    @Mock private WorkspaceIamIntegrationService iamIntegrationService;
 
-    private TeamApplicationService teamApplicationService;
-    private TeamMemberApplicationService service;
+    private AddTeamMemberAction addTeamMemberAction;
+    private RemoveTeamMemberAction removeTeamMemberAction;
 
     @BeforeEach
     void setUp() {
-        teamApplicationService = new TeamApplicationService(
-                teamRepository, workspaceRepository, activityLogger, currentUserService, iamIntegrationService);
-        service = new TeamMemberApplicationService(
-                teamApplicationService, teamMemberRepository, workspaceMemberRepository, activityLogger);
+        addTeamMemberAction = new AddTeamMemberAction(teamRepository, teamMemberRepository, workspaceMemberRepository, activityLogger);
+        removeTeamMemberAction = new RemoveTeamMemberAction(teamRepository, teamMemberRepository, activityLogger);
     }
 
     @Test
@@ -78,7 +74,7 @@ class TeamMemberApplicationServiceTest {
         when(teamMemberRepository.existsByTeamIdAndUserId(teamId, userId)).thenReturn(false);
         when(teamMemberRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TeamMemberResponse response = service.addTeamMember(command);
+        TeamMemberResponse response = addTeamMemberAction.execute(command);
 
         assertThat(response.teamId()).isEqualTo(teamId);
         assertThat(response.userId()).isEqualTo(userId);
@@ -97,7 +93,7 @@ class TeamMemberApplicationServiceTest {
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(activeTeam(teamId, workspaceId)));
         when(workspaceMemberRepository.isActiveMember(workspaceId, userId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.addTeamMember(command))
+        assertThatThrownBy(() -> addTeamMemberAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -118,7 +114,7 @@ class TeamMemberApplicationServiceTest {
         when(workspaceMemberRepository.isActiveMember(workspaceId, userId)).thenReturn(true);
         when(teamMemberRepository.existsByTeamIdAndUserId(teamId, userId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.addTeamMember(command))
+        assertThatThrownBy(() -> addTeamMemberAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -137,7 +133,7 @@ class TeamMemberApplicationServiceTest {
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(activeTeam(teamId, workspaceId)));
         when(teamMemberRepository.existsByTeamIdAndUserId(teamId, userId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.removeTeamMember(command))
+        assertThatThrownBy(() -> removeTeamMemberAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -152,7 +148,7 @@ class TeamMemberApplicationServiceTest {
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(activeTeam(teamId, workspaceId)));
         when(teamMemberRepository.existsByTeamIdAndUserId(teamId, userId)).thenReturn(true);
 
-        service.removeTeamMember(command);
+        removeTeamMemberAction.execute(command);
 
         verify(teamMemberRepository).delete(teamId, userId);
         verify(activityLogger).logSuccess(eq("TEAM_MEMBER"), any(UUID.class),
@@ -169,6 +165,6 @@ class TeamMemberApplicationServiceTest {
     private Workspace activeWorkspace(UUID id) {
         Instant now = Instant.now();
         return new Workspace(id, UUID.randomUUID(), WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
-                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, WorkspaceStatus.ACTIVE, now, now);
+                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, WorkspaceStatus.ACTIVE, 0, now, now);
     }
 }

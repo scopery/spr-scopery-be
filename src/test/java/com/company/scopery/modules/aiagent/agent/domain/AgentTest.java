@@ -1,5 +1,10 @@
 package com.company.scopery.modules.aiagent.agent.domain;
 
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

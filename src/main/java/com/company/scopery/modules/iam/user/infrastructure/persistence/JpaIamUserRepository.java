@@ -1,14 +1,18 @@
 package com.company.scopery.modules.iam.user.infrastructure.persistence;
 
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserRepository;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.model.IamUserRepository;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
 import com.company.scopery.modules.iam.user.infrastructure.mapper.IamUserPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -47,6 +51,11 @@ public class JpaIamUserRepository implements IamUserRepository {
     }
 
     @Override
+    public Optional<IamUser> findByEmail(EmailAddress email) {
+        return springDataRepository.findByEmail(email.value()).map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsByUsername(Username username) {
         return springDataRepository.existsByUsername(username.value());
     }
@@ -57,9 +66,18 @@ public class JpaIamUserRepository implements IamUserRepository {
     }
 
     @Override
-    public Page<IamUser> findAll(String keyword, IamUserStatus status, Pageable pageable) {
+    public PageResult<IamUser> findAll(String keyword, IamUserStatus status, PageQuery pageQuery) {
         Specification<IamUserJpaEntity> spec = buildSpec(keyword, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<IamUser> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<IamUserJpaEntity> buildSpec(String keyword, IamUserStatus status) {

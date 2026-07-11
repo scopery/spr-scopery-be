@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: "12345678"
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,6 +30,24 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  scopery-backend:
+    build: .
+    container_name: scopery-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://scopery-postgres:5432/scopery
+      REDIS_HOST: scopery-redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: on-failure
 
 volumes:
   postgres_data:

@@ -1,8 +1,8 @@
 package com.company.scopery.modules.notification.emailrule.infrastructure.persistence;
 
-import com.company.scopery.modules.notification.emailrule.domain.EmailRule;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRuleRepository;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRuleSearchCriteria;
+import com.company.scopery.modules.notification.emailrule.domain.model.EmailRule;
+import com.company.scopery.modules.notification.emailrule.domain.model.EmailRuleRepository;
+import com.company.scopery.modules.notification.emailrule.domain.model.EmailRuleSearchCriteria;
 import com.company.scopery.modules.notification.emailrule.infrastructure.mapper.EmailRulePersistenceMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

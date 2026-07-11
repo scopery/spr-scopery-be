@@ -1,8 +1,8 @@
 package com.company.scopery.modules.aiagent.providersecret.application;
 
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecret;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretRepository;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretType;
+import com.company.scopery.modules.aiagent.providersecret.domain.enums.ProviderSecretType;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecret;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecretRepository;
 import com.company.scopery.modules.aiagent.providersecret.infrastructure.crypto.EncryptedSecret;
 import com.company.scopery.modules.aiagent.providersecret.infrastructure.crypto.SecretEncryptor;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentExceptions;

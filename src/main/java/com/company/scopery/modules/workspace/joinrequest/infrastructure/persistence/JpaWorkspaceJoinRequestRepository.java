@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.joinrequest.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequest;
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequestRepository;
+import com.company.scopery.modules.workspace.joinrequest.domain.model.WorkspaceJoinRequest;
+import com.company.scopery.modules.workspace.joinrequest.domain.model.WorkspaceJoinRequestRepository;
 import com.company.scopery.modules.workspace.joinrequest.infrastructure.mapper.WorkspaceJoinRequestPersistenceMapper;
 import org.springframework.stereotype.Repository;
 

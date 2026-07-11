@@ -1,5 +1,7 @@
 package com.company.scopery.modules.notification.emailtemplate.application;
 
+import com.company.scopery.modules.notification.emailtemplate.application.service.SimpleMustacheEmailTemplateRenderer;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

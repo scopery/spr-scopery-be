@@ -1,17 +1,26 @@
 package com.company.scopery.modules.aiagent.execution.application;
+import com.company.scopery.modules.aiagent.execution.application.action.CancelExecutionAction;
+import com.company.scopery.modules.aiagent.execution.application.action.CreateExecutionLogAction;
+import com.company.scopery.modules.aiagent.execution.application.action.MarkExecutionRunningAction;
+import com.company.scopery.modules.aiagent.execution.application.action.MarkExecutionSucceededAction;
+import com.company.scopery.modules.aiagent.execution.application.guard.ExecutionLifecycleWriteGuard;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.agent.domain.AgentRepository;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentRepository;
-import com.company.scopery.modules.aiagent.eventconfig.domain.EventConfigRepository;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfigRepository;
 import com.company.scopery.modules.aiagent.execution.application.command.*;
 import com.company.scopery.modules.aiagent.execution.application.response.ExecutionLogDetailResponse;
 import com.company.scopery.modules.aiagent.execution.application.response.ExecutionLogResponse;
-import com.company.scopery.modules.aiagent.execution.domain.*;
-import com.company.scopery.modules.aiagent.prompt.domain.PromptVersionRepository;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionStatus;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionTriggerSource;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLog;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLogRepository;
+import com.company.scopery.modules.aiagent.execution.domain.valueobject.ExecutionRequestId;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersionRepository;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.EventDefinitionRepository;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ExecutionLogApplicationServiceTest {
+class ExecutionLogActionTest {
 
     @Mock private ExecutionLogRepository executionLogRepository;
     @Mock private EventConfigRepository eventConfigRepository;
@@ -39,16 +48,24 @@ class ExecutionLogApplicationServiceTest {
     @Mock private ModelDeploymentRepository modelDeploymentRepository;
     @Mock private AiAgentActivityLogger activityLogger;
 
-    private ExecutionLogApplicationService service;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ExecutionLifecycleWriteGuard lifecycleWriteGuard = new ExecutionLifecycleWriteGuard(false);
+
     private final UUID agentId = UUID.randomUUID();
     private final UUID promptVersionId = UUID.randomUUID();
     private final UUID modelDeploymentId = UUID.randomUUID();
 
+    private CancelExecutionAction cancelExecutionAction;
+    private CreateExecutionLogAction createExecutionLogAction;
+    private MarkExecutionRunningAction markExecutionRunningAction;
+    private MarkExecutionSucceededAction markExecutionSucceededAction;
+
     @BeforeEach
     void setUp() {
-        service = new ExecutionLogApplicationService(executionLogRepository, eventConfigRepository,
-                eventDefinitionRepository, agentRepository, promptVersionRepository,
-                modelDeploymentRepository, activityLogger, new ObjectMapper());
+        cancelExecutionAction = new CancelExecutionAction(executionLogRepository, eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, modelDeploymentRepository, activityLogger, lifecycleWriteGuard);
+        createExecutionLogAction = new CreateExecutionLogAction(executionLogRepository, eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, modelDeploymentRepository, activityLogger, objectMapper, lifecycleWriteGuard);
+        markExecutionRunningAction = new MarkExecutionRunningAction(executionLogRepository, eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, modelDeploymentRepository, activityLogger, lifecycleWriteGuard);
+        markExecutionSucceededAction = new MarkExecutionSucceededAction(executionLogRepository, eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, modelDeploymentRepository, activityLogger, objectMapper, lifecycleWriteGuard);
     }
 
     @Test
@@ -56,12 +73,12 @@ class ExecutionLogApplicationServiceTest {
         CreateExecutionLogCommand command = buildCreateCommand("req-001");
 
         when(executionLogRepository.existsByRequestId(ExecutionRequestId.of("req-001"))).thenReturn(false);
-        when(agentRepository.findById(agentId)).thenReturn(Optional.of(mock(com.company.scopery.modules.aiagent.agent.domain.Agent.class)));
-        when(promptVersionRepository.findById(promptVersionId)).thenReturn(Optional.of(mock(com.company.scopery.modules.aiagent.prompt.domain.PromptVersion.class)));
-        when(modelDeploymentRepository.findById(modelDeploymentId)).thenReturn(Optional.of(mock(com.company.scopery.modules.aiagent.deployment.domain.ModelDeployment.class)));
+        when(agentRepository.findById(agentId)).thenReturn(Optional.of(mock(com.company.scopery.modules.aiagent.agent.domain.model.Agent.class)));
+        when(promptVersionRepository.findById(promptVersionId)).thenReturn(Optional.of(mock(com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersion.class)));
+        when(modelDeploymentRepository.findById(modelDeploymentId)).thenReturn(Optional.of(mock(com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment.class)));
         when(executionLogRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ExecutionLogResponse response = service.createExecutionLog(command);
+        ExecutionLogResponse response = createExecutionLogAction.execute(command);
 
         assertThat(response.requestId()).isEqualTo("req-001");
         assertThat(response.status()).isEqualTo("PENDING");
@@ -75,7 +92,7 @@ class ExecutionLogApplicationServiceTest {
 
         when(executionLogRepository.existsByRequestId(ExecutionRequestId.of("req-duplicate"))).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createExecutionLog(command))
+        assertThatThrownBy(() -> createExecutionLogAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -94,7 +111,7 @@ class ExecutionLogApplicationServiceTest {
         when(executionLogRepository.existsByRequestId(any())).thenReturn(false);
         when(agentRepository.findById(agentId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createExecutionLog(command))
+        assertThatThrownBy(() -> createExecutionLogAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 
@@ -109,7 +126,7 @@ class ExecutionLogApplicationServiceTest {
 
         when(executionLogRepository.existsByRequestId(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createExecutionLog(command))
+        assertThatThrownBy(() -> createExecutionLogAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -129,7 +146,7 @@ class ExecutionLogApplicationServiceTest {
         when(promptVersionRepository.findById(any())).thenReturn(Optional.empty());
         when(modelDeploymentRepository.findById(any())).thenReturn(Optional.empty());
 
-        ExecutionLogDetailResponse response = service.markRunning(new MarkExecutionRunningCommand(id));
+        ExecutionLogDetailResponse response = markExecutionRunningAction.execute(new MarkExecutionRunningCommand(id));
 
         assertThat(response.status()).isEqualTo("RUNNING");
     }
@@ -141,7 +158,7 @@ class ExecutionLogApplicationServiceTest {
 
         when(executionLogRepository.findById(id)).thenReturn(Optional.of(cancelled));
 
-        assertThatThrownBy(() -> service.markRunning(new MarkExecutionRunningCommand(id)))
+        assertThatThrownBy(() -> markExecutionRunningAction.execute(new MarkExecutionRunningCommand(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -158,7 +175,7 @@ class ExecutionLogApplicationServiceTest {
 
         when(executionLogRepository.findById(id)).thenReturn(Optional.of(pending));
 
-        assertThatThrownBy(() -> service.markSucceeded(new MarkExecutionSucceededCommand(
+        assertThatThrownBy(() -> markExecutionSucceededAction.execute(new MarkExecutionSucceededCommand(
                 id, null, null, null, null, null, null)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
@@ -180,7 +197,7 @@ class ExecutionLogApplicationServiceTest {
         when(promptVersionRepository.findById(any())).thenReturn(Optional.empty());
         when(modelDeploymentRepository.findById(any())).thenReturn(Optional.empty());
 
-        ExecutionLogDetailResponse response = service.cancelExecution(new CancelExecutionCommand(id));
+        ExecutionLogDetailResponse response = cancelExecutionAction.execute(new CancelExecutionCommand(id));
 
         assertThat(response.status()).isEqualTo("CANCELLED");
     }

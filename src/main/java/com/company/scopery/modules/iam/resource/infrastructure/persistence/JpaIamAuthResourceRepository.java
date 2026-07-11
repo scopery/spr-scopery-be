@@ -1,14 +1,18 @@
 package com.company.scopery.modules.iam.resource.infrastructure.persistence;
 
-import com.company.scopery.modules.iam.resource.domain.IamAuthResource;
-import com.company.scopery.modules.iam.resource.domain.IamAuthResourceRepository;
-import com.company.scopery.modules.iam.resource.domain.IamResourceCode;
-import com.company.scopery.modules.iam.resource.domain.IamResourceStatus;
-import com.company.scopery.modules.iam.resource.domain.IamResourceType;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.iam.resource.domain.model.IamAuthResource;
+import com.company.scopery.modules.iam.resource.domain.model.IamAuthResourceRepository;
+import com.company.scopery.modules.iam.resource.domain.valueobject.IamResourceCode;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceStatus;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceType;
 import com.company.scopery.modules.iam.resource.infrastructure.mapper.IamAuthResourcePersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -42,6 +46,12 @@ public class JpaIamAuthResourceRepository implements IamAuthResourceRepository {
     }
 
     @Override
+    public Optional<IamAuthResource> findByCodeAndResourceType(IamResourceCode code, IamResourceType resourceType) {
+        return springDataRepository.findByCodeAndResourceType(code.value(), resourceType.name())
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<IamAuthResource> findByRefIdAndResourceType(UUID refId, IamResourceType resourceType) {
         return springDataRepository.findByRefIdAndResourceType(refId, resourceType.name())
                 .map(mapper::toDomain);
@@ -53,10 +63,31 @@ public class JpaIamAuthResourceRepository implements IamAuthResourceRepository {
     }
 
     @Override
-    public Page<IamAuthResource> findAll(String keyword, IamResourceType resourceType,
-                                          IamResourceStatus status, Pageable pageable) {
+    public PageResult<IamAuthResource> findAll(String keyword, IamResourceType resourceType,
+                                          IamResourceStatus status, PageQuery pageQuery) {
         Specification<IamAuthResourceJpaEntity> spec = buildSpec(keyword, resourceType, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<IamAuthResource> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
+    }
+
+    @Override
+    public List<IamAuthResource> findAllByResourceTypeAndStatus(IamResourceType resourceType,
+                                                                 IamResourceStatus status) {
+        return springDataRepository.findAllByResourceTypeAndStatus(resourceType.name(), status.name())
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<IamAuthResource> findAllByOrganizationId(UUID organizationId) {
+        return springDataRepository.findAllByOrganizationId(organizationId).stream().map(mapper::toDomain).toList();
     }
 
     private Specification<IamAuthResourceJpaEntity> buildSpec(String keyword,

@@ -1,10 +1,20 @@
 package com.company.scopery.modules.aiagent.capability.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.capability.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterCapabilityStatus;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterSupportStatus;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterValueType;
+import com.company.scopery.modules.aiagent.capability.domain.model.ModelParameterCapability;
+import com.company.scopery.modules.aiagent.capability.domain.model.ModelParameterCapabilityRepository;
+import com.company.scopery.modules.aiagent.capability.domain.valueobject.ModelParameterName;
 import com.company.scopery.modules.aiagent.capability.infrastructure.mapper.ModelParameterCapabilityPersistenceMapper;
+import com.company.scopery.modules.aiagent.capability.infrastructure.persistence.entity.ModelParameterCapabilityJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -44,14 +54,23 @@ public class JpaModelParameterCapabilityRepository implements ModelParameterCapa
     }
 
     @Override
-    public Page<ModelParameterCapability> findAll(UUID modelId, String parameterName,
-                                                   ModelParameterSupportStatus supportStatus,
-                                                   ModelParameterValueType valueType,
-                                                   ModelParameterCapabilityStatus status,
-                                                   Pageable pageable) {
+    public PageResult<ModelParameterCapability> findAll(UUID modelId, String parameterName,
+                                                          ModelParameterSupportStatus supportStatus,
+                                                          ModelParameterValueType valueType,
+                                                          ModelParameterCapabilityStatus status,
+                                                          PageQuery pageQuery) {
         Specification<ModelParameterCapabilityJpaEntity> spec =
                 buildSearchSpec(modelId, parameterName, supportStatus, valueType, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<ModelParameterCapability> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<ModelParameterCapabilityJpaEntity> buildSearchSpec(

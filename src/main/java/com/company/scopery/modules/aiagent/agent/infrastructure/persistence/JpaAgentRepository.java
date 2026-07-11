@@ -1,10 +1,20 @@
 package com.company.scopery.modules.aiagent.agent.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.agent.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
 import com.company.scopery.modules.aiagent.agent.infrastructure.mapper.AgentPersistenceMapper;
+import com.company.scopery.modules.aiagent.agent.infrastructure.persistence.entity.AgentJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -49,10 +59,19 @@ public class JpaAgentRepository implements AgentRepository {
     }
 
     @Override
-    public Page<Agent> findAll(String keyword, AgentType type, AgentStatus status,
-                               AgentOutputFormat outputFormat, Pageable pageable) {
+    public PageResult<Agent> findAll(String keyword, AgentType type, AgentStatus status,
+                               AgentOutputFormat outputFormat, PageQuery pageQuery) {
         Specification<AgentJpaEntity> spec = buildSearchSpec(keyword, type, status, outputFormat);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<Agent> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<AgentJpaEntity> buildSearchSpec(String keyword, AgentType type,

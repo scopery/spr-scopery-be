@@ -25,4 +25,9 @@ public interface SpringDataIamAccessGrantJpaRepository
             @Param("subjectTypes") List<String> subjectTypes,
             @Param("subjectIds") List<UUID> subjectIds,
             @Param("resourceId") UUID resourceId);
+
+    List<IamAccessGrantJpaEntity> findAllByResourceIdAndStatus(UUID resourceId, String status);
+
+    List<IamAccessGrantJpaEntity> findAllBySubjectTypeAndSubjectIdAndResourceIdAndStatus(
+            String subjectType, UUID subjectId, UUID resourceId, String status);
 }

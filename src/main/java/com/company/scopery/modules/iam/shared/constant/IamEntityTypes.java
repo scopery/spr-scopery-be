@@ -11,4 +11,6 @@ public final class IamEntityTypes {
     public static final String IAM_ACCESS_GRANT            = "IAM_ACCESS_GRANT";
     public static final String IAM_ROLE_ASSIGNMENT         = "IAM_ROLE_ASSIGNMENT";
     public static final String IAM_AUTHORIZATION_DECISION  = "IAM_AUTHORIZATION_DECISION";
+    public static final String IAM_ME                       = "IAM_ME";
+    public static final String IAM_OWNER_POLICY             = "IAM_OWNER_POLICY";
 }

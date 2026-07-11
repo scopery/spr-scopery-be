@@ -1,14 +1,21 @@
 package com.company.scopery.modules.aiagent.agent.application;
 
+import com.company.scopery.modules.aiagent.agent.application.action.CreateAgentAction;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentEnvironment;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentStatus;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDeploymentCode;
+
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.aiagent.agent.application.command.CreateAgentCommand;
 import com.company.scopery.modules.aiagent.agent.application.response.AgentResponse;
-import com.company.scopery.modules.aiagent.agent.domain.*;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeployment;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentCode;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentEnvironment;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentRepository;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentStatus;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AgentApplicationServiceTest {
+class AgentActionTest {
 
     @Mock
     private AgentRepository agentRepository;
@@ -39,11 +46,11 @@ class AgentApplicationServiceTest {
     @Mock
     private AiAgentActivityLogger activityLogger;
 
-    private AgentApplicationService service;
+    private CreateAgentAction createAction;
 
     @BeforeEach
     void setUp() {
-        service = new AgentApplicationService(agentRepository, deploymentRepository, activityLogger);
+        createAction = new CreateAgentAction(agentRepository, deploymentRepository, activityLogger);
     }
 
     @Test
@@ -55,7 +62,7 @@ class AgentApplicationServiceTest {
         when(agentRepository.existsByCode(AgentCode.of("CV_EXTRACTION_AGENT"))).thenReturn(false);
         when(agentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgentResponse response = service.createAgent(command);
+        AgentResponse response = createAction.execute(command);
 
         assertThat(response.code()).isEqualTo("CV_EXTRACTION_AGENT");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -74,7 +81,7 @@ class AgentApplicationServiceTest {
         when(agentRepository.existsByCode(AgentCode.of("CV_EXTRACTION_AGENT"))).thenReturn(false);
         when(agentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgentResponse response = service.createAgent(command);
+        AgentResponse response = createAction.execute(command);
 
         assertThat(response.code()).isEqualTo("CV_EXTRACTION_AGENT");
     }
@@ -87,7 +94,7 @@ class AgentApplicationServiceTest {
 
         when(agentRepository.existsByCode(AgentCode.of("CV_EXTRACTION_AGENT"))).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createAgent(command))
+        assertThatThrownBy(() -> createAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("CV_EXTRACTION_AGENT")
                 .satisfies(e -> {
@@ -110,7 +117,7 @@ class AgentApplicationServiceTest {
         when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(activeDeployment(deploymentId)));
         when(agentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgentResponse response = service.createAgent(command);
+        AgentResponse response = createAction.execute(command);
 
         assertThat(response.defaultModelDeploymentId()).isEqualTo(deploymentId);
     }
@@ -125,7 +132,7 @@ class AgentApplicationServiceTest {
         when(agentRepository.existsByCode(any())).thenReturn(false);
         when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.of(inactiveDeployment(deploymentId)));
 
-        assertThatThrownBy(() -> service.createAgent(command))
+        assertThatThrownBy(() -> createAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("ACTIVE")
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -144,7 +151,7 @@ class AgentApplicationServiceTest {
         when(agentRepository.existsByCode(any())).thenReturn(false);
         when(deploymentRepository.findById(deploymentId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createAgent(command))
+        assertThatThrownBy(() -> createAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 

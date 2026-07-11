@@ -1,5 +1,6 @@
 package com.company.scopery.modules.workspace.workspace.domain;
 
+import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
 import com.company.scopery.common.exception.ValidationException;
 import org.junit.jupiter.api.Test;
 

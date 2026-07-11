@@ -1,5 +1,10 @@
 package com.company.scopery.modules.aiagent.eventconfig.domain;
 
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfig;
+import com.company.scopery.modules.aiagent.eventconfig.domain.valueobject.EventConfigCode;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigEnvironment;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigStatus;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventTriggerType;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

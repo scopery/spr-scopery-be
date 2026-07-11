@@ -1,6 +1,6 @@
 package com.company.scopery.modules.notification.emailoutbox.application.response;
 
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutbox;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutbox;
 
 import java.time.Instant;
 import java.util.UUID;

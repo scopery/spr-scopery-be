@@ -1,9 +1,9 @@
 package com.company.scopery.modules.workspace.onboarding.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingOption;
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingState;
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingStatus;
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingStep;
+import com.company.scopery.modules.workspace.onboarding.domain.enums.WorkspaceOnboardingOption;
+import com.company.scopery.modules.workspace.onboarding.domain.model.WorkspaceOnboardingState;
+import com.company.scopery.modules.workspace.onboarding.domain.enums.WorkspaceOnboardingStatus;
+import com.company.scopery.modules.workspace.onboarding.domain.enums.WorkspaceOnboardingStep;
 import com.company.scopery.modules.workspace.onboarding.infrastructure.persistence.WorkspaceOnboardingStateJpaEntity;
 import org.springframework.stereotype.Component;
 

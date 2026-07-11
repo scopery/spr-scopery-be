@@ -1,5 +1,9 @@
 package com.company.scopery.modules.aiagent.provider.domain;
 
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.valueobject.ProviderCode;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderStatus;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderType;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -12,7 +16,7 @@ class ProviderTest {
     @Test
     void create_withValidData_createsActiveProvider() {
         Provider provider = Provider.create(
-                "OpenAI", ProviderCode.of("OPENAI"), "LLM",
+                "OpenAI", ProviderCode.of("OPENAI"), ProviderType.LLM,
                 "https://api.openai.com", "OpenAI provider");
 
         assertThat(provider.id()).isNotNull();
@@ -24,7 +28,7 @@ class ProviderTest {
     @Test
     void create_withoutApiBaseUrl_throwsException() {
         assertThatThrownBy(() -> Provider.create(
-                "OpenAI", ProviderCode.of("OPENAI"), "LLM", null, null))
+                "OpenAI", ProviderCode.of("OPENAI"), ProviderType.LLM, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("API base URL");
     }
@@ -32,7 +36,7 @@ class ProviderTest {
     @Test
     void create_withBlankName_throwsException() {
         assertThatThrownBy(() -> Provider.create(
-                "", ProviderCode.of("OPENAI"), "LLM", "https://api.openai.com", null))
+                "", ProviderCode.of("OPENAI"), ProviderType.LLM, "https://api.openai.com", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("name");
     }
@@ -70,7 +74,7 @@ class ProviderTest {
     @Test
     void update_onActiveProvider_withoutApiBaseUrl_throwsException() {
         Provider provider = activeProvider();
-        assertThatThrownBy(() -> provider.update("New Name", "LLM", null, null))
+        assertThatThrownBy(() -> provider.update("New Name", ProviderType.LLM, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("API base URL");
     }
@@ -78,17 +82,17 @@ class ProviderTest {
     // --- helpers ---
 
     private Provider activeProvider() {
-        return Provider.create("OpenAI", ProviderCode.of("OPENAI"), "LLM",
+        return Provider.create("OpenAI", ProviderCode.of("OPENAI"), ProviderType.LLM,
                 "https://api.openai.com", null);
     }
 
     private Provider inactiveProvider(String apiBaseUrl) {
         return Provider.reconstitute(UUID.randomUUID(), "OpenAI", ProviderCode.of("OPENAI"),
-                "LLM", apiBaseUrl, null, ProviderStatus.INACTIVE, Instant.now(), Instant.now());
+                ProviderType.LLM, apiBaseUrl, null, ProviderStatus.INACTIVE, Instant.now(), Instant.now());
     }
 
     private Provider deprecatedProvider() {
         return Provider.reconstitute(UUID.randomUUID(), "Old Provider", ProviderCode.of("OLD"),
-                "LLM", "https://old.api.com", null, ProviderStatus.DEPRECATED, Instant.now(), Instant.now());
+                ProviderType.LLM, "https://old.api.com", null, ProviderStatus.DEPRECATED, Instant.now(), Instant.now());
     }
 }

@@ -1,29 +1,33 @@
 package com.company.scopery.modules.workspace.workspace.application;
+import com.company.scopery.modules.workspace.workspace.application.action.CreateWorkspaceAction;
+import com.company.scopery.modules.workspace.workspace.application.action.UpdateWorkspaceAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.iam.authorization.application.CurrentUserAuthorizationService;
-import com.company.scopery.modules.iam.integration.WorkspaceIamIntegrationService;
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMember;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberRepository;
-import com.company.scopery.modules.workspace.organization.domain.Organization;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationCode;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationRepository;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationStatus;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.organization.domain.model.Organization;
+import com.company.scopery.modules.workspace.organization.domain.valueobject.OrganizationCode;
+import com.company.scopery.modules.workspace.organization.domain.model.OrganizationRepository;
+import com.company.scopery.modules.workspace.organization.domain.enums.OrganizationStatus;
+import com.company.scopery.common.audit.ImmutableAuditEventService;
+import com.company.scopery.common.outbox.TransactionalOutboxService;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
 import com.company.scopery.modules.workspace.workspace.application.command.CreateWorkspaceCommand;
 import com.company.scopery.modules.workspace.workspace.application.command.UpdateWorkspaceCommand;
 import com.company.scopery.modules.workspace.workspace.application.response.WorkspaceDetailResponse;
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceVisibility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +44,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class WorkspaceApplicationServiceTest {
+class WorkspaceActionTest {
 
     @Mock private WorkspaceRepository workspaceRepository;
     @Mock private OrganizationRepository organizationRepository;
@@ -48,15 +52,18 @@ class WorkspaceApplicationServiceTest {
     @Mock private WorkspaceActivityLogger activityLogger;
     @Mock private CurrentUserAuthorizationService currentUserService;
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
+    @Mock private ImmutableAuditEventService auditEventService;
+    @Mock private TransactionalOutboxService outboxService;
 
-    private WorkspaceApplicationService service;
     private IamUser currentUser;
+
+    private CreateWorkspaceAction createWorkspaceAction;
+    private UpdateWorkspaceAction updateWorkspaceAction;
 
     @BeforeEach
     void setUp() {
-        service = new WorkspaceApplicationService(
-                workspaceRepository, organizationRepository, workspaceMemberRepository,
-                activityLogger, currentUserService, iamIntegrationService);
+        createWorkspaceAction = new CreateWorkspaceAction(workspaceRepository, organizationRepository, workspaceMemberRepository, activityLogger, currentUserService, iamIntegrationService, auditEventService, outboxService);
+        updateWorkspaceAction = new UpdateWorkspaceAction(workspaceRepository, activityLogger);
         Instant now = Instant.now();
         currentUser = new IamUser(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
@@ -73,9 +80,9 @@ class WorkspaceApplicationServiceTest {
         when(workspaceRepository.existsByOrganizationIdAndCode(any(), any())).thenReturn(false);
         when(workspaceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(workspaceMemberRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(iamIntegrationService.bootstrapWorkspaceAccess(any(), any(), any())).thenReturn(UUID.randomUUID());
+        when(iamIntegrationService.bootstrapWorkspaceAccess(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
 
-        WorkspaceDetailResponse response = service.createWorkspace(command);
+        WorkspaceDetailResponse response = createWorkspaceAction.execute(command);
 
         assertThat(response.code()).isEqualTo("DEV_WS");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -94,9 +101,9 @@ class WorkspaceApplicationServiceTest {
         when(workspaceRepository.existsByOrganizationIdAndCode(any(), any())).thenReturn(false);
         when(workspaceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(workspaceMemberRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(iamIntegrationService.bootstrapWorkspaceAccess(any(), any(), any())).thenReturn(UUID.randomUUID());
+        when(iamIntegrationService.bootstrapWorkspaceAccess(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
 
-        WorkspaceDetailResponse response = service.createWorkspace(command);
+        WorkspaceDetailResponse response = createWorkspaceAction.execute(command);
 
         assertThat(response.defaultVisibility()).isEqualTo("PRIVATE");
     }
@@ -109,7 +116,7 @@ class WorkspaceApplicationServiceTest {
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(activeOrganization(orgId)));
         when(workspaceRepository.existsByOrganizationIdAndCode(any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createWorkspace(command))
+        assertThatThrownBy(() -> createWorkspaceAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -129,7 +136,7 @@ class WorkspaceApplicationServiceTest {
 
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(inactiveOrg));
 
-        assertThatThrownBy(() -> service.createWorkspace(command))
+        assertThatThrownBy(() -> createWorkspaceAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -147,7 +154,7 @@ class WorkspaceApplicationServiceTest {
 
         when(workspaceRepository.findById(id)).thenReturn(Optional.of(archived));
 
-        assertThatThrownBy(() -> service.updateWorkspace(command))
+        assertThatThrownBy(() -> updateWorkspaceAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -162,18 +169,18 @@ class WorkspaceApplicationServiceTest {
     private Organization activeOrganization(UUID id) {
         Instant now = Instant.now();
         return new Organization(id, OrganizationCode.of("ACME"), "Acme Corp", null,
-                UUID.randomUUID(), OrganizationStatus.ACTIVE, now, now);
+                UUID.randomUUID(), OrganizationStatus.ACTIVE, 0, now, now);
     }
 
     private Organization inactiveOrganization(UUID id) {
         Instant now = Instant.now();
         return new Organization(id, OrganizationCode.of("ACME"), "Acme Corp", null,
-                UUID.randomUUID(), OrganizationStatus.INACTIVE, now, now);
+                UUID.randomUUID(), OrganizationStatus.INACTIVE, 0, now, now);
     }
 
     private Workspace existingWorkspace(UUID id, UUID orgId, WorkspaceStatus status) {
         Instant now = Instant.now();
         return new Workspace(id, orgId, WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
-                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, status, now, now);
+                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY, status, 0, now, now);
     }
 }

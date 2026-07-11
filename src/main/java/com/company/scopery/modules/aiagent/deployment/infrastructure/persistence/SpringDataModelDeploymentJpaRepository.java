@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.deployment.infrastructure.persistence;
 
+import com.company.scopery.modules.aiagent.deployment.infrastructure.persistence.entity.ModelDeploymentJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

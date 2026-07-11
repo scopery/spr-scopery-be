@@ -1,4 +1,7 @@
 package com.company.scopery.modules.aiagent.prompt.application;
+import com.company.scopery.modules.aiagent.prompt.application.action.ActivatePromptVersionAction;
+import com.company.scopery.modules.aiagent.prompt.application.action.CreatePromptVersionAction;
+import com.company.scopery.modules.aiagent.prompt.application.action.UpdatePromptVersionAction;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.aiagent.prompt.application.command.ActivatePromptVersionCommand;
@@ -6,7 +9,14 @@ import com.company.scopery.modules.aiagent.prompt.application.command.CreateProm
 import com.company.scopery.modules.aiagent.prompt.application.command.UpdatePromptVersionCommand;
 import com.company.scopery.modules.aiagent.prompt.application.response.PromptVersionDetailResponse;
 import com.company.scopery.modules.aiagent.prompt.application.response.PromptVersionResponse;
-import com.company.scopery.modules.aiagent.prompt.domain.*;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptContentFormat;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptTemplateStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptVersionStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplateRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersion;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersionRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.valueobject.PromptTemplateCode;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,17 +35,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PromptVersionApplicationServiceTest {
+class PromptVersionActionTest {
 
     @Mock private PromptVersionRepository versionRepository;
     @Mock private PromptTemplateRepository templateRepository;
     @Mock private AiAgentActivityLogger activityLogger;
 
-    private PromptVersionApplicationService service;
+
+    private ActivatePromptVersionAction activatePromptVersionAction;
+    private CreatePromptVersionAction createPromptVersionAction;
+    private UpdatePromptVersionAction updatePromptVersionAction;
 
     @BeforeEach
     void setUp() {
-        service = new PromptVersionApplicationService(versionRepository, templateRepository, activityLogger);
+        activatePromptVersionAction = new ActivatePromptVersionAction(versionRepository, templateRepository, activityLogger);
+        createPromptVersionAction = new CreatePromptVersionAction(versionRepository, templateRepository, activityLogger);
+        updatePromptVersionAction = new UpdatePromptVersionAction(versionRepository, templateRepository, activityLogger);
     }
 
     @Test
@@ -48,7 +63,7 @@ class PromptVersionApplicationServiceTest {
         when(versionRepository.getMaxVersionNumber(templateId)).thenReturn(0);
         when(versionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PromptVersionResponse response = service.createPromptVersion(command);
+        PromptVersionResponse response = createPromptVersionAction.execute(command);
 
         assertThat(response.versionNumber()).isEqualTo(1);
         assertThat(response.status()).isEqualTo("DRAFT");
@@ -65,7 +80,7 @@ class PromptVersionApplicationServiceTest {
         when(versionRepository.getMaxVersionNumber(templateId)).thenReturn(1);
         when(versionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PromptVersionResponse response = service.createPromptVersion(command);
+        PromptVersionResponse response = createPromptVersionAction.execute(command);
 
         assertThat(response.versionNumber()).isEqualTo(2);
     }
@@ -78,7 +93,7 @@ class PromptVersionApplicationServiceTest {
 
         when(templateRepository.findById(templateId)).thenReturn(Optional.of(deprecatedTemplate(templateId)));
 
-        assertThatThrownBy(() -> service.createPromptVersion(command))
+        assertThatThrownBy(() -> createPromptVersionAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("deprecated")
                 .satisfies(e -> {
@@ -99,7 +114,7 @@ class PromptVersionApplicationServiceTest {
 
         when(templateRepository.findById(templateId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createPromptVersion(command))
+        assertThatThrownBy(() -> createPromptVersionAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -116,7 +131,7 @@ class PromptVersionApplicationServiceTest {
         UpdatePromptVersionCommand command = new UpdatePromptVersionCommand(
                 versionId, null, "New content", "TEXT", null, null);
 
-        assertThatThrownBy(() -> service.updatePromptVersion(command))
+        assertThatThrownBy(() -> updatePromptVersionAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("DRAFT")
                 .satisfies(e -> {
@@ -136,7 +151,7 @@ class PromptVersionApplicationServiceTest {
 
         when(versionRepository.findById(versionId)).thenReturn(Optional.of(archived));
 
-        assertThatThrownBy(() -> service.activatePromptVersion(new ActivatePromptVersionCommand(versionId)))
+        assertThatThrownBy(() -> activatePromptVersionAction.execute(new ActivatePromptVersionCommand(versionId)))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("Archived")
                 .satisfies(e -> {
@@ -158,7 +173,7 @@ class PromptVersionApplicationServiceTest {
         when(versionRepository.findById(versionId)).thenReturn(Optional.of(draft));
         when(templateRepository.findById(templateId)).thenReturn(Optional.of(inactiveTemplate(templateId)));
 
-        assertThatThrownBy(() -> service.activatePromptVersion(new ActivatePromptVersionCommand(versionId)))
+        assertThatThrownBy(() -> activatePromptVersionAction.execute(new ActivatePromptVersionCommand(versionId)))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("ACTIVE")
                 .satisfies(e -> {

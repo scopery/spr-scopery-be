@@ -1,7 +1,7 @@
 package com.company.scopery.modules.notification.emaildelivery.infrastructure.mapper;
 
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDelivery;
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDeliveryStatus;
+import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDelivery;
+import com.company.scopery.modules.notification.emaildelivery.domain.enums.EmailDeliveryStatus;
 import com.company.scopery.modules.notification.emaildelivery.infrastructure.persistence.EmailDeliveryJpaEntity;
 import org.springframework.stereotype.Component;
 

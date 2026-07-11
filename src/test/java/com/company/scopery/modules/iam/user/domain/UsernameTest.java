@@ -1,5 +1,6 @@
 package com.company.scopery.modules.iam.user.domain;
 
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

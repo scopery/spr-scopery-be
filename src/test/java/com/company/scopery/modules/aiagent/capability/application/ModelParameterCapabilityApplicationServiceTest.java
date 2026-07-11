@@ -1,16 +1,17 @@
 package com.company.scopery.modules.aiagent.capability.application;
+import com.company.scopery.modules.aiagent.capability.application.action.CreateModelParameterCapabilityAction;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.common.exception.ValidationException;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModel;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelCode;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelRepository;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelStatus;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelType;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
+import com.company.scopery.modules.aiagent.aimodel.domain.valueobject.AiModelCode;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModelRepository;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelStatus;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelType;
 import com.company.scopery.modules.aiagent.capability.application.command.CreateModelParameterCapabilityCommand;
 import com.company.scopery.modules.aiagent.capability.application.response.ModelParameterCapabilityResponse;
-import com.company.scopery.modules.aiagent.capability.domain.ModelParameterCapabilityRepository;
-import com.company.scopery.modules.aiagent.capability.domain.ModelParameterName;
+import com.company.scopery.modules.aiagent.capability.domain.model.ModelParameterCapabilityRepository;
+import com.company.scopery.modules.aiagent.capability.domain.valueobject.ModelParameterName;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ModelParameterCapabilityApplicationServiceTest {
+class ModelParameterCapabilityActionTest {
 
     @Mock
     private ModelParameterCapabilityRepository capabilityRepository;
@@ -40,12 +41,12 @@ class ModelParameterCapabilityApplicationServiceTest {
     @Mock
     private AiAgentActivityLogger activityLogger;
 
-    private ModelParameterCapabilityApplicationService service;
+
+    private CreateModelParameterCapabilityAction createModelParameterCapabilityAction;
 
     @BeforeEach
     void setUp() {
-        service = new ModelParameterCapabilityApplicationService(
-                capabilityRepository, aiModelRepository, activityLogger);
+        createModelParameterCapabilityAction = new CreateModelParameterCapabilityAction(capabilityRepository, aiModelRepository, activityLogger);
     }
 
     @Test
@@ -59,7 +60,7 @@ class ModelParameterCapabilityApplicationServiceTest {
         when(capabilityRepository.existsByModelIdAndParameterName(any(), any())).thenReturn(false);
         when(capabilityRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ModelParameterCapabilityResponse response = service.createModelParameterCapability(command);
+        ModelParameterCapabilityResponse response = createModelParameterCapabilityAction.execute(command);
 
         assertThat(response.parameterName()).isEqualTo("TEMPERATURE");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -80,7 +81,7 @@ class ModelParameterCapabilityApplicationServiceTest {
         when(capabilityRepository.existsByModelIdAndParameterName(any(), any())).thenReturn(false);
         when(capabilityRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ModelParameterCapabilityResponse response = service.createModelParameterCapability(command);
+        ModelParameterCapabilityResponse response = createModelParameterCapabilityAction.execute(command);
 
         assertThat(response.parameterName()).isEqualTo("MAX_OUTPUT_TOKENS");
     }
@@ -96,7 +97,7 @@ class ModelParameterCapabilityApplicationServiceTest {
         when(capabilityRepository.existsByModelIdAndParameterName(
                 eq(modelId), eq(ModelParameterName.of("TEMPERATURE")))).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createModelParameterCapability(command))
+        assertThatThrownBy(() -> createModelParameterCapabilityAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("TEMPERATURE")
                 .satisfies(e -> {
@@ -118,7 +119,7 @@ class ModelParameterCapabilityApplicationServiceTest {
 
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createModelParameterCapability(command))
+        assertThatThrownBy(() -> createModelParameterCapabilityAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -132,7 +133,7 @@ class ModelParameterCapabilityApplicationServiceTest {
 
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.of(deprecatedModel(modelId)));
 
-        assertThatThrownBy(() -> service.createModelParameterCapability(command))
+        assertThatThrownBy(() -> createModelParameterCapabilityAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("deprecated")
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -149,7 +150,7 @@ class ModelParameterCapabilityApplicationServiceTest {
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.of(activeModel(modelId)));
         when(capabilityRepository.existsByModelIdAndParameterName(any(), any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createModelParameterCapability(command))
+        assertThatThrownBy(() -> createModelParameterCapabilityAction.execute(command))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("INVALID_MODEL_PARAMETER_IF_NULL_BEHAVIOR");
 

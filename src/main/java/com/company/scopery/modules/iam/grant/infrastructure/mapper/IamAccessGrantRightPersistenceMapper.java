@@ -1,6 +1,6 @@
 package com.company.scopery.modules.iam.grant.infrastructure.mapper;
 
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantRight;
+import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrantRight;
 import com.company.scopery.modules.iam.grant.infrastructure.persistence.IamAccessGrantRightJpaEntity;
 import org.springframework.stereotype.Component;
 

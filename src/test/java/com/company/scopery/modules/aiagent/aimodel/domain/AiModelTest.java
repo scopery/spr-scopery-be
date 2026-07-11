@@ -1,5 +1,10 @@
 package com.company.scopery.modules.aiagent.aimodel.domain;
 
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
+import com.company.scopery.modules.aiagent.aimodel.domain.valueobject.AiModelCode;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelStatus;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelType;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

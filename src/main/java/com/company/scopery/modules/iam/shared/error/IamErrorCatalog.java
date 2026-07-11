@@ -63,6 +63,34 @@ public enum IamErrorCatalog implements ErrorCatalog {
     INVALID_IAM_RIGHT_STATUS(
             "INVALID_IAM_RIGHT_STATUS", "Invalid right status value", HttpStatus.BAD_REQUEST),
 
+    // Permission / Action
+    IAM_PERMISSION_NOT_FOUND(
+            "IAM_PERMISSION_NOT_FOUND", "Permission not found", HttpStatus.NOT_FOUND),
+    IAM_PERMISSION_INACTIVE_CANNOT_BE_USED(
+            "IAM_PERMISSION_INACTIVE_CANNOT_BE_USED", "Permission is inactive and cannot be granted", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_PERMISSION_ACTION_NOT_FOUND(
+            "IAM_PERMISSION_ACTION_NOT_FOUND", "Permission action not found", HttpStatus.NOT_FOUND),
+    IAM_PERMISSION_ACTION_INACTIVE_CANNOT_BE_USED(
+            "IAM_PERMISSION_ACTION_INACTIVE_CANNOT_BE_USED", "Permission action is inactive and cannot be granted", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_PERMISSION_ACTION_RIGHT_NOT_MAPPED(
+            "IAM_PERMISSION_ACTION_RIGHT_NOT_MAPPED", "Permission action is not mapped to a legacy right", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_PERMISSION_ACTION_RESOURCE_SCOPE_MISMATCH(
+            "IAM_PERMISSION_ACTION_RESOURCE_SCOPE_MISMATCH", "Permission action cannot be granted on this resource scope", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_PERMISSION_ACTION_SUBJECT_TYPE_NOT_ALLOWED(
+            "IAM_PERMISSION_ACTION_SUBJECT_TYPE_NOT_ALLOWED", "Permission action cannot be granted to this subject type", HttpStatus.UNPROCESSABLE_ENTITY),
+    INVALID_IAM_PERMISSION_STATUS(
+            "INVALID_IAM_PERMISSION_STATUS", "Invalid permission status value", HttpStatus.BAD_REQUEST),
+    INVALID_IAM_RESOURCE_SCOPE_LEVEL(
+            "INVALID_IAM_RESOURCE_SCOPE_LEVEL", "Invalid resource scope level value", HttpStatus.BAD_REQUEST),
+    INVALID_IAM_DATA_ACCESS_POLICY(
+            "INVALID_IAM_DATA_ACCESS_POLICY", "Invalid data access policy value", HttpStatus.BAD_REQUEST),
+    INVALID_IAM_PERMISSION_CATEGORY(
+            "INVALID_IAM_PERMISSION_CATEGORY", "Invalid permission category value", HttpStatus.BAD_REQUEST),
+    INVALID_IAM_PERMISSION_RISK_LEVEL(
+            "INVALID_IAM_PERMISSION_RISK_LEVEL", "Invalid permission risk level value", HttpStatus.BAD_REQUEST),
+    INVALID_IAM_PERMISSION_ASSIGNABLE_SUBJECT_TYPE(
+            "INVALID_IAM_PERMISSION_ASSIGNABLE_SUBJECT_TYPE", "Invalid permission assignable subject type value", HttpStatus.BAD_REQUEST),
+
     // Auth Resource
     IAM_AUTH_RESOURCE_NOT_FOUND(
             "IAM_AUTH_RESOURCE_NOT_FOUND", "Resource not found", HttpStatus.NOT_FOUND),
@@ -70,6 +98,8 @@ public enum IamErrorCatalog implements ErrorCatalog {
             "IAM_AUTH_RESOURCE_CODE_ALREADY_EXISTS", "Resource code already exists for this type", HttpStatus.CONFLICT),
     IAM_AUTH_RESOURCE_INACTIVE_CANNOT_BE_USED(
             "IAM_AUTH_RESOURCE_INACTIVE_CANNOT_BE_USED", "Resource is inactive and cannot receive access grants", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_AUTH_RESOURCE_MANUAL_CREATE_REQUIRES_GLOBAL(
+            "IAM_AUTH_RESOURCE_MANUAL_CREATE_REQUIRES_GLOBAL", "Only global IAM resources can be manually registered", HttpStatus.UNPROCESSABLE_ENTITY),
     INVALID_IAM_RESOURCE_TYPE(
             "INVALID_IAM_RESOURCE_TYPE", "Invalid resource type value", HttpStatus.BAD_REQUEST),
     INVALID_IAM_RESOURCE_STATUS(
@@ -86,6 +116,10 @@ public enum IamErrorCatalog implements ErrorCatalog {
             "IAM_ACCESS_GRANT_RIGHT_ALREADY_EXISTS", "Right is already attached to this grant", HttpStatus.CONFLICT),
     IAM_ACCESS_GRANT_RIGHT_NOT_FOUND(
             "IAM_ACCESS_GRANT_RIGHT_NOT_FOUND", "Right is not attached to this grant", HttpStatus.NOT_FOUND),
+    IAM_ACCESS_GRANT_PERMISSION_ACTION_ALREADY_EXISTS(
+            "IAM_ACCESS_GRANT_PERMISSION_ACTION_ALREADY_EXISTS", "Permission action is already attached to this grant", HttpStatus.CONFLICT),
+    IAM_ACCESS_GRANT_PERMISSION_ACTION_NOT_FOUND(
+            "IAM_ACCESS_GRANT_PERMISSION_ACTION_NOT_FOUND", "Permission action is not attached to this grant", HttpStatus.NOT_FOUND),
     INVALID_IAM_SUBJECT_TYPE(
             "INVALID_IAM_SUBJECT_TYPE", "Invalid subject type value", HttpStatus.BAD_REQUEST),
     INVALID_IAM_ACCESS_GRANT_STATUS(
@@ -94,6 +128,12 @@ public enum IamErrorCatalog implements ErrorCatalog {
             "INVALID_IAM_GRANT_EFFECT", "Invalid grant effect value", HttpStatus.BAD_REQUEST),
     INVALID_IAM_GRANT_SCOPE_TYPE(
             "INVALID_IAM_GRANT_SCOPE_TYPE", "Invalid grant scope type value", HttpStatus.BAD_REQUEST),
+    IAM_OWNER_POLICY_NOT_FOUND(
+            "IAM_OWNER_POLICY_NOT_FOUND", "Active owner policy not found", HttpStatus.UNPROCESSABLE_ENTITY),
+    IAM_DELEGATION_NOT_PERMITTED(
+            "IAM_DELEGATION_NOT_PERMITTED", "The actor is not permitted to delegate this access", HttpStatus.FORBIDDEN),
+    IAM_DELEGATION_DEPTH_EXCEEDED(
+            "IAM_DELEGATION_DEPTH_EXCEEDED", "Delegation depth exceeds the source grant", HttpStatus.UNPROCESSABLE_ENTITY),
 
     // Role Assignment
     IAM_ROLE_ASSIGNMENT_NOT_FOUND(
@@ -129,7 +169,9 @@ public enum IamErrorCatalog implements ErrorCatalog {
     IAM_RIGHT_REQUIRED_FOR_BOOTSTRAP_NOT_FOUND(
             "IAM_RIGHT_REQUIRED_FOR_BOOTSTRAP_NOT_FOUND", "Required right not found in catalog during IAM bootstrap", HttpStatus.INTERNAL_SERVER_ERROR),
     IAM_INTEGRATION_ACCESS_DENIED(
-            "IAM_INTEGRATION_ACCESS_DENIED", "Access denied by IAM integration", HttpStatus.FORBIDDEN);
+            "IAM_INTEGRATION_ACCESS_DENIED", "Access denied by IAM integration", HttpStatus.FORBIDDEN),
+    IAM_GLOBAL_SYSTEM_RESOURCE_MISSING(
+            "IAM_GLOBAL_SYSTEM_RESOURCE_MISSING", "Global system IAM resource is not seeded", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;
     private final String defaultMessage;

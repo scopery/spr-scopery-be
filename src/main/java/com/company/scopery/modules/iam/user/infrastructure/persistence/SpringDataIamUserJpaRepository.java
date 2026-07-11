@@ -10,6 +10,7 @@ public interface SpringDataIamUserJpaRepository
         extends JpaRepository<IamUserJpaEntity, UUID>, JpaSpecificationExecutor<IamUserJpaEntity> {
 
     Optional<IamUserJpaEntity> findByUsername(String username);
+    Optional<IamUserJpaEntity> findByEmail(String email);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
 }

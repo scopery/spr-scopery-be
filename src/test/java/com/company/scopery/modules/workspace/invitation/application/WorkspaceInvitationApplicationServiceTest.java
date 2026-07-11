@@ -1,29 +1,36 @@
 package com.company.scopery.modules.workspace.invitation.application;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.iam.authorization.application.CurrentUserAuthorizationService;
-import com.company.scopery.modules.iam.integration.WorkspaceIamIntegrationService;
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
-import com.company.scopery.modules.notification.emailtrigger.domain.EmailNotificationTriggerPublisher;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
+import com.company.scopery.modules.notification.emailtrigger.domain.model.EmailNotificationTriggerPublisher;
+import com.company.scopery.modules.workspace.invitation.application.action.AcceptInvitationAction;
+import com.company.scopery.modules.workspace.invitation.application.action.CreateInvitationAction;
+import com.company.scopery.modules.workspace.invitation.application.action.RevokeInvitationAction;
+import com.company.scopery.modules.workspace.invitation.application.command.AcceptInvitationCommand;
 import com.company.scopery.modules.workspace.invitation.application.command.CreateWorkspaceInvitationCommand;
+import com.company.scopery.modules.workspace.invitation.application.command.RevokeInvitationCommand;
 import com.company.scopery.modules.workspace.invitation.application.response.WorkspaceInvitationResponse;
-import com.company.scopery.modules.workspace.invitation.domain.InvitationCodeHasher;
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitation;
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitationRepository;
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitationStatus;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMember;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.invitation.application.service.InvitationQueryService;
+import com.company.scopery.modules.workspace.invitation.domain.enums.WorkspaceInvitationStatus;
+import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitation;
+import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitationRepository;
+import com.company.scopery.modules.workspace.invitation.domain.valueobject.InvitationCodeHasher;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceVisibility;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
+import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,24 +48,36 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class WorkspaceInvitationApplicationServiceTest {
+class WorkspaceInvitationActionTest {
 
     @Mock private WorkspaceInvitationRepository invitationRepository;
     @Mock private WorkspaceRepository workspaceRepository;
     @Mock private WorkspaceMemberRepository memberRepository;
+    @Mock private OrgMemberRepository orgMemberRepository;
     @Mock private CurrentUserAuthorizationService currentUserService;
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
     @Mock private EmailNotificationTriggerPublisher notificationPublisher;
     @Mock private WorkspaceActivityLogger activityLogger;
 
-    private WorkspaceInvitationApplicationService service;
+    private CreateInvitationAction createInvitationAction;
+    private AcceptInvitationAction acceptInvitationAction;
+    private RevokeInvitationAction revokeInvitationAction;
+    private InvitationQueryService invitationQueryService;
     private UUID currentUserId;
 
     @BeforeEach
     void setUp() {
-        service = new WorkspaceInvitationApplicationService(
-                invitationRepository, workspaceRepository, memberRepository,
-                currentUserService, iamIntegrationService, notificationPublisher, activityLogger);
+        createInvitationAction = new CreateInvitationAction(
+                invitationRepository, workspaceRepository, currentUserService,
+                iamIntegrationService, notificationPublisher, activityLogger);
+        acceptInvitationAction = new AcceptInvitationAction(
+                invitationRepository, memberRepository, orgMemberRepository, workspaceRepository,
+                currentUserService, notificationPublisher, activityLogger);
+        revokeInvitationAction = new RevokeInvitationAction(
+                invitationRepository, currentUserService, iamIntegrationService, activityLogger);
+        invitationQueryService = new InvitationQueryService(
+                invitationRepository, currentUserService, iamIntegrationService);
+
         Instant now = Instant.now();
         currentUserId = UUID.randomUUID();
         IamUser currentUser = new IamUser(currentUserId, Username.of("admin"),
@@ -75,7 +94,7 @@ class WorkspaceInvitationApplicationServiceTest {
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(activeWorkspace(workspaceId)));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        WorkspaceInvitationResponse response = service.createInvitation(command);
+        WorkspaceInvitationResponse response = createInvitationAction.execute(command);
 
         assertThat(response.invitationCode()).isNotNull();
         assertThat(response.invitationCode()).hasSize(20);
@@ -92,10 +111,13 @@ class WorkspaceInvitationApplicationServiceTest {
 
         when(invitationRepository.findByCodeHash(InvitationCodeHasher.hash(rawCode))).thenReturn(Optional.of(inv));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(false);
+        when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(activeWorkspace(workspaceId)));
+        when(orgMemberRepository.existsByOrganizationIdAndUserId(any(), eq(currentUserId))).thenReturn(true);
+        when(orgMemberRepository.isActiveMember(any(), eq(currentUserId))).thenReturn(true);
         when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(memberRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        service.acceptInvitation(rawCode);
+        acceptInvitationAction.execute(new AcceptInvitationCommand(rawCode));
 
         verify(memberRepository).save(any(WorkspaceMember.class));
         verify(invitationRepository).save(any(WorkspaceInvitation.class));
@@ -105,7 +127,7 @@ class WorkspaceInvitationApplicationServiceTest {
     void acceptInvitation_hashMismatch_throws404() {
         when(invitationRepository.findByCodeHash(any())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.acceptInvitation("UNKNOWNCODE12345678A"))
+        assertThatThrownBy(() -> acceptInvitationAction.execute(new AcceptInvitationCommand("UNKNOWNCODE12345678A")))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -120,7 +142,7 @@ class WorkspaceInvitationApplicationServiceTest {
         when(invitationRepository.findByCodeHash(InvitationCodeHasher.hash(rawCode))).thenReturn(Optional.of(inv));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.acceptInvitation(rawCode))
+        assertThatThrownBy(() -> acceptInvitationAction.execute(new AcceptInvitationCommand(rawCode)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -141,7 +163,7 @@ class WorkspaceInvitationApplicationServiceTest {
         when(invitationRepository.findByCodeHash(InvitationCodeHasher.hash(rawCode))).thenReturn(Optional.of(inv));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.acceptInvitation(rawCode))
+        assertThatThrownBy(() -> acceptInvitationAction.execute(new AcceptInvitationCommand(rawCode)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -159,7 +181,7 @@ class WorkspaceInvitationApplicationServiceTest {
         when(invitationRepository.findByCodeHash(InvitationCodeHasher.hash(rawCode))).thenReturn(Optional.of(inv));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.acceptInvitation(rawCode))
+        assertThatThrownBy(() -> acceptInvitationAction.execute(new AcceptInvitationCommand(rawCode)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -177,7 +199,7 @@ class WorkspaceInvitationApplicationServiceTest {
         when(invitationRepository.findByCodeHash(InvitationCodeHasher.hash(rawCode))).thenReturn(Optional.of(inv));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.acceptInvitation(rawCode))
+        assertThatThrownBy(() -> acceptInvitationAction.execute(new AcceptInvitationCommand(rawCode)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -197,7 +219,7 @@ class WorkspaceInvitationApplicationServiceTest {
         when(invitationRepository.findById(invId)).thenReturn(Optional.of(inv));
         when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        WorkspaceInvitationResponse response = service.revokeInvitation(invId, workspaceId);
+        WorkspaceInvitationResponse response = revokeInvitationAction.execute(new RevokeInvitationCommand(invId, workspaceId));
 
         assertThat(response.status()).isEqualTo("REVOKED");
         verify(invitationRepository).save(any(WorkspaceInvitation.class));
@@ -212,7 +234,7 @@ class WorkspaceInvitationApplicationServiceTest {
 
         when(invitationRepository.findByWorkspaceId(workspaceId)).thenReturn(List.of(inv));
 
-        List<WorkspaceInvitationResponse> responses = service.listInvitations(workspaceId);
+        List<WorkspaceInvitationResponse> responses = invitationQueryService.listInvitations(workspaceId);
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).invitationCode()).isNull();
@@ -223,7 +245,7 @@ class WorkspaceInvitationApplicationServiceTest {
         Instant now = Instant.now();
         return new Workspace(id, UUID.randomUUID(), WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
                 UUID.randomUUID(), WorkspaceVisibility.PRIVATE, WorkspaceJoinPolicy.INVITE_ONLY,
-                WorkspaceStatus.ACTIVE, now, now);
+                WorkspaceStatus.ACTIVE, 0, now, now);
     }
 
     private WorkspaceInvitation buildPendingInvitation(UUID workspaceId, String rawCode,

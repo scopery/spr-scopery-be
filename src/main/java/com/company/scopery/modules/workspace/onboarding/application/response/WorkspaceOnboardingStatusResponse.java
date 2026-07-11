@@ -1,6 +1,6 @@
 package com.company.scopery.modules.workspace.onboarding.application.response;
 
-import com.company.scopery.modules.workspace.onboarding.domain.WorkspaceOnboardingState;
+import com.company.scopery.modules.workspace.onboarding.domain.model.WorkspaceOnboardingState;
 
 import java.time.Instant;
 import java.util.UUID;

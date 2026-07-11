@@ -1,15 +1,23 @@
 package com.company.scopery.modules.aiagent.usagepolicy.application;
+import com.company.scopery.modules.aiagent.usagepolicy.application.action.ActivateUsagePolicyAction;
+import com.company.scopery.modules.aiagent.usagepolicy.application.action.CreateUsagePolicyAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.agent.domain.AgentRepository;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentRepository;
-import com.company.scopery.modules.aiagent.eventconfig.domain.EventConfigRepository;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfigRepository;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import com.company.scopery.modules.aiagent.usagepolicy.application.command.ActivateUsagePolicyCommand;
 import com.company.scopery.modules.aiagent.usagepolicy.application.command.CreateUsagePolicyCommand;
 import com.company.scopery.modules.aiagent.usagepolicy.application.response.UsagePolicyResponse;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.*;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyAction;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyPeriod;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyStatus;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyTargetType;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicy;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicyRepository;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.valueobject.UsagePolicyCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UsagePolicyApplicationServiceTest {
+class UsagePolicyActionTest {
 
     @Mock private UsagePolicyRepository usagePolicyRepository;
     @Mock private EventConfigRepository eventConfigRepository;
@@ -34,12 +42,14 @@ class UsagePolicyApplicationServiceTest {
     @Mock private ModelDeploymentRepository modelDeploymentRepository;
     @Mock private AiAgentActivityLogger activityLogger;
 
-    private UsagePolicyApplicationService service;
+
+    private ActivateUsagePolicyAction activateUsagePolicyAction;
+    private CreateUsagePolicyAction createUsagePolicyAction;
 
     @BeforeEach
     void setUp() {
-        service = new UsagePolicyApplicationService(usagePolicyRepository, eventConfigRepository,
-                agentRepository, modelDeploymentRepository, activityLogger);
+        activateUsagePolicyAction = new ActivateUsagePolicyAction(usagePolicyRepository, eventConfigRepository, agentRepository, modelDeploymentRepository, activityLogger);
+        createUsagePolicyAction = new CreateUsagePolicyAction(usagePolicyRepository, eventConfigRepository, agentRepository, modelDeploymentRepository, activityLogger);
     }
 
     @Test
@@ -50,7 +60,7 @@ class UsagePolicyApplicationServiceTest {
         when(usagePolicyRepository.existsActiveByTargetTypeAndTargetId(any(), any(), any())).thenReturn(false);
         when(usagePolicyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        UsagePolicyResponse response = service.createUsagePolicy(command);
+        UsagePolicyResponse response = createUsagePolicyAction.execute(command);
 
         assertThat(response.code()).isEqualTo("GLOBAL_LIMIT");
         assertThat(response.status()).isEqualTo("INACTIVE");
@@ -67,7 +77,7 @@ class UsagePolicyApplicationServiceTest {
         when(usagePolicyRepository.existsActiveByTargetTypeAndTargetId(any(), any(), any())).thenReturn(false);
         when(usagePolicyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        UsagePolicyResponse response = service.createUsagePolicy(command);
+        UsagePolicyResponse response = createUsagePolicyAction.execute(command);
 
         assertThat(response.code()).isEqualTo("GLOBAL_LIMIT");
     }
@@ -78,7 +88,7 @@ class UsagePolicyApplicationServiceTest {
 
         when(usagePolicyRepository.existsByCode(UsagePolicyCode.of("GLOBAL_LIMIT"))).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createUsagePolicy(command))
+        assertThatThrownBy(() -> createUsagePolicyAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -97,7 +107,7 @@ class UsagePolicyApplicationServiceTest {
 
         when(usagePolicyRepository.existsByCode(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createUsagePolicy(command))
+        assertThatThrownBy(() -> createUsagePolicyAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
 
@@ -112,7 +122,7 @@ class UsagePolicyApplicationServiceTest {
 
         when(usagePolicyRepository.existsByCode(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createUsagePolicy(command))
+        assertThatThrownBy(() -> createUsagePolicyAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
 
@@ -127,7 +137,7 @@ class UsagePolicyApplicationServiceTest {
 
         when(usagePolicyRepository.existsByCode(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createUsagePolicy(command))
+        assertThatThrownBy(() -> createUsagePolicyAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY));
 
@@ -142,7 +152,7 @@ class UsagePolicyApplicationServiceTest {
 
         when(usagePolicyRepository.existsByCode(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createUsagePolicy(command))
+        assertThatThrownBy(() -> createUsagePolicyAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -159,7 +169,7 @@ class UsagePolicyApplicationServiceTest {
         when(usagePolicyRepository.existsActiveByTargetTypeAndTargetId(
                 UsagePolicyTargetType.GLOBAL, null, null)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createUsagePolicy(command))
+        assertThatThrownBy(() -> createUsagePolicyAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.CONFLICT));
 
@@ -176,7 +186,7 @@ class UsagePolicyApplicationServiceTest {
 
         when(usagePolicyRepository.findById(id)).thenReturn(Optional.of(deprecated));
 
-        assertThatThrownBy(() -> service.activateUsagePolicy(new ActivateUsagePolicyCommand(id)))
+        assertThatThrownBy(() -> activateUsagePolicyAction.execute(new ActivateUsagePolicyCommand(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;

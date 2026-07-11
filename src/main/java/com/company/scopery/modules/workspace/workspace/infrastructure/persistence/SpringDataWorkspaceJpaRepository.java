@@ -21,4 +21,6 @@ public interface SpringDataWorkspaceJpaRepository
            "JOIN WorkspaceMemberJpaEntity m ON w.id = m.workspaceId " +
            "WHERE m.userId = :userId AND m.status = 'ACTIVE' AND w.status != 'ARCHIVED'")
     List<WorkspaceJpaEntity> findActiveByMemberId(@Param("userId") UUID userId);
+
+    List<WorkspaceJpaEntity> findAllByOrganizationIdAndStatus(UUID organizationId, String status);
 }

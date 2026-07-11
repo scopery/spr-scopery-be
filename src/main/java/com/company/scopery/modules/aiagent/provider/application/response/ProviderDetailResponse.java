@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.provider.application.response;
 
-import com.company.scopery.modules.aiagent.provider.domain.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public record ProviderDetailResponse(
                 provider.id(),
                 provider.name(),
                 provider.code().value(),
-                provider.type(),
+                provider.type().name(),
                 provider.apiBaseUrl(),
                 provider.description(),
                 provider.status().name(),

@@ -195,6 +195,11 @@ public enum WorkspaceErrorCatalog implements ErrorCatalog {
             "Cannot perform this action at the current onboarding step",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
+    WORKSPACE_ONBOARDING_OPTION_NOT_SUPPORTED(
+            "WORKSPACE_ONBOARDING_OPTION_NOT_SUPPORTED",
+            "This onboarding option is not supported. Use create workspace or join with invitation code.",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
     INVALID_WORKSPACE_MEMBER_STATUS(
             "INVALID_WORKSPACE_MEMBER_STATUS",
             "Invalid workspace member status value",
@@ -213,7 +218,112 @@ public enum WorkspaceErrorCatalog implements ErrorCatalog {
     WORKSPACE_ACCESS_DENIED(
             "WORKSPACE_ACCESS_DENIED",
             "You do not have permission to perform this action",
-            HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN),
+
+    ORG_MEMBER_NOT_FOUND(
+            "ORG_MEMBER_NOT_FOUND",
+            "Organization member not found",
+            HttpStatus.NOT_FOUND),
+
+    ORG_MEMBER_ALREADY_EXISTS(
+            "ORG_MEMBER_ALREADY_EXISTS",
+            "User is already a member of this organization",
+            HttpStatus.CONFLICT),
+
+    ORG_MEMBER_CANNOT_REMOVE_OWNER(
+            "ORG_MEMBER_CANNOT_REMOVE_OWNER",
+            "Organization owner cannot be removed from the organization",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    INVALID_ORG_MEMBERSHIP_TYPE(
+            "INVALID_ORG_MEMBERSHIP_TYPE",
+            "Invalid organization membership type value",
+            HttpStatus.BAD_REQUEST),
+
+    INVALID_ORG_MEMBER_STATUS(
+            "INVALID_ORG_MEMBER_STATUS",
+            "Invalid organization member status value",
+            HttpStatus.BAD_REQUEST),
+
+    ORG_INVITATION_NOT_FOUND(
+            "ORG_INVITATION_NOT_FOUND",
+            "Organization invitation not found",
+            HttpStatus.NOT_FOUND),
+
+    ORG_INVITATION_ALREADY_MEMBER(
+            "ORG_INVITATION_ALREADY_MEMBER",
+            "User is already a member of this organization",
+            HttpStatus.CONFLICT),
+
+    ORG_INVITATION_EXPIRED(
+            "ORG_INVITATION_EXPIRED",
+            "This organization invitation has expired",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    ORG_INVITATION_NOT_PENDING(
+            "ORG_INVITATION_NOT_PENDING",
+            "This invitation is no longer pending",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    ORG_TEAM_NOT_FOUND(
+            "ORG_TEAM_NOT_FOUND",
+            "Organization team not found",
+            HttpStatus.NOT_FOUND),
+
+    ORG_TEAM_CODE_ALREADY_EXISTS(
+            "ORG_TEAM_CODE_ALREADY_EXISTS",
+            "Team code already exists in this organization",
+            HttpStatus.CONFLICT),
+
+    ORG_TEAM_NOT_ACTIVE(
+            "ORG_TEAM_NOT_ACTIVE",
+            "Organization team is not active",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    ORG_TEAM_ARCHIVED_CANNOT_BE_UPDATED(
+            "ORG_TEAM_ARCHIVED_CANNOT_BE_UPDATED",
+            "Archived organization team cannot be updated",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    ORG_TEAM_MEMBER_NOT_FOUND(
+            "ORG_TEAM_MEMBER_NOT_FOUND",
+            "Organization team member not found",
+            HttpStatus.NOT_FOUND),
+
+    ORG_TEAM_MEMBER_ALREADY_EXISTS(
+            "ORG_TEAM_MEMBER_ALREADY_EXISTS",
+            "User is already a member of this organization team",
+            HttpStatus.CONFLICT),
+
+    ORG_TEAM_MEMBER_REQUIRES_ORG_MEMBER(
+            "ORG_TEAM_MEMBER_REQUIRES_ORG_MEMBER",
+            "User must be an active organization member before joining an org team",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    ORG_TEAM_WORKSPACE_ASSIGNMENT_NOT_FOUND(
+            "ORG_TEAM_WORKSPACE_ASSIGNMENT_NOT_FOUND",
+            "Organization team workspace assignment not found",
+            HttpStatus.NOT_FOUND),
+
+    ORG_TEAM_WORKSPACE_ASSIGNMENT_ALREADY_EXISTS(
+            "ORG_TEAM_WORKSPACE_ASSIGNMENT_ALREADY_EXISTS",
+            "This team is already assigned to this workspace",
+            HttpStatus.CONFLICT),
+
+    ORG_TEAM_CROSS_ORGANIZATION_ASSIGNMENT(
+            "ORG_TEAM_CROSS_ORGANIZATION_ASSIGNMENT",
+            "An organization team cannot be assigned outside its organization",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    INVALID_ORG_TEAM_STATUS(
+            "INVALID_ORG_TEAM_STATUS",
+            "Invalid organization team status value",
+            HttpStatus.BAD_REQUEST),
+
+    INVALID_ORG_TEAM_WORKSPACE_ASSIGNMENT_STATUS(
+            "INVALID_ORG_TEAM_WORKSPACE_ASSIGNMENT_STATUS",
+            "Invalid org team workspace assignment status value",
+            HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String defaultMessage;

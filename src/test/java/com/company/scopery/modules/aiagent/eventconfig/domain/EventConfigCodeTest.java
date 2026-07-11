@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.eventconfig.domain;
 
+import com.company.scopery.modules.aiagent.eventconfig.domain.valueobject.EventConfigCode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

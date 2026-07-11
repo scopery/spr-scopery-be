@@ -1,13 +1,17 @@
 package com.company.scopery.modules.workspace.team.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.team.domain.TeamCode;
-import com.company.scopery.modules.workspace.team.domain.TeamRepository;
-import com.company.scopery.modules.workspace.team.domain.TeamStatus;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeam;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.workspace.team.domain.valueobject.TeamCode;
+import com.company.scopery.modules.workspace.team.domain.model.TeamRepository;
+import com.company.scopery.modules.workspace.team.domain.enums.TeamStatus;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeam;
 import com.company.scopery.modules.workspace.team.infrastructure.mapper.WorkspaceTeamPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -46,9 +50,18 @@ public class JpaWorkspaceTeamRepository implements TeamRepository {
     }
 
     @Override
-    public Page<WorkspaceTeam> findAll(UUID workspaceId, TeamStatus status, Pageable pageable) {
+    public PageResult<WorkspaceTeam> findAll(UUID workspaceId, TeamStatus status, PageQuery pageQuery) {
         Specification<WorkspaceTeamJpaEntity> spec = buildSearchSpec(workspaceId, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<WorkspaceTeam> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<WorkspaceTeamJpaEntity> buildSearchSpec(UUID workspaceId, TeamStatus status) {

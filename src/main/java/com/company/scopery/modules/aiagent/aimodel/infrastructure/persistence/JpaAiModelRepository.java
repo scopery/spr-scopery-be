@@ -1,10 +1,19 @@
 package com.company.scopery.modules.aiagent.aimodel.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.aimodel.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelStatus;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelType;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModelRepository;
+import com.company.scopery.modules.aiagent.aimodel.domain.valueobject.AiModelCode;
 import com.company.scopery.modules.aiagent.aimodel.infrastructure.mapper.AiModelPersistenceMapper;
+import com.company.scopery.modules.aiagent.aimodel.infrastructure.persistence.entity.AiModelJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -20,7 +29,7 @@ public class JpaAiModelRepository implements AiModelRepository {
     private final AiModelPersistenceMapper mapper;
 
     public JpaAiModelRepository(SpringDataAiModelJpaRepository springDataRepository,
-                                  AiModelPersistenceMapper mapper) {
+                                 AiModelPersistenceMapper mapper) {
         this.springDataRepository = springDataRepository;
         this.mapper = mapper;
     }
@@ -43,10 +52,18 @@ public class JpaAiModelRepository implements AiModelRepository {
     }
 
     @Override
-    public Page<AiModel> findAll(UUID providerId, String keyword, AiModelStatus status,
-                                  AiModelType type, Pageable pageable) {
+    public PageResult<AiModel> findAll(UUID providerId, String keyword, AiModelStatus status,
+                                        AiModelType type, PageQuery pageQuery) {
         Specification<AiModelJpaEntity> spec = buildSearchSpec(providerId, keyword, status, type);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Page<AiModel> page = springDataRepository.findAll(spec, toPageable(pageQuery)).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<AiModelJpaEntity> buildSearchSpec(UUID providerId, String keyword,

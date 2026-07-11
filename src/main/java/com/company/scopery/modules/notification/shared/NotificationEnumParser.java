@@ -1,15 +1,15 @@
 package com.company.scopery.modules.notification.shared;
 
 import com.company.scopery.common.exception.ValidationException;
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDeliveryStatus;
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutboxStatus;
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailProviderType;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRecipientStrategy;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRuleScope;
-import com.company.scopery.modules.notification.emailrule.domain.EmailRuleStatus;
-import com.company.scopery.modules.notification.emailtemplate.domain.EmailTemplateScope;
-import com.company.scopery.modules.notification.emailtemplate.domain.EmailTemplateStatus;
-import com.company.scopery.modules.notification.emailtemplate.domain.EmailTemplateVersionStatus;
+import com.company.scopery.modules.notification.emaildelivery.domain.enums.EmailDeliveryStatus;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailOutboxStatus;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailProviderType;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRecipientStrategy;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleScope;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleStatus;
+import com.company.scopery.modules.notification.emailtemplate.domain.enums.EmailTemplateScope;
+import com.company.scopery.modules.notification.emailtemplate.domain.enums.EmailTemplateStatus;
+import com.company.scopery.modules.notification.emailtemplate.domain.enums.EmailTemplateVersionStatus;
 import com.company.scopery.modules.notification.shared.error.NotificationErrorCatalog;
 
 public final class NotificationEnumParser {

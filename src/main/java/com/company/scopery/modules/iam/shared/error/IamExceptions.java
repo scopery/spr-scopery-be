@@ -118,11 +118,81 @@ public final class IamExceptions {
                 "Inactive right cannot be granted: " + code, Map.of("code", code));
     }
 
+    // ── IAM Permission / Action ──────────────────────────────────────────────
+
+    public static AppException iamPermissionNotFound(UUID id) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_NOT_FOUND,
+                "IAM permission not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException iamPermissionNotFound(String code) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_NOT_FOUND,
+                "IAM permission not found: " + code, Map.of("code", code));
+    }
+
+    public static AppException iamPermissionInactiveCannotBeUsed(String code) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_INACTIVE_CANNOT_BE_USED,
+                "Inactive permission cannot be granted: " + code, Map.of("code", code));
+    }
+
+    public static AppException iamPermissionActionNotFound(UUID id) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_ACTION_NOT_FOUND,
+                "IAM permission action not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException iamPermissionActionNotFound(String permissionCode, String actionCode) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_ACTION_NOT_FOUND,
+                "IAM permission action not found: " + permissionCode + "." + actionCode,
+                Map.of("permissionCode", permissionCode, "actionCode", actionCode));
+    }
+
+    public static AppException iamPermissionActionInactiveCannotBeUsed(String permissionCode, String actionCode) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_ACTION_INACTIVE_CANNOT_BE_USED,
+                "Inactive permission action cannot be granted: " + permissionCode + "." + actionCode,
+                Map.of("permissionCode", permissionCode, "actionCode", actionCode));
+    }
+
+    public static AppException iamPermissionActionRightNotMapped(UUID actionId) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_ACTION_RIGHT_NOT_MAPPED,
+                "Permission action is not mapped to a legacy right: " + actionId,
+                Map.of("actionId", actionId));
+    }
+
+    public static AppException iamPermissionActionResourceScopeMismatch(String permissionCode,
+                                                                        String resourceScopeLevel,
+                                                                        String resourceType,
+                                                                        UUID resourceId) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_ACTION_RESOURCE_SCOPE_MISMATCH,
+                "Permission " + permissionCode + " applies to " + resourceScopeLevel
+                        + " scope and cannot be granted on resource " + resourceId
+                        + " of type " + resourceType,
+                Map.of("permissionCode", permissionCode,
+                        "resourceScopeLevel", resourceScopeLevel,
+                        "resourceType", resourceType,
+                        "resourceId", resourceId));
+    }
+
+    public static AppException iamPermissionActionSubjectTypeNotAllowed(String permissionCode,
+                                                                        String subjectType,
+                                                                        UUID grantId) {
+        return new AppException(IamErrorCatalog.IAM_PERMISSION_ACTION_SUBJECT_TYPE_NOT_ALLOWED,
+                "Permission " + permissionCode + " cannot be granted to subject type "
+                        + subjectType + " on grant " + grantId,
+                Map.of("permissionCode", permissionCode,
+                        "subjectType", subjectType,
+                        "grantId", grantId));
+    }
+
     // ── IAM Auth Resource ─────────────────────────────────────────────────────
 
     public static AppException iamAuthResourceNotFound(UUID id) {
         return new AppException(IamErrorCatalog.IAM_AUTH_RESOURCE_NOT_FOUND,
                 "IAM auth resource not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException iamAuthResourceNotFound(String code) {
+        return new AppException(IamErrorCatalog.IAM_AUTH_RESOURCE_NOT_FOUND,
+                "IAM auth resource not found: " + code, Map.of("code", code));
     }
 
     public static AppException iamAuthResourceCodeAlreadyExists(String code, String type) {
@@ -134,6 +204,13 @@ public final class IamExceptions {
     public static AppException iamAuthResourceInactiveCannotBeUsed(String code) {
         return new AppException(IamErrorCatalog.IAM_AUTH_RESOURCE_INACTIVE_CANNOT_BE_USED,
                 "Inactive resource cannot receive access grants: " + code, Map.of("code", code));
+    }
+
+    public static AppException iamAuthResourceManualCreateRequiresGlobal(String resourceType) {
+        return new AppException(IamErrorCatalog.IAM_AUTH_RESOURCE_MANUAL_CREATE_REQUIRES_GLOBAL,
+                "Only GLOBAL IAM resources can be manually registered; " + resourceType
+                        + " resources must be bootstrapped by their owning module",
+                Map.of("resourceType", resourceType));
     }
 
     // ── IAM Access Grant ──────────────────────────────────────────────────────
@@ -164,6 +241,38 @@ public final class IamExceptions {
         return new AppException(IamErrorCatalog.IAM_ACCESS_GRANT_RIGHT_NOT_FOUND,
                 "Right " + rightId + " is not attached to grant " + grantId,
                 Map.of("grantId", grantId, "rightId", rightId));
+    }
+
+    public static AppException iamAccessGrantPermissionActionAlreadyExists(UUID grantId,
+                                                                           UUID permissionActionId) {
+        return new AppException(IamErrorCatalog.IAM_ACCESS_GRANT_PERMISSION_ACTION_ALREADY_EXISTS,
+                "Permission action " + permissionActionId + " is already attached to grant " + grantId,
+                Map.of("grantId", grantId, "permissionActionId", permissionActionId));
+    }
+
+    public static AppException iamAccessGrantPermissionActionNotFound(UUID grantId,
+                                                                      UUID permissionActionId) {
+        return new AppException(IamErrorCatalog.IAM_ACCESS_GRANT_PERMISSION_ACTION_NOT_FOUND,
+                "Permission action " + permissionActionId + " is not attached to grant " + grantId,
+                Map.of("grantId", grantId, "permissionActionId", permissionActionId));
+    }
+
+    public static AppException iamOwnerPolicyNotFound(String resourceType) {
+        return new AppException(IamErrorCatalog.IAM_OWNER_POLICY_NOT_FOUND,
+                "Active owner policy not found for resource type " + resourceType,
+                Map.of("resourceType", resourceType));
+    }
+
+    public static AppException iamDelegationNotPermitted(UUID actorId, UUID resourceId) {
+        return new AppException(IamErrorCatalog.IAM_DELEGATION_NOT_PERMITTED,
+                "Actor " + actorId + " cannot delegate access on resource " + resourceId,
+                Map.of("actorId", actorId, "resourceId", resourceId));
+    }
+
+    public static AppException iamDelegationDepthExceeded(int requestedDepth, int availableDepth) {
+        return new AppException(IamErrorCatalog.IAM_DELEGATION_DEPTH_EXCEEDED,
+                "Requested delegation depth " + requestedDepth + " exceeds available depth " + availableDepth,
+                Map.of("requestedDepth", requestedDepth, "availableDepth", availableDepth));
     }
 
     // ── IAM Role Assignment ───────────────────────────────────────────────────
@@ -217,6 +326,11 @@ public final class IamExceptions {
     public static AppException authorizationDecisionFailed(String reason) {
         return new AppException(IamErrorCatalog.IAM_AUTHORIZATION_DECISION_FAILED,
                 "Authorization decision failed: " + reason, Map.of("reason", reason));
+    }
+
+    public static AppException globalSystemResourceMissing() {
+        return new AppException(IamErrorCatalog.IAM_GLOBAL_SYSTEM_RESOURCE_MISSING,
+                IamErrorCatalog.IAM_GLOBAL_SYSTEM_RESOURCE_MISSING.defaultMessage(), Map.of());
     }
 
     // ── Integration ───────────────────────────────────────────────────────────

@@ -1,7 +1,10 @@
 package com.company.scopery.modules.aiagent.deployment.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.deployment.domain.*;
-import com.company.scopery.modules.aiagent.deployment.infrastructure.persistence.ModelDeploymentJpaEntity;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentEnvironment;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentStatus;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDeploymentCode;
+import com.company.scopery.modules.aiagent.deployment.infrastructure.persistence.entity.ModelDeploymentJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,18 +1,21 @@
 package com.company.scopery.modules.aiagent.providersecret.application;
+import com.company.scopery.modules.aiagent.providersecret.application.action.DeactivateProviderSecretAction;
+import com.company.scopery.modules.aiagent.providersecret.application.action.RotateProviderSecretAction;
+import com.company.scopery.modules.aiagent.providersecret.application.action.SetProviderSecretAction;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.common.exception.ValidationException;
-import com.company.scopery.modules.aiagent.provider.domain.Provider;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderCode;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderRepository;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderStatus;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.valueobject.ProviderCode;
+import com.company.scopery.modules.aiagent.provider.domain.model.ProviderRepository;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderStatus;
 import com.company.scopery.modules.aiagent.providersecret.application.command.DeactivateProviderSecretCommand;
 import com.company.scopery.modules.aiagent.providersecret.application.command.RotateProviderSecretCommand;
 import com.company.scopery.modules.aiagent.providersecret.application.command.SetProviderSecretCommand;
 import com.company.scopery.modules.aiagent.providersecret.application.response.ProviderSecretResponse;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecret;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretRepository;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretType;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecret;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecretRepository;
+import com.company.scopery.modules.aiagent.providersecret.domain.enums.ProviderSecretType;
 import com.company.scopery.modules.aiagent.providersecret.infrastructure.crypto.EncryptedSecret;
 import com.company.scopery.modules.aiagent.providersecret.infrastructure.crypto.SecretEncryptor;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
@@ -34,22 +37,26 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class ProviderSecretApplicationServiceTest {
+class ProviderSecretActionTest {
 
     @Mock private ProviderSecretRepository providerSecretRepository;
     @Mock private ProviderRepository providerRepository;
     @Mock private SecretEncryptor secretEncryptor;
     @Mock private AiAgentActivityLogger activityLogger;
 
-    private ProviderSecretApplicationService service;
 
     private final UUID providerId = UUID.randomUUID();
     private final UUID secretId   = UUID.randomUUID();
 
+    private DeactivateProviderSecretAction deactivateProviderSecretAction;
+    private RotateProviderSecretAction rotateProviderSecretAction;
+    private SetProviderSecretAction setProviderSecretAction;
+
     @BeforeEach
     void setUp() {
-        service = new ProviderSecretApplicationService(
-                providerSecretRepository, providerRepository, secretEncryptor, activityLogger);
+        deactivateProviderSecretAction = new DeactivateProviderSecretAction(providerSecretRepository, activityLogger);
+        rotateProviderSecretAction = new RotateProviderSecretAction(providerSecretRepository, providerRepository, secretEncryptor, activityLogger);
+        setProviderSecretAction = new SetProviderSecretAction(providerSecretRepository, providerRepository, secretEncryptor, activityLogger);
     }
 
     @Test
@@ -62,7 +69,7 @@ class ProviderSecretApplicationServiceTest {
                 .thenReturn(Optional.empty());
         when(providerSecretRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProviderSecretResponse response = service.setProviderSecret(
+        ProviderSecretResponse response = setProviderSecretAction.execute(
                 new SetProviderSecretCommand(providerId, "API_KEY", "sk-test-key", "My key"));
 
         assertThat(response.providerId()).isEqualTo(providerId);
@@ -83,7 +90,7 @@ class ProviderSecretApplicationServiceTest {
                 .thenReturn(Optional.of(existing));
         when(providerSecretRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.setProviderSecret(
+        setProviderSecretAction.execute(
                 new SetProviderSecretCommand(providerId, "API_KEY", "sk-new-key", null));
 
         // 2 saves: deactivate old + create new
@@ -94,7 +101,7 @@ class ProviderSecretApplicationServiceTest {
     void setProviderSecret_providerNotFound_throwsNotFound() {
         when(providerRepository.findById(providerId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.setProviderSecret(
+        assertThatThrownBy(() -> setProviderSecretAction.execute(
                 new SetProviderSecretCommand(providerId, "API_KEY", "sk-test", null)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -107,7 +114,7 @@ class ProviderSecretApplicationServiceTest {
         when(inactive.status()).thenReturn(ProviderStatus.INACTIVE);
         when(providerRepository.findById(providerId)).thenReturn(Optional.of(inactive));
 
-        assertThatThrownBy(() -> service.setProviderSecret(
+        assertThatThrownBy(() -> setProviderSecretAction.execute(
                 new SetProviderSecretCommand(providerId, "API_KEY", "sk-test", null)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -119,7 +126,7 @@ class ProviderSecretApplicationServiceTest {
         Provider provider = activeProvider();
         when(providerRepository.findById(providerId)).thenReturn(Optional.of(provider));
 
-        assertThatThrownBy(() -> service.setProviderSecret(
+        assertThatThrownBy(() -> setProviderSecretAction.execute(
                 new SetProviderSecretCommand(providerId, "INVALID_TYPE", "sk-test", null)))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("INVALID_PROVIDER_SECRET_TYPE");
@@ -131,7 +138,7 @@ class ProviderSecretApplicationServiceTest {
         when(providerSecretRepository.findById(secretId)).thenReturn(Optional.of(secret));
         when(providerSecretRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProviderSecretResponse response = service.deactivateProviderSecret(
+        ProviderSecretResponse response = deactivateProviderSecretAction.execute(
                 new DeactivateProviderSecretCommand(secretId));
 
         assertThat(response.status()).isEqualTo("INACTIVE");
@@ -141,7 +148,7 @@ class ProviderSecretApplicationServiceTest {
     void deactivateProviderSecret_notFound_throwsNotFound() {
         when(providerSecretRepository.findById(secretId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.deactivateProviderSecret(
+        assertThatThrownBy(() -> deactivateProviderSecretAction.execute(
                 new DeactivateProviderSecretCommand(secretId)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -158,7 +165,7 @@ class ProviderSecretApplicationServiceTest {
                 new EncryptedSecret("enc-rotated", "iv-rotated", "v1"));
         when(providerSecretRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProviderSecretResponse response = service.rotateProviderSecret(
+        ProviderSecretResponse response = rotateProviderSecretAction.execute(
                 new RotateProviderSecretCommand(secretId, "sk-rotated-key", "Rotated"));
 
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -176,7 +183,7 @@ class ProviderSecretApplicationServiceTest {
                 .thenReturn(Optional.empty());
         when(providerSecretRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProviderSecretResponse response = service.setProviderSecret(
+        ProviderSecretResponse response = setProviderSecretAction.execute(
                 new SetProviderSecretCommand(providerId, "API_KEY", "sk-real-secret", null));
 
         // Must not expose raw secret or encrypted value in response

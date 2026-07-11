@@ -1,9 +1,16 @@
 package com.company.scopery.modules.notification.emailoutbox.application;
 
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDelivery;
-import com.company.scopery.modules.notification.emaildelivery.domain.EmailDeliveryRepository;
-import com.company.scopery.modules.notification.emailoutbox.domain.*;
-import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.*;
+import com.company.scopery.modules.notification.emailoutbox.application.jobs.EmailOutboxProcessor;
+import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDelivery;
+import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDeliveryRepository;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailOutboxStatus;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailProviderType;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailMessage;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutbox;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutboxRepository;
+import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailProviderResolver;
+import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailSendResult;
+import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailSender;
 import com.company.scopery.modules.notification.shared.NotificationProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +48,7 @@ class EmailOutboxProcessorTest {
     @Test
     void processOne_logOnlySender_marksSent() {
         EmailOutbox outbox = makeOutbox();
+        when(outboxRepository.claimForProcessing(any())).thenReturn(1);
         when(outboxRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(providerResolver.resolve(EmailProviderType.LOG_ONLY)).thenReturn(emailSender);
         when(emailSender.send(any(), any(), any())).thenReturn(EmailSendResult.ok("MSG-123"));
@@ -55,6 +63,7 @@ class EmailOutboxProcessorTest {
     @Test
     void processOne_senderFailure_schedulesRetry() {
         EmailOutbox outbox = makeOutbox();
+        when(outboxRepository.claimForProcessing(any())).thenReturn(1);
         when(outboxRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(providerResolver.resolve(any())).thenReturn(emailSender);
         when(emailSender.send(any(), any(), any())).thenReturn(EmailSendResult.fail("connection refused"));
@@ -68,6 +77,7 @@ class EmailOutboxProcessorTest {
     @Test
     void processOne_maxRetryReached_marksFailed() {
         EmailOutbox outbox = makeOutboxWithRetries(3);
+        when(outboxRepository.claimForProcessing(any())).thenReturn(1);
         when(outboxRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(providerResolver.resolve(any())).thenReturn(emailSender);
         when(emailSender.send(any(), any(), any())).thenReturn(EmailSendResult.fail("timeout"));
@@ -76,6 +86,18 @@ class EmailOutboxProcessorTest {
         processor.processOne(outbox);
 
         assertThat(outbox.status()).isEqualTo(EmailOutboxStatus.FAILED);
+    }
+
+    @Test
+    void processOne_claimLost_skipsProcessing() {
+        EmailOutbox outbox = makeOutbox();
+        when(outboxRepository.claimForProcessing(any())).thenReturn(0);
+
+        processor.processOne(outbox);
+
+        assertThat(outbox.status()).isEqualTo(EmailOutboxStatus.PENDING);
+        verifyNoInteractions(providerResolver, emailSender, deliveryRepository);
+        verify(outboxRepository, never()).save(any());
     }
 
     private EmailOutbox makeOutbox() {
@@ -96,7 +118,7 @@ class EmailOutboxProcessorTest {
     private EmailDelivery makeDelivery(UUID id) {
         return EmailDelivery.reconstitute(id, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), null, "to@example.com", "Subject", "<p>Body</p>", null, null,
-                com.company.scopery.modules.notification.emaildelivery.domain.EmailDeliveryStatus.CREATED,
+                com.company.scopery.modules.notification.emaildelivery.domain.enums.EmailDeliveryStatus.CREATED,
                 null, Instant.now(), Instant.now());
     }
 }

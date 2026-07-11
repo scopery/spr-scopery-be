@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.usagepolicy.application.evaluator;
 
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyPeriod;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyPeriod;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;

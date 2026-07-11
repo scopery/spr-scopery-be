@@ -1,10 +1,19 @@
 package com.company.scopery.modules.aiagent.usagepolicy.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.usagepolicy.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyStatus;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyTargetType;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicy;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicyRepository;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.valueobject.UsagePolicyCode;
+import com.company.scopery.modules.aiagent.usagepolicy.infrastructure.persistence.entity.UsagePolicyJpaEntity;
 import com.company.scopery.modules.aiagent.usagepolicy.infrastructure.mapper.UsagePolicyPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -63,10 +72,19 @@ public class JpaUsagePolicyRepository implements UsagePolicyRepository {
     }
 
     @Override
-    public Page<UsagePolicy> findAll(String keyword, UsagePolicyTargetType targetType,
-                                      UsagePolicyStatus status, Pageable pageable) {
+    public PageResult<UsagePolicy> findAll(String keyword, UsagePolicyTargetType targetType,
+                                      UsagePolicyStatus status, PageQuery pageQuery) {
         Specification<UsagePolicyJpaEntity> spec = buildSearchSpec(keyword, targetType, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<UsagePolicy> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.company.scopery.modules.iam.right.infrastructure.mapper;
 
-import com.company.scopery.modules.iam.right.domain.IamRight;
-import com.company.scopery.modules.iam.right.domain.IamRightCode;
-import com.company.scopery.modules.iam.right.domain.IamRightStatus;
+import com.company.scopery.modules.iam.right.domain.model.IamRight;
+import com.company.scopery.modules.iam.right.domain.valueobject.IamRightCode;
+import com.company.scopery.modules.iam.right.domain.enums.IamRightStatus;
 import com.company.scopery.modules.iam.right.infrastructure.persistence.IamRightJpaEntity;
 import org.springframework.stereotype.Component;
 

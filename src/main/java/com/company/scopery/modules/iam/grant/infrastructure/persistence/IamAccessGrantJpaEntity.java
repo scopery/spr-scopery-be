@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -62,4 +64,22 @@ public class IamAccessGrantJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "granted_at", nullable = false)
     private Instant grantedAt;
+
+    @Column(name = "kind", nullable = false, length = 50)
+    private String kind;
+    @Column(name = "source_policy_id")
+    private UUID sourcePolicyId;
+    @Column(name = "can_delegate", nullable = false)
+    private boolean canDelegate;
+    @Column(name = "delegation_depth", nullable = false)
+    private int delegationDepth;
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "condition_json", columnDefinition = "jsonb")
+    private String conditionJson;
+    @Column(name = "reason", columnDefinition = "TEXT")
+    private String reason;
+    @Version @Column(name = "version", nullable = false)
+    private Integer version;
 }

@@ -1,6 +1,6 @@
 package com.company.scopery.modules.iam.right.application.response;
 
-import com.company.scopery.modules.iam.right.domain.IamRight;
+import com.company.scopery.modules.iam.right.domain.model.IamRight;
 
 import java.time.Instant;
 import java.util.UUID;

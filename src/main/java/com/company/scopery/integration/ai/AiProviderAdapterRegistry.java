@@ -1,6 +1,6 @@
 package com.company.scopery.integration.ai;
 
-import com.company.scopery.modules.aiagent.shared.error.AiAgentExceptions;
+import com.company.scopery.common.exception.BusinessException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class AiProviderAdapterRegistry {
     public AiProviderAdapter getAdapter(String providerCode) {
         AiProviderAdapter adapter = adapters.get(providerCode);
         if (adapter == null) {
-            throw AiAgentExceptions.providerAdapterNotImplemented(providerCode);
+            throw new BusinessException("Provider adapter not implemented for: " + providerCode);
         }
         return adapter;
     }

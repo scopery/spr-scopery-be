@@ -123,14 +123,133 @@ public final class WorkspaceExceptions {
 
     // ── IAM Integration ───────────────────────────────────────────────────────
 
-    public static AppException workspaceIamBootstrapFailed(String entityType, UUID entityId) {
+    public static AppException workspaceIamBootstrapFailed(String entityType, UUID entityId, String reason) {
         return new AppException(WorkspaceErrorCatalog.WORKSPACE_IAM_BOOTSTRAP_FAILED,
-                "Failed to bootstrap IAM access for " + entityType + " " + entityId,
-                Map.of("entityType", entityType, "entityId", entityId));
+                "Failed to initialize access for " + entityType.toLowerCase() + ". Please try again or contact support.",
+                Map.of("entityType", entityType));
     }
 
     public static AppException workspaceAccessDenied(String action) {
         return new AppException(WorkspaceErrorCatalog.WORKSPACE_ACCESS_DENIED,
                 "Access denied: " + action, Map.of("action", action));
+    }
+
+    // ── Onboarding ────────────────────────────────────────────────────────────
+
+    public static AppException onboardingInvalidStep() {
+        return new AppException(WorkspaceErrorCatalog.WORKSPACE_ONBOARDING_INVALID_STEP);
+    }
+
+    public static AppException onboardingAlreadyInProgressOrCompleted() {
+        return new AppException(WorkspaceErrorCatalog.WORKSPACE_ONBOARDING_ALREADY_COMPLETED,
+                "Your workspace onboarding is already in progress or completed", null);
+    }
+
+    public static AppException onboardingOptionNotSupported() {
+        return new AppException(WorkspaceErrorCatalog.WORKSPACE_ONBOARDING_OPTION_NOT_SUPPORTED);
+    }
+
+    // ── Org Member ────────────────────────────────────────────────────────────
+
+    public static AppException orgMemberNotFound(UUID id) {
+        return new AppException(WorkspaceErrorCatalog.ORG_MEMBER_NOT_FOUND,
+                "Organization member not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException orgMemberAlreadyExists(UUID organizationId, UUID userId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_MEMBER_ALREADY_EXISTS,
+                "User " + userId + " is already a member of organization " + organizationId,
+                Map.of("organizationId", organizationId, "userId", userId));
+    }
+
+    public static AppException orgMemberCannotRemoveOwner(UUID userId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_MEMBER_CANNOT_REMOVE_OWNER,
+                "Organization owner cannot be removed: " + userId, Map.of("userId", userId));
+    }
+
+    // ── Org Invitation ────────────────────────────────────────────────────────
+
+    public static AppException orgInvitationNotFound(UUID id) {
+        return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_NOT_FOUND,
+                "Organization invitation not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException orgInvitationNotFound(String token) {
+        return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_NOT_FOUND,
+                "Organization invitation not found for token", Map.of("token", token));
+    }
+
+    public static AppException orgInvitationAlreadyMember(UUID organizationId, UUID userId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_ALREADY_MEMBER,
+                "User " + userId + " is already a member of organization " + organizationId,
+                Map.of("organizationId", organizationId, "userId", userId));
+    }
+
+    public static AppException orgInvitationExpired(UUID invitationId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_EXPIRED,
+                "Organization invitation has expired: " + invitationId, Map.of("invitationId", invitationId));
+    }
+
+    public static AppException orgInvitationNotPending(UUID invitationId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_NOT_PENDING,
+                "Organization invitation is no longer pending: " + invitationId, Map.of("invitationId", invitationId));
+    }
+
+    // ── Org Team ──────────────────────────────────────────────────────────────
+
+    public static AppException orgTeamNotFound(UUID id) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_NOT_FOUND,
+                "Organization team not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException orgTeamCodeAlreadyExists(String code, UUID organizationId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_CODE_ALREADY_EXISTS,
+                "Team code already exists in organization " + organizationId + ": " + code,
+                Map.of("code", code, "organizationId", organizationId));
+    }
+
+    public static AppException orgTeamNotActive(String code) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_NOT_ACTIVE,
+                "Organization team is not active: " + code, Map.of("code", code));
+    }
+
+    public static AppException orgTeamArchivedCannotBeUpdated(UUID id) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_ARCHIVED_CANNOT_BE_UPDATED,
+                "Archived organization team cannot be updated: " + id, Map.of("id", id));
+    }
+
+    public static AppException orgTeamMemberNotFound(UUID teamId, UUID userId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_MEMBER_NOT_FOUND,
+                "Team member not found: userId=" + userId + " in teamId=" + teamId,
+                Map.of("teamId", teamId, "userId", userId));
+    }
+
+    public static AppException orgTeamMemberAlreadyExists(UUID teamId, UUID userId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_MEMBER_ALREADY_EXISTS,
+                "User " + userId + " is already a member of team " + teamId,
+                Map.of("teamId", teamId, "userId", userId));
+    }
+
+    public static AppException orgTeamMemberRequiresOrgMember(UUID userId, UUID organizationId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_MEMBER_REQUIRES_ORG_MEMBER,
+                "User " + userId + " must be an active org member of " + organizationId,
+                Map.of("userId", userId, "organizationId", organizationId));
+    }
+
+    public static AppException orgTeamWorkspaceAssignmentNotFound(UUID id) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_WORKSPACE_ASSIGNMENT_NOT_FOUND,
+                "Org team workspace assignment not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException orgTeamWorkspaceAssignmentAlreadyExists(UUID teamId, UUID workspaceId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_WORKSPACE_ASSIGNMENT_ALREADY_EXISTS,
+                "Team " + teamId + " is already assigned to workspace " + workspaceId,
+                Map.of("teamId", teamId, "workspaceId", workspaceId));
+    }
+
+    public static AppException orgTeamCrossOrganizationAssignment(UUID teamId, UUID workspaceId) {
+        return new AppException(WorkspaceErrorCatalog.ORG_TEAM_CROSS_ORGANIZATION_ASSIGNMENT,
+                "Team " + teamId + " and workspace " + workspaceId + " belong to different organizations",
+                Map.of("teamId", teamId, "workspaceId", workspaceId));
     }
 }

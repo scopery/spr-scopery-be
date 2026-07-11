@@ -1,13 +1,18 @@
 package com.company.scopery.modules.aiagent.providersecret.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecret;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretRepository;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretStatus;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretType;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.providersecret.domain.enums.ProviderSecretStatus;
+import com.company.scopery.modules.aiagent.providersecret.domain.enums.ProviderSecretType;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecret;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecretRepository;
 import com.company.scopery.modules.aiagent.providersecret.infrastructure.mapper.ProviderSecretPersistenceMapper;
+import com.company.scopery.modules.aiagent.providersecret.infrastructure.persistence.entity.ProviderSecretJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -48,10 +53,19 @@ public class JpaProviderSecretRepository implements ProviderSecretRepository {
     }
 
     @Override
-    public Page<ProviderSecret> findAll(UUID providerId, ProviderSecretType secretType,
-                                         ProviderSecretStatus status, Pageable pageable) {
+    public PageResult<ProviderSecret> findAll(UUID providerId, ProviderSecretType secretType,
+                                              ProviderSecretStatus status, PageQuery pageQuery) {
         Specification<ProviderSecretJpaEntity> spec = buildSearchSpec(providerId, secretType, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<ProviderSecret> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<ProviderSecretJpaEntity> buildSearchSpec(UUID providerId,

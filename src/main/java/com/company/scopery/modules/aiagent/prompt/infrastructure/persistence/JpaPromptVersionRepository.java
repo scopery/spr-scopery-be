@@ -1,10 +1,18 @@
 package com.company.scopery.modules.aiagent.prompt.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.prompt.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptContentFormat;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptVersionStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersion;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersionRepository;
 import com.company.scopery.modules.aiagent.prompt.infrastructure.mapper.PromptVersionPersistenceMapper;
+import com.company.scopery.modules.aiagent.prompt.infrastructure.persistence.entity.PromptVersionJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -54,10 +62,19 @@ public class JpaPromptVersionRepository implements PromptVersionRepository {
     }
 
     @Override
-    public Page<PromptVersion> findAll(UUID templateId, PromptVersionStatus status,
-                                       PromptContentFormat contentFormat, Pageable pageable) {
+    public PageResult<PromptVersion> findAll(UUID templateId, PromptVersionStatus status,
+                                             PromptContentFormat contentFormat, PageQuery pageQuery) {
         Specification<PromptVersionJpaEntity> spec = buildSearchSpec(templateId, status, contentFormat);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<PromptVersion> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<PromptVersionJpaEntity> buildSearchSpec(UUID templateId,

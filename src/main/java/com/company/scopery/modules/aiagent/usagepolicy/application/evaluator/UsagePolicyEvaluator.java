@@ -1,12 +1,12 @@
 package com.company.scopery.modules.aiagent.usagepolicy.application.evaluator;
 
-import com.company.scopery.modules.aiagent.execution.domain.ExecutionLogRepository;
-import com.company.scopery.modules.aiagent.execution.domain.UsageAggregate;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLogRepository;
+import com.company.scopery.modules.aiagent.execution.domain.model.UsageAggregate;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentExceptions;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicy;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyAction;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyRepository;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyTargetType;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyAction;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyTargetType;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicy;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

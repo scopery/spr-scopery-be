@@ -1,10 +1,19 @@
 package com.company.scopery.modules.aiagent.deployment.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.deployment.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentEnvironment;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentStatus;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDeploymentCode;
 import com.company.scopery.modules.aiagent.deployment.infrastructure.mapper.ModelDeploymentPersistenceMapper;
+import com.company.scopery.modules.aiagent.deployment.infrastructure.persistence.entity.ModelDeploymentJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -49,12 +58,14 @@ public class JpaModelDeploymentRepository implements ModelDeploymentRepository {
     }
 
     @Override
-    public Page<ModelDeployment> findAll(UUID modelId, ModelDeploymentEnvironment environment,
-                                          String keyword, ModelDeploymentStatus status,
-                                          Boolean isDefault, Pageable pageable) {
+    public PageResult<ModelDeployment> findAll(UUID modelId, ModelDeploymentEnvironment environment,
+                                                String keyword, ModelDeploymentStatus status,
+                                                Boolean isDefault, PageQuery pageQuery) {
         Specification<ModelDeploymentJpaEntity> spec =
                 buildSearchSpec(modelId, environment, keyword, status, isDefault);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<ModelDeployment> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
     }
 
     @Override
@@ -64,6 +75,13 @@ public class JpaModelDeploymentRepository implements ModelDeploymentRepository {
         } else {
             return springDataRepository.clearOtherDefaultFlags(modelId, environment.name(), excludeId);
         }
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<ModelDeploymentJpaEntity> buildSearchSpec(UUID modelId,

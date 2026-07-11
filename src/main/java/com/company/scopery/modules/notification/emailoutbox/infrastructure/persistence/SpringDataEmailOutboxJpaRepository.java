@@ -1,6 +1,7 @@
 package com.company.scopery.modules.notification.emailoutbox.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +18,14 @@ public interface SpringDataEmailOutboxJpaRepository extends JpaRepository<EmailO
             ORDER BY o.scheduledAt ASC
             """)
     List<EmailOutboxJpaEntity> findPendingBatch(@Param("now") Instant now, org.springframework.data.domain.Pageable pageable);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE EmailOutboxJpaEntity o
+            SET o.status = 'PROCESSING', o.updatedAt = CURRENT_TIMESTAMP
+            WHERE o.id = :id AND o.status = 'PENDING'
+            """)
+    int claimForProcessing(@Param("id") UUID id);
 
     @Query("""
             SELECT o FROM EmailOutboxJpaEntity o

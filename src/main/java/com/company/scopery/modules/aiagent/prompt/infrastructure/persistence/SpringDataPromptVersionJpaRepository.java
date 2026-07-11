@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.prompt.infrastructure.persistence;
 
+import com.company.scopery.modules.aiagent.prompt.infrastructure.persistence.entity.PromptVersionJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

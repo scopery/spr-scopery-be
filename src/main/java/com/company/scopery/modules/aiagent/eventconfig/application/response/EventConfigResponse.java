@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.eventconfig.application.response;
 
-import com.company.scopery.modules.aiagent.eventconfig.domain.EventConfig;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfig;
 
 import java.time.Instant;
 import java.util.UUID;

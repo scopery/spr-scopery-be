@@ -1,9 +1,9 @@
 package com.company.scopery.modules.aiagent.providersecret.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecret;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretStatus;
-import com.company.scopery.modules.aiagent.providersecret.domain.ProviderSecretType;
-import com.company.scopery.modules.aiagent.providersecret.infrastructure.persistence.ProviderSecretJpaEntity;
+import com.company.scopery.modules.aiagent.providersecret.domain.enums.ProviderSecretStatus;
+import com.company.scopery.modules.aiagent.providersecret.domain.enums.ProviderSecretType;
+import com.company.scopery.modules.aiagent.providersecret.domain.model.ProviderSecret;
+import com.company.scopery.modules.aiagent.providersecret.infrastructure.persistence.entity.ProviderSecretJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

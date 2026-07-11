@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.agent.domain;
 
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

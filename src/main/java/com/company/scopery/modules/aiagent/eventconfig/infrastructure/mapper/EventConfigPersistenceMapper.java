@@ -1,7 +1,11 @@
 package com.company.scopery.modules.aiagent.eventconfig.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.eventconfig.domain.*;
-import com.company.scopery.modules.aiagent.eventconfig.infrastructure.persistence.EventConfigJpaEntity;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigEnvironment;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigStatus;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventTriggerType;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfig;
+import com.company.scopery.modules.aiagent.eventconfig.domain.valueobject.EventConfigCode;
+import com.company.scopery.modules.aiagent.eventconfig.infrastructure.persistence.entity.EventConfigJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

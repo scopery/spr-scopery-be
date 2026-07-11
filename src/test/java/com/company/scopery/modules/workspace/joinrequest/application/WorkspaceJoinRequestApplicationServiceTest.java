@@ -1,29 +1,34 @@
 package com.company.scopery.modules.workspace.joinrequest.application;
+import com.company.scopery.modules.workspace.joinrequest.application.action.ApproveJoinRequestAction;
+import com.company.scopery.modules.workspace.joinrequest.application.action.CancelJoinRequestAction;
+import com.company.scopery.modules.workspace.joinrequest.application.action.CreateJoinRequestAction;
+import com.company.scopery.modules.workspace.joinrequest.application.action.RejectJoinRequestAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.iam.authorization.application.CurrentUserAuthorizationService;
-import com.company.scopery.modules.iam.integration.WorkspaceIamIntegrationService;
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
-import com.company.scopery.modules.notification.emailtrigger.domain.EmailNotificationTriggerPublisher;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
+import com.company.scopery.modules.notification.emailtrigger.domain.model.EmailNotificationTriggerPublisher;
+import com.company.scopery.modules.workspace.joinrequest.application.command.CancelJoinRequestCommand;
 import com.company.scopery.modules.workspace.joinrequest.application.command.CreateWorkspaceJoinRequestCommand;
 import com.company.scopery.modules.workspace.joinrequest.application.command.ReviewWorkspaceJoinRequestCommand;
 import com.company.scopery.modules.workspace.joinrequest.application.response.WorkspaceJoinRequestResponse;
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequest;
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequestRepository;
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequestStatus;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMember;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.joinrequest.domain.model.WorkspaceJoinRequest;
+import com.company.scopery.modules.workspace.joinrequest.domain.model.WorkspaceJoinRequestRepository;
+import com.company.scopery.modules.workspace.joinrequest.domain.enums.WorkspaceJoinRequestStatus;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceCode;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceJoinPolicy;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceRepository;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceStatus;
-import com.company.scopery.modules.workspace.workspace.domain.WorkspaceVisibility;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceVisibility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class WorkspaceJoinRequestApplicationServiceTest {
+class WorkspaceJoinRequestActionTest {
 
     @Mock private WorkspaceJoinRequestRepository joinRequestRepository;
     @Mock private WorkspaceRepository workspaceRepository;
@@ -50,14 +55,19 @@ class WorkspaceJoinRequestApplicationServiceTest {
     @Mock private EmailNotificationTriggerPublisher notificationPublisher;
     @Mock private WorkspaceActivityLogger activityLogger;
 
-    private WorkspaceJoinRequestApplicationService service;
     private UUID currentUserId;
+
+    private ApproveJoinRequestAction approveJoinRequestAction;
+    private CancelJoinRequestAction cancelJoinRequestAction;
+    private CreateJoinRequestAction createJoinRequestAction;
+    private RejectJoinRequestAction rejectJoinRequestAction;
 
     @BeforeEach
     void setUp() {
-        service = new WorkspaceJoinRequestApplicationService(
-                joinRequestRepository, workspaceRepository, memberRepository,
-                currentUserService, iamIntegrationService, notificationPublisher, activityLogger);
+        approveJoinRequestAction = new ApproveJoinRequestAction(joinRequestRepository, memberRepository, currentUserService, iamIntegrationService, notificationPublisher, activityLogger);
+        cancelJoinRequestAction = new CancelJoinRequestAction(joinRequestRepository, currentUserService, activityLogger);
+        createJoinRequestAction = new CreateJoinRequestAction(joinRequestRepository, workspaceRepository, memberRepository, currentUserService, notificationPublisher, activityLogger);
+        rejectJoinRequestAction = new RejectJoinRequestAction(joinRequestRepository, currentUserService, iamIntegrationService, activityLogger);
         Instant now = Instant.now();
         currentUserId = UUID.randomUUID();
         IamUser currentUser = new IamUser(currentUserId, Username.of("admin"),
@@ -78,7 +88,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        WorkspaceJoinRequestResponse response = service.createJoinRequest(command);
+        WorkspaceJoinRequestResponse response = createJoinRequestAction.execute(command);
 
         assertThat(response.status()).isEqualTo("PENDING");
         assertThat(response.message()).isEqualTo("Please let me in");
@@ -94,7 +104,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(
                 workspace(workspaceId, WorkspaceJoinPolicy.INVITE_ONLY)));
 
-        assertThatThrownBy(() -> service.createJoinRequest(command))
+        assertThatThrownBy(() -> createJoinRequestAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -118,7 +128,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
         when(joinRequestRepository.findPendingByWorkspaceAndUser(workspaceId, currentUserId))
                 .thenReturn(Optional.of(existing));
 
-        assertThatThrownBy(() -> service.createJoinRequest(command))
+        assertThatThrownBy(() -> createJoinRequestAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -137,7 +147,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
                 workspace(workspaceId, WorkspaceJoinPolicy.REQUEST_TO_JOIN)));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createJoinRequest(command))
+        assertThatThrownBy(() -> createJoinRequestAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -159,7 +169,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
         when(joinRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(memberRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        WorkspaceJoinRequestResponse response = service.approveJoinRequest(command);
+        WorkspaceJoinRequestResponse response = approveJoinRequestAction.execute(command);
 
         assertThat(response.status()).isEqualTo("APPROVED");
         verify(memberRepository).save(any(WorkspaceMember.class));
@@ -176,7 +186,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
         when(joinRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
         when(joinRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        WorkspaceJoinRequestResponse response = service.rejectJoinRequest(command);
+        WorkspaceJoinRequestResponse response = rejectJoinRequestAction.execute(command);
 
         assertThat(response.status()).isEqualTo("REJECTED");
         assertThat(response.reviewNote()).isEqualTo("Not a good fit");
@@ -192,7 +202,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
         when(joinRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
         when(joinRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        WorkspaceJoinRequestResponse response = service.cancelJoinRequest(requestId);
+        WorkspaceJoinRequestResponse response = cancelJoinRequestAction.execute(new CancelJoinRequestCommand(requestId));
 
         assertThat(response.status()).isEqualTo("CANCELLED");
     }
@@ -206,7 +216,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
 
         when(joinRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
 
-        assertThatThrownBy(() -> service.cancelJoinRequest(requestId))
+        assertThatThrownBy(() -> cancelJoinRequestAction.execute(new CancelJoinRequestCommand(requestId)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -220,7 +230,7 @@ class WorkspaceJoinRequestApplicationServiceTest {
     private Workspace workspace(UUID id, WorkspaceJoinPolicy joinPolicy) {
         Instant now = Instant.now();
         return new Workspace(id, UUID.randomUUID(), WorkspaceCode.of("DEV_WS"), "Dev Workspace", null,
-                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, joinPolicy, WorkspaceStatus.ACTIVE, now, now);
+                UUID.randomUUID(), WorkspaceVisibility.PRIVATE, joinPolicy, WorkspaceStatus.ACTIVE, 0, now, now);
     }
 
     private WorkspaceJoinRequest pendingRequest(UUID workspaceId, UUID requestedByUserId) {

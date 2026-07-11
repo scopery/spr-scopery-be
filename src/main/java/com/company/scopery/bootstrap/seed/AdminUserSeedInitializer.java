@@ -1,14 +1,14 @@
 package com.company.scopery.bootstrap.seed;
 
-import com.company.scopery.modules.iam.role.domain.IamRoleCode;
-import com.company.scopery.modules.iam.role.domain.IamRoleRepository;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignment;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignmentRepository;
-import com.company.scopery.modules.iam.roleassignment.domain.RoleAssigneeType;
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserRepository;
-import com.company.scopery.modules.iam.user.domain.Username;
+import com.company.scopery.modules.iam.role.domain.valueobject.IamRoleCode;
+import com.company.scopery.modules.iam.role.domain.model.IamRoleRepository;
+import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignment;
+import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignmentRepository;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.RoleAssigneeType;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.model.IamUserRepository;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

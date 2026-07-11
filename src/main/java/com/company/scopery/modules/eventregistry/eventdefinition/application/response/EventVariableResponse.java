@@ -1,6 +1,6 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.application.response;
 
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.EventVariable;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventVariable;
 
 import java.util.UUID;
 

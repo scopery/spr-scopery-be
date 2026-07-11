@@ -1,6 +1,6 @@
 package com.company.scopery.modules.notification.emailrule.application.response;
 
-import com.company.scopery.modules.notification.emailrule.domain.EmailRule;
+import com.company.scopery.modules.notification.emailrule.domain.model.EmailRule;
 
 import java.time.Instant;
 import java.util.UUID;

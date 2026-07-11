@@ -1,8 +1,8 @@
 package com.company.scopery.modules.notification.emailoutbox.infrastructure.persistence;
 
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutbox;
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutboxRepository;
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutboxSearchCriteria;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutbox;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutboxRepository;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutboxSearchCriteria;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.mapper.EmailOutboxPersistenceMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -62,5 +62,11 @@ public class JpaEmailOutboxRepository implements EmailOutboxRepository {
     public List<EmailOutbox> findPendingBatch(Instant beforeScheduledAt, int limit) {
         return springRepo.findPendingBatch(beforeScheduledAt, PageRequest.of(0, limit))
                 .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    @Transactional
+    public int claimForProcessing(UUID id) {
+        return springRepo.claimForProcessing(id);
     }
 }

@@ -1,16 +1,16 @@
 package com.company.scopery.modules.aiagent.usagepolicy.application.evaluator;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.execution.domain.ExecutionLogRepository;
-import com.company.scopery.modules.aiagent.execution.domain.UsageAggregate;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLogRepository;
+import com.company.scopery.modules.aiagent.execution.domain.model.UsageAggregate;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicy;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyAction;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyCode;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyPeriod;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyRepository;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyStatus;
-import com.company.scopery.modules.aiagent.usagepolicy.domain.UsagePolicyTargetType;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicy;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyAction;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.valueobject.UsagePolicyCode;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyPeriod;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicyRepository;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyStatus;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyTargetType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

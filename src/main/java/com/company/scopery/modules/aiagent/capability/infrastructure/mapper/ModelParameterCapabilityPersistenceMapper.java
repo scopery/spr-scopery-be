@@ -1,7 +1,12 @@
 package com.company.scopery.modules.aiagent.capability.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.capability.domain.*;
-import com.company.scopery.modules.aiagent.capability.infrastructure.persistence.ModelParameterCapabilityJpaEntity;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterCapabilityStatus;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterIfNullBehavior;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterSupportStatus;
+import com.company.scopery.modules.aiagent.capability.domain.enums.ModelParameterValueType;
+import com.company.scopery.modules.aiagent.capability.domain.model.ModelParameterCapability;
+import com.company.scopery.modules.aiagent.capability.domain.valueobject.ModelParameterName;
+import com.company.scopery.modules.aiagent.capability.infrastructure.persistence.entity.ModelParameterCapabilityJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

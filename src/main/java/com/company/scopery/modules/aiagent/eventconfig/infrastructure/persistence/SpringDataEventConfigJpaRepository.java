@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.eventconfig.infrastructure.persistence;
 
+import com.company.scopery.modules.aiagent.eventconfig.infrastructure.persistence.entity.EventConfigJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

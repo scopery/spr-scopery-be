@@ -1,16 +1,22 @@
 package com.company.scopery.modules.aiagent.deployment.application;
+import com.company.scopery.modules.aiagent.deployment.application.action.CreateModelDeploymentAction;
+import com.company.scopery.modules.aiagent.deployment.application.action.SetDefaultModelDeploymentAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModel;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelCode;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelRepository;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelStatus;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelType;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
+import com.company.scopery.modules.aiagent.aimodel.domain.valueobject.AiModelCode;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModelRepository;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelStatus;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelType;
 import com.company.scopery.modules.aiagent.deployment.application.command.CreateModelDeploymentCommand;
 import com.company.scopery.modules.aiagent.deployment.application.command.SetDefaultModelDeploymentCommand;
 import com.company.scopery.modules.aiagent.deployment.application.response.ModelDeploymentDetailResponse;
 import com.company.scopery.modules.aiagent.deployment.application.response.ModelDeploymentResponse;
-import com.company.scopery.modules.aiagent.deployment.domain.*;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentEnvironment;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentStatus;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDeploymentCode;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ModelDeploymentApplicationServiceTest {
+class ModelDeploymentActionTest {
 
     @Mock
     private ModelDeploymentRepository deploymentRepository;
@@ -40,11 +46,14 @@ class ModelDeploymentApplicationServiceTest {
     @Mock
     private AiAgentActivityLogger activityLogger;
 
-    private ModelDeploymentApplicationService service;
+
+    private CreateModelDeploymentAction createModelDeploymentAction;
+    private SetDefaultModelDeploymentAction setDefaultModelDeploymentAction;
 
     @BeforeEach
     void setUp() {
-        service = new ModelDeploymentApplicationService(deploymentRepository, aiModelRepository, activityLogger);
+        createModelDeploymentAction = new CreateModelDeploymentAction(deploymentRepository, aiModelRepository, activityLogger);
+        setDefaultModelDeploymentAction = new SetDefaultModelDeploymentAction(deploymentRepository, aiModelRepository, activityLogger);
     }
 
     @Test
@@ -58,7 +67,7 @@ class ModelDeploymentApplicationServiceTest {
         when(deploymentRepository.existsByModelIdAndCode(any(), any())).thenReturn(false);
         when(deploymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ModelDeploymentResponse response = service.createModelDeployment(command);
+        ModelDeploymentResponse response = createModelDeploymentAction.execute(command);
 
         assertThat(response.name()).isEqualTo("GPT-4.1 Prod");
         assertThat(response.code()).isEqualTo("GPT_4_1_PROD");
@@ -79,7 +88,7 @@ class ModelDeploymentApplicationServiceTest {
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.of(activeModel(modelId)));
         when(deploymentRepository.existsByModelIdAndCode(any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createModelDeployment(command))
+        assertThatThrownBy(() -> createModelDeploymentAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -99,7 +108,7 @@ class ModelDeploymentApplicationServiceTest {
 
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createModelDeployment(command))
+        assertThatThrownBy(() -> createModelDeploymentAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -113,7 +122,7 @@ class ModelDeploymentApplicationServiceTest {
 
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.of(inactiveModel(modelId)));
 
-        assertThatThrownBy(() -> service.createModelDeployment(command))
+        assertThatThrownBy(() -> createModelDeploymentAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("non-active")
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -131,7 +140,7 @@ class ModelDeploymentApplicationServiceTest {
         when(deploymentRepository.existsByModelIdAndCode(any(), any())).thenReturn(false);
         when(deploymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.createModelDeployment(command);
+        createModelDeploymentAction.execute(command);
 
         verify(deploymentRepository).clearDefaultFlags(eq(modelId), eq(ModelDeploymentEnvironment.PROD), isNull());
     }
@@ -146,7 +155,7 @@ class ModelDeploymentApplicationServiceTest {
         when(aiModelRepository.findById(modelId)).thenReturn(Optional.of(activeModel(modelId)));
         when(deploymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ModelDeploymentDetailResponse response = service.setDefaultModelDeployment(
+        ModelDeploymentDetailResponse response = setDefaultModelDeploymentAction.execute(
                 new SetDefaultModelDeploymentCommand(deploymentId));
 
         verify(deploymentRepository).clearDefaultFlags(eq(modelId), eq(ModelDeploymentEnvironment.PROD), eq(deploymentId));

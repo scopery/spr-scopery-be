@@ -1,6 +1,6 @@
 package com.company.scopery.modules.workspace.workspace.application.response;
 
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 
 import java.time.Instant;
 import java.util.UUID;

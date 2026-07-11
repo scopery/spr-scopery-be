@@ -1,6 +1,6 @@
 package com.company.scopery.modules.iam.role.application.response;
 
-import com.company.scopery.modules.iam.role.domain.IamRole;
+import com.company.scopery.modules.iam.role.domain.model.IamRole;
 
 import java.time.Instant;
 import java.util.UUID;

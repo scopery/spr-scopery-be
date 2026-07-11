@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.member.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMember;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberStatus;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
+import com.company.scopery.modules.workspace.member.domain.enums.WorkspaceMemberStatus;
 import com.company.scopery.modules.workspace.member.infrastructure.persistence.WorkspaceMemberJpaEntity;
 import org.springframework.stereotype.Component;
 

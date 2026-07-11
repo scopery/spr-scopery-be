@@ -1,23 +1,45 @@
 package com.company.scopery.modules.aiagent.eventconfig.application;
+import com.company.scopery.modules.aiagent.eventconfig.application.action.ActivateEventConfigAction;
+import com.company.scopery.modules.aiagent.eventconfig.application.action.CreateEventConfigAction;
+import com.company.scopery.modules.aiagent.eventconfig.application.action.DeactivateEventConfigAction;
+import com.company.scopery.modules.aiagent.eventconfig.application.service.EventConfigQueryService;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.agent.domain.Agent;
-import com.company.scopery.modules.aiagent.agent.domain.AgentCode;
-import com.company.scopery.modules.aiagent.agent.domain.AgentRepository;
-import com.company.scopery.modules.aiagent.agent.domain.AgentStatus;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeployment;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentCode;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentEnvironment;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentRepository;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentStatus;
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDeploymentCode;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentEnvironment;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentStatus;
 import com.company.scopery.modules.aiagent.eventconfig.application.command.*;
 import com.company.scopery.modules.aiagent.eventconfig.application.query.*;
 import com.company.scopery.modules.aiagent.eventconfig.application.response.*;
-import com.company.scopery.modules.aiagent.eventconfig.domain.*;
-import com.company.scopery.modules.aiagent.prompt.domain.*;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigEnvironment;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigStatus;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventTriggerType;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfig;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfigRepository;
+import com.company.scopery.modules.aiagent.eventconfig.domain.valueobject.EventConfigCode;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptTemplateStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptVersionStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplateRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersion;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersionRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.valueobject.PromptTemplateCode;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptContentFormat;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EventConfigApplicationServiceTest {
+class EventConfigActionTest {
 
     @Mock private EventConfigRepository eventConfigRepository;
     @Mock private EventDefinitionRepository eventDefinitionRepository;
@@ -44,7 +66,6 @@ class EventConfigApplicationServiceTest {
     @Mock private ModelDeploymentRepository modelDeploymentRepository;
     @Mock private AiAgentActivityLogger activityLogger;
 
-    private EventConfigApplicationService service;
 
     private final UUID eventDefId  = UUID.randomUUID();
     private final UUID agentId     = UUID.randomUUID();
@@ -52,12 +73,17 @@ class EventConfigApplicationServiceTest {
     private final UUID versionId   = UUID.randomUUID();
     private final UUID deploymentId = UUID.randomUUID();
 
+    private ActivateEventConfigAction activateEventConfigAction;
+    private CreateEventConfigAction createEventConfigAction;
+    private DeactivateEventConfigAction deactivateEventConfigAction;
+    private EventConfigQueryService eventConfigQueryService;
+
     @BeforeEach
     void setUp() {
-        service = new EventConfigApplicationService(
-                eventConfigRepository, eventDefinitionRepository, agentRepository,
-                promptVersionRepository, promptTemplateRepository, modelDeploymentRepository,
-                activityLogger, "DEV");
+        activateEventConfigAction = new ActivateEventConfigAction(eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, promptTemplateRepository, modelDeploymentRepository, activityLogger);
+        createEventConfigAction = new CreateEventConfigAction(eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, promptTemplateRepository, modelDeploymentRepository, activityLogger, "DEV");
+        deactivateEventConfigAction = new DeactivateEventConfigAction(eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, promptTemplateRepository, modelDeploymentRepository, activityLogger);
+        eventConfigQueryService = new EventConfigQueryService(eventConfigRepository, eventDefinitionRepository, agentRepository, promptVersionRepository, promptTemplateRepository, modelDeploymentRepository, "DEV");
     }
 
     private CreateEventConfigCommand createCommand() {
@@ -76,7 +102,7 @@ class EventConfigApplicationServiceTest {
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "My Agent", AgentCode.of("MY_AGENT"),
-                com.company.scopery.modules.aiagent.agent.domain.AgentType.GENERATION, null,
+                com.company.scopery.modules.aiagent.agent.domain.enums.AgentType.GENERATION, null,
                 null, null, AgentStatus.ACTIVE, Instant.now(), Instant.now());
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent));
 
@@ -106,7 +132,7 @@ class EventConfigApplicationServiceTest {
         mockAllDepsActive();
         when(eventConfigRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        EventConfigResponse response = service.createEventConfig(createCommand());
+        EventConfigResponse response = createEventConfigAction.execute(createCommand());
 
         assertThat(response.code()).isEqualTo("HRM_CV_UPLOAD_DEV");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -117,7 +143,7 @@ class EventConfigApplicationServiceTest {
     void create_duplicateCode_throwsConflict() {
         when(eventConfigRepository.existsByCode(any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -134,7 +160,7 @@ class EventConfigApplicationServiceTest {
         when(eventConfigRepository.existsByCode(any())).thenReturn(false);
         when(eventConfigRepository.existsActiveByEventDefinitionIdAndEnvironment(any(), any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.CONFLICT));
     }
@@ -151,7 +177,7 @@ class EventConfigApplicationServiceTest {
                 EventDefinition.INITIAL_VERSION, null, Instant.now(), Instant.now());
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(inactive));
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -173,11 +199,11 @@ class EventConfigApplicationServiceTest {
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent inactive = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
-                com.company.scopery.modules.aiagent.agent.domain.AgentType.GENERATION,
+                com.company.scopery.modules.aiagent.agent.domain.enums.AgentType.GENERATION,
                 null, null, null, AgentStatus.INACTIVE, Instant.now(), Instant.now());
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(inactive));
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getErrorCode()).isEqualTo(
                         AiAgentErrorCatalog.EVENT_CONFIG_AGENT_NOT_ACTIVE.code()));
@@ -195,7 +221,7 @@ class EventConfigApplicationServiceTest {
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
-                com.company.scopery.modules.aiagent.agent.domain.AgentType.GENERATION,
+                com.company.scopery.modules.aiagent.agent.domain.enums.AgentType.GENERATION,
                 null, null, null, AgentStatus.ACTIVE, Instant.now(), Instant.now());
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent));
 
@@ -204,7 +230,7 @@ class EventConfigApplicationServiceTest {
                 PromptVersionStatus.DRAFT, Instant.now(), Instant.now());
         when(promptVersionRepository.findById(versionId)).thenReturn(Optional.of(draft));
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getErrorCode()).isEqualTo(
                         AiAgentErrorCatalog.EVENT_CONFIG_PROMPT_VERSION_NOT_ACTIVE.code()));
@@ -222,7 +248,7 @@ class EventConfigApplicationServiceTest {
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
-                com.company.scopery.modules.aiagent.agent.domain.AgentType.GENERATION,
+                com.company.scopery.modules.aiagent.agent.domain.enums.AgentType.GENERATION,
                 null, null, null, AgentStatus.ACTIVE, Instant.now(), Instant.now());
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent));
 
@@ -237,7 +263,7 @@ class EventConfigApplicationServiceTest {
                 PromptTemplateStatus.ACTIVE, Instant.now(), Instant.now());
         when(promptTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getErrorCode()).isEqualTo(
                         AiAgentErrorCatalog.EVENT_CONFIG_PROMPT_TEMPLATE_AGENT_MISMATCH.code()));
@@ -255,7 +281,7 @@ class EventConfigApplicationServiceTest {
         when(eventDefinitionRepository.findById(eventDefId)).thenReturn(Optional.of(ed));
 
         Agent agent = Agent.reconstitute(agentId, "Agent", AgentCode.of("AGENT"),
-                com.company.scopery.modules.aiagent.agent.domain.AgentType.GENERATION,
+                com.company.scopery.modules.aiagent.agent.domain.enums.AgentType.GENERATION,
                 null, null, null, AgentStatus.ACTIVE, Instant.now(), Instant.now());
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent));
 
@@ -275,7 +301,7 @@ class EventConfigApplicationServiceTest {
                 ModelDeploymentStatus.ACTIVE, Instant.now(), Instant.now());
         when(modelDeploymentRepository.findById(deploymentId)).thenReturn(Optional.of(prodDeployment));
 
-        assertThatThrownBy(() -> service.createEventConfig(createCommand()))
+        assertThatThrownBy(() -> createEventConfigAction.execute(createCommand()))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getErrorCode()).isEqualTo(
                         AiAgentErrorCatalog.EVENT_CONFIG_MODEL_DEPLOYMENT_ENVIRONMENT_MISMATCH.code()));
@@ -294,7 +320,7 @@ class EventConfigApplicationServiceTest {
 
         when(eventConfigRepository.findById(id)).thenReturn(Optional.of(deprecated));
 
-        assertThatThrownBy(() -> service.activateEventConfig(new ActivateEventConfigCommand(id)))
+        assertThatThrownBy(() -> activateEventConfigAction.execute(new ActivateEventConfigCommand(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -317,7 +343,7 @@ class EventConfigApplicationServiceTest {
         when(eventConfigRepository.existsActiveByEventDefinitionIdAndEnvironment(
                 eq(eventDefId), any(), eq(id))).thenReturn(true);
 
-        assertThatThrownBy(() -> service.activateEventConfig(new ActivateEventConfigCommand(id)))
+        assertThatThrownBy(() -> activateEventConfigAction.execute(new ActivateEventConfigCommand(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.CONFLICT));
     }
@@ -340,7 +366,7 @@ class EventConfigApplicationServiceTest {
         when(promptVersionRepository.findById(versionId)).thenReturn(Optional.empty());
         when(modelDeploymentRepository.findById(deploymentId)).thenReturn(Optional.empty());
 
-        EventConfigDetailResponse response = service.resolveActiveEventConfig(
+        EventConfigDetailResponse response = eventConfigQueryService.resolveActiveEventConfig(
                 new ResolveActiveEventConfigQuery(eventDefId, null, null, "DEV"));
 
         assertThat(response.code()).isEqualTo("HRM_CV_DEV");
@@ -352,7 +378,7 @@ class EventConfigApplicationServiceTest {
         when(eventConfigRepository.findActiveByEventDefinitionIdAndEnvironment(any(), any()))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.resolveActiveEventConfig(
+        assertThatThrownBy(() -> eventConfigQueryService.resolveActiveEventConfig(
                 new ResolveActiveEventConfigQuery(UUID.randomUUID(), null, null, "DEV")))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
@@ -376,7 +402,7 @@ class EventConfigApplicationServiceTest {
         when(promptVersionRepository.findById(any())).thenReturn(Optional.empty());
         when(modelDeploymentRepository.findById(any())).thenReturn(Optional.empty());
 
-        EventConfigDetailResponse response = service.deactivateEventConfig(new DeactivateEventConfigCommand(id));
+        EventConfigDetailResponse response = deactivateEventConfigAction.execute(new DeactivateEventConfigCommand(id));
         assertThat(response.status()).isEqualTo("INACTIVE");
     }
 }

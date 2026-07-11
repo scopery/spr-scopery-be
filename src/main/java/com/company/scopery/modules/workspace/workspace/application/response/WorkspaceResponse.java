@@ -1,6 +1,6 @@
 package com.company.scopery.modules.workspace.workspace.application.response;
 
-import com.company.scopery.modules.workspace.workspace.domain.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -15,6 +15,7 @@ public record WorkspaceResponse(
         String defaultVisibility,
         String joinPolicy,
         String status,
+        int version,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -29,6 +30,7 @@ public record WorkspaceResponse(
                 ws.defaultVisibility().name(),
                 ws.joinPolicy() != null ? ws.joinPolicy().name() : "INVITE_ONLY",
                 ws.status().name(),
+                ws.version(),
                 ws.createdAt(),
                 ws.updatedAt());
     }

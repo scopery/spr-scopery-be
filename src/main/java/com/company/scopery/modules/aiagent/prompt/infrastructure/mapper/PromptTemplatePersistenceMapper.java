@@ -1,7 +1,9 @@
 package com.company.scopery.modules.aiagent.prompt.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.prompt.domain.*;
-import com.company.scopery.modules.aiagent.prompt.infrastructure.persistence.PromptTemplateJpaEntity;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptTemplateStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
+import com.company.scopery.modules.aiagent.prompt.domain.valueobject.PromptTemplateCode;
+import com.company.scopery.modules.aiagent.prompt.infrastructure.persistence.entity.PromptTemplateJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

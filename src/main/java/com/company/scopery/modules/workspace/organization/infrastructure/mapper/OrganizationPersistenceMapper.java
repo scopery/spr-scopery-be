@@ -1,8 +1,8 @@
 package com.company.scopery.modules.workspace.organization.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.organization.domain.Organization;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationCode;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationStatus;
+import com.company.scopery.modules.workspace.organization.domain.model.Organization;
+import com.company.scopery.modules.workspace.organization.domain.enums.OrganizationStatus;
+import com.company.scopery.modules.workspace.organization.domain.valueobject.OrganizationCode;
 import com.company.scopery.modules.workspace.organization.infrastructure.persistence.OrganizationJpaEntity;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +17,7 @@ public class OrganizationPersistenceMapper {
                 entity.getDescription(),
                 entity.getOwnerUserId(),
                 OrganizationStatus.valueOf(entity.getStatus()),
+                entity.getVersion(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt());
     }
@@ -29,6 +30,7 @@ public class OrganizationPersistenceMapper {
         entity.setDescription(domain.description());
         entity.setOwnerUserId(domain.ownerUserId());
         entity.setStatus(domain.status().name());
+        entity.setVersion(domain.version());
         entity.setCreatedAt(domain.createdAt()); // required for Spring Data merge()
         return entity;
     }

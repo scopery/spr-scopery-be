@@ -1,28 +1,32 @@
 package com.company.scopery.modules.aiagent.playground.application;
+import com.company.scopery.modules.aiagent.playground.application.action.RunEventConfigAction;
+import com.company.scopery.modules.aiagent.playground.application.action.RunPlaygroundDirectAction;
+import com.company.scopery.modules.aiagent.playground.application.service.PlaygroundQueryService;
+import com.company.scopery.modules.aiagent.playground.domain.enums.PlaygroundMode;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.agent.domain.AgentRepository;
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeploymentRepository;
-import com.company.scopery.modules.aiagent.eventconfig.domain.EventConfig;
-import com.company.scopery.modules.aiagent.eventconfig.domain.EventConfigRepository;
-import com.company.scopery.modules.aiagent.eventconfig.domain.EventConfigStatus;
-import com.company.scopery.modules.aiagent.execution.application.ExecutionApplicationService;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfig;
+import com.company.scopery.modules.aiagent.eventconfig.domain.model.EventConfigRepository;
+import com.company.scopery.modules.aiagent.eventconfig.domain.enums.EventConfigStatus;
+import com.company.scopery.modules.aiagent.execution.application.action.ExecuteEventConfigAction;
+import com.company.scopery.modules.aiagent.execution.application.action.ExecutePlaygroundDirectAction;
 import com.company.scopery.modules.aiagent.execution.application.command.ExecuteEventConfigCommand;
 import com.company.scopery.modules.aiagent.execution.application.command.ExecutePlaygroundDirectCommand;
 import com.company.scopery.modules.aiagent.execution.application.prompt.PromptRenderPreviewResult;
 import com.company.scopery.modules.aiagent.execution.application.prompt.PromptRenderer;
 import com.company.scopery.modules.aiagent.execution.application.response.ExecutionRunResponse;
-import com.company.scopery.modules.aiagent.execution.domain.ExecutionTriggerSource;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionTriggerSource;
 import com.company.scopery.modules.aiagent.playground.application.command.PreviewPromptCommand;
 import com.company.scopery.modules.aiagent.playground.application.command.RunPlaygroundDirectCommand;
 import com.company.scopery.modules.aiagent.playground.application.command.RunPlaygroundEventConfigCommand;
 import com.company.scopery.modules.aiagent.playground.application.response.PlaygroundOptionResponse;
 import com.company.scopery.modules.aiagent.playground.application.response.PlaygroundPromptPreviewResponse;
 import com.company.scopery.modules.aiagent.playground.application.response.PlaygroundRunResponse;
-import com.company.scopery.modules.aiagent.playground.mapper.PlaygroundResponseMapper;
-import com.company.scopery.modules.aiagent.prompt.domain.PromptVersion;
-import com.company.scopery.modules.aiagent.prompt.domain.PromptVersionRepository;
-import com.company.scopery.modules.aiagent.prompt.domain.PromptVersionStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersion;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersionRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptVersionStatus;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,17 +54,15 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class PlaygroundApplicationServiceTest {
+class PlaygroundActionTest {
 
-    @Mock private ExecutionApplicationService executionApplicationService;
+    @Mock private ExecuteEventConfigAction executeEventConfigAction;
+    @Mock private ExecutePlaygroundDirectAction executePlaygroundDirectAction;
     @Mock private PromptRenderer promptRenderer;
     @Mock private EventConfigRepository eventConfigRepository;
     @Mock private AgentRepository agentRepository;
     @Mock private PromptVersionRepository promptVersionRepository;
     @Mock private ModelDeploymentRepository modelDeploymentRepository;
-    @Mock private PlaygroundResponseMapper responseMapper;
-
-    private PlaygroundApplicationService service;
 
     private final UUID eventConfigId   = UUID.randomUUID();
     private final UUID agentId         = UUID.randomUUID();
@@ -68,12 +70,16 @@ class PlaygroundApplicationServiceTest {
     private final UUID templateId      = UUID.randomUUID();
     private final UUID deploymentId    = UUID.randomUUID();
 
+    private PlaygroundQueryService playgroundQueryService;
+    private RunEventConfigAction runEventConfigAction;
+    private RunPlaygroundDirectAction runPlaygroundDirectAction;
+
     @BeforeEach
     void setUp() {
-        service = new PlaygroundApplicationService(
-                executionApplicationService, promptRenderer,
-                eventConfigRepository, agentRepository,
-                promptVersionRepository, modelDeploymentRepository, responseMapper);
+        playgroundQueryService = new PlaygroundQueryService(eventConfigRepository, agentRepository,
+                promptVersionRepository, modelDeploymentRepository, promptRenderer);
+        runEventConfigAction = new RunEventConfigAction(executeEventConfigAction, eventConfigRepository, true, "DEV");
+        runPlaygroundDirectAction = new RunPlaygroundDirectAction(executePlaygroundDirectAction, true, "DEV");
     }
 
     @Test
@@ -82,19 +88,18 @@ class PlaygroundApplicationServiceTest {
         when(eventConfigRepository.findById(eventConfigId)).thenReturn(Optional.of(eventConfig));
 
         ExecutionRunResponse execResponse = buildExecutionRunResponse();
-        when(executionApplicationService.executeEventConfig(any())).thenReturn(execResponse);
-
-        PlaygroundRunResponse mapped = buildPlaygroundRunResponse(PlaygroundMode.EVENT_CONFIG);
-        when(responseMapper.toPlaygroundRunResponse(execResponse, PlaygroundMode.EVENT_CONFIG)).thenReturn(mapped);
+        when(executeEventConfigAction.execute(any())).thenReturn(execResponse);
 
         RunPlaygroundEventConfigCommand command = new RunPlaygroundEventConfigCommand(
                 "req-1", eventConfigId, Map.of());
 
-        PlaygroundRunResponse result = service.runEventConfig(command);
+        PlaygroundRunResponse result = runEventConfigAction.execute(command);
 
-        assertThat(result).isSameAs(mapped);
+        assertThat(result.mode()).isEqualTo(PlaygroundMode.EVENT_CONFIG.name());
+        assertThat(result.requestId()).isEqualTo(execResponse.requestId());
+        assertThat(result.status()).isEqualTo(execResponse.status());
         ArgumentCaptor<ExecuteEventConfigCommand> captor = ArgumentCaptor.forClass(ExecuteEventConfigCommand.class);
-        verify(executionApplicationService).executeEventConfig(captor.capture());
+        verify(executeEventConfigAction).execute(captor.capture());
         assertThat(captor.getValue().triggerSource()).isEqualTo(ExecutionTriggerSource.PLAYGROUND.name());
         assertThat(captor.getValue().eventConfigId()).isEqualTo(eventConfigId);
     }
@@ -103,7 +108,7 @@ class PlaygroundApplicationServiceTest {
     void runEventConfig_notFound_throwsNotFound() {
         when(eventConfigRepository.findById(eventConfigId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.runEventConfig(
+        assertThatThrownBy(() -> runEventConfigAction.execute(
                 new RunPlaygroundEventConfigCommand("req-1", eventConfigId, Map.of())))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
@@ -121,7 +126,7 @@ class PlaygroundApplicationServiceTest {
         when(inactive.status()).thenReturn(EventConfigStatus.INACTIVE);
         when(eventConfigRepository.findById(eventConfigId)).thenReturn(Optional.of(inactive));
 
-        assertThatThrownBy(() -> service.runEventConfig(
+        assertThatThrownBy(() -> runEventConfigAction.execute(
                 new RunPlaygroundEventConfigCommand("req-1", eventConfigId, Map.of())))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -131,20 +136,18 @@ class PlaygroundApplicationServiceTest {
     @Test
     void runDirect_delegatesToExecutionServiceDirect() {
         ExecutionRunResponse execResponse = buildExecutionRunResponse();
-        when(executionApplicationService.executePlaygroundDirect(any())).thenReturn(execResponse);
-
-        PlaygroundRunResponse mapped = buildPlaygroundRunResponse(PlaygroundMode.DIRECT);
-        when(responseMapper.toPlaygroundRunResponse(execResponse, PlaygroundMode.DIRECT)).thenReturn(mapped);
+        when(executePlaygroundDirectAction.execute(any())).thenReturn(execResponse);
 
         RunPlaygroundDirectCommand command = new RunPlaygroundDirectCommand(
                 "req-2", agentId, promptVersionId, deploymentId, Map.of());
 
-        PlaygroundRunResponse result = service.runDirect(command);
+        PlaygroundRunResponse result = runPlaygroundDirectAction.execute(command);
 
-        assertThat(result).isSameAs(mapped);
+        assertThat(result.mode()).isEqualTo(PlaygroundMode.DIRECT.name());
+        assertThat(result.requestId()).isEqualTo(execResponse.requestId());
         ArgumentCaptor<ExecutePlaygroundDirectCommand> captor =
                 ArgumentCaptor.forClass(ExecutePlaygroundDirectCommand.class);
-        verify(executionApplicationService).executePlaygroundDirect(captor.capture());
+        verify(executePlaygroundDirectAction).execute(captor.capture());
         assertThat(captor.getValue().agentId()).isEqualTo(agentId);
         assertThat(captor.getValue().promptVersionId()).isEqualTo(promptVersionId);
         assertThat(captor.getValue().modelDeploymentId()).isEqualTo(deploymentId);
@@ -158,14 +161,14 @@ class PlaygroundApplicationServiceTest {
                 .thenReturn(new PromptRenderPreviewResult("Hello, World!", List.of()));
 
         PreviewPromptCommand command = new PreviewPromptCommand(promptVersionId, Map.of("name", "World"));
-        PlaygroundPromptPreviewResponse result = service.previewPrompt(command);
+        PlaygroundPromptPreviewResponse result = playgroundQueryService.previewPrompt(command);
 
         assertThat(result.renderedPrompt()).isEqualTo("Hello, World!");
         assertThat(result.missingVariables()).isEmpty();
         assertThat(result.promptVersionId()).isEqualTo(promptVersionId);
         assertThat(result.promptTemplateId()).isEqualTo(templateId);
-        verify(executionApplicationService, never()).executeEventConfig(any());
-        verify(executionApplicationService, never()).executePlaygroundDirect(any());
+        verify(executeEventConfigAction, never()).execute(any());
+        verify(executePlaygroundDirectAction, never()).execute(any());
     }
 
     @Test
@@ -180,7 +183,7 @@ class PlaygroundApplicationServiceTest {
                 .thenReturn(new PromptRenderPreviewResult("Draft prompt", List.of()));
 
         PreviewPromptCommand command = new PreviewPromptCommand(promptVersionId, Map.of());
-        PlaygroundPromptPreviewResponse result = service.previewPrompt(command);
+        PlaygroundPromptPreviewResponse result = playgroundQueryService.previewPrompt(command);
 
         assertThat(result.renderedPrompt()).isEqualTo("Draft prompt");
     }
@@ -192,7 +195,7 @@ class PlaygroundApplicationServiceTest {
         when(archived.status()).thenReturn(PromptVersionStatus.ARCHIVED);
         when(promptVersionRepository.findById(promptVersionId)).thenReturn(Optional.of(archived));
 
-        assertThatThrownBy(() -> service.previewPrompt(
+        assertThatThrownBy(() -> playgroundQueryService.previewPrompt(
                 new PreviewPromptCommand(promptVersionId, Map.of())))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
@@ -210,7 +213,7 @@ class PlaygroundApplicationServiceTest {
         when(promptRenderer.renderPreview("Hello, {{name}}!", Map.of()))
                 .thenReturn(new PromptRenderPreviewResult("Hello, {{name}}!", List.of("name")));
 
-        PlaygroundPromptPreviewResponse result = service.previewPrompt(
+        PlaygroundPromptPreviewResponse result = playgroundQueryService.previewPrompt(
                 new PreviewPromptCommand(promptVersionId, Map.of()));
 
         assertThat(result.missingVariables()).containsExactly("name");
@@ -224,7 +227,7 @@ class PlaygroundApplicationServiceTest {
         when(promptVersionRepository.findAllByStatus(any())).thenReturn(List.of());
         when(modelDeploymentRepository.findAllByStatus(any())).thenReturn(List.of());
 
-        PlaygroundOptionResponse result = service.getOptions(true, true, true, true);
+        PlaygroundOptionResponse result = playgroundQueryService.getOptions(true, true, true, true);
 
         assertThat(result.eventConfigs()).isNotNull();
         assertThat(result.agents()).isNotNull();
@@ -234,7 +237,7 @@ class PlaygroundApplicationServiceTest {
 
     @Test
     void getOptions_noneIncluded_allNulls() {
-        PlaygroundOptionResponse result = service.getOptions(false, false, false, false);
+        PlaygroundOptionResponse result = playgroundQueryService.getOptions(false, false, false, false);
 
         assertThat(result.eventConfigs()).isNull();
         assertThat(result.agents()).isNull();
@@ -267,14 +270,5 @@ class PlaygroundApplicationServiceTest {
                 "OPENAI", "GPT-4O", "gpt-4o-dep",
                 "output", 10, 20, 30, new BigDecimal("0.01"),
                 100L, "prov-req-1", null, null, "ALLOWED", List.of());
-    }
-
-    private PlaygroundRunResponse buildPlaygroundRunResponse(PlaygroundMode mode) {
-        return new PlaygroundRunResponse(
-                UUID.randomUUID(), "req-ok", "SUCCEEDED", mode.name(),
-                null, null, agentId, promptVersionId, deploymentId,
-                "OPENAI", "GPT-4O", "gpt-4o-dep",
-                "output", 10, 20, 30, new BigDecimal("0.01"),
-                100L, "prov-req-1", "ALLOWED", List.of(), null, null);
     }
 }

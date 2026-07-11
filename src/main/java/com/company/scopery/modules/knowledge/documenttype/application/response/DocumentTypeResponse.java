@@ -1,6 +1,6 @@
 package com.company.scopery.modules.knowledge.documenttype.application.response;
 
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentType;
+import com.company.scopery.modules.knowledge.documenttype.domain.model.DocumentType;
 
 import java.time.Instant;
 import java.util.UUID;

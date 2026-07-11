@@ -54,6 +54,9 @@ public class IamAuthResourceJpaEntity extends AuditableJpaEntity {
     @Column(name = "workspace_id")
     private UUID workspaceId;
 
+    @Column(name = "organization_id")
+    private UUID organizationId;
+
     @Column(name = "visibility", length = 100)
     private String visibility;
 
@@ -62,4 +65,7 @@ public class IamAuthResourceJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;
+
+    @Version @Column(name = "version", nullable = false)
+    private Integer version;
 }

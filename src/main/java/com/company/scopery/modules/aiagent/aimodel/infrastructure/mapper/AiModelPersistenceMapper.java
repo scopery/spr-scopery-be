@@ -1,7 +1,10 @@
 package com.company.scopery.modules.aiagent.aimodel.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.aimodel.domain.*;
-import com.company.scopery.modules.aiagent.aimodel.infrastructure.persistence.AiModelJpaEntity;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelStatus;
+import com.company.scopery.modules.aiagent.aimodel.domain.enums.AiModelType;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
+import com.company.scopery.modules.aiagent.aimodel.domain.valueobject.AiModelCode;
+import com.company.scopery.modules.aiagent.aimodel.infrastructure.persistence.entity.AiModelJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

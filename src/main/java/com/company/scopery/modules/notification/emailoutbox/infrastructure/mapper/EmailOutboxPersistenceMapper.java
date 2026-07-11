@@ -1,8 +1,8 @@
 package com.company.scopery.modules.notification.emailoutbox.infrastructure.mapper;
 
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutbox;
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailOutboxStatus;
-import com.company.scopery.modules.notification.emailoutbox.domain.EmailProviderType;
+import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutbox;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailOutboxStatus;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailProviderType;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.persistence.EmailOutboxJpaEntity;
 import org.springframework.stereotype.Component;
 

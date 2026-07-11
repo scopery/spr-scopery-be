@@ -22,7 +22,4 @@ public interface SpringDataIamAccessGrantRightJpaRepository
 
     @Query("SELECT gr.grantId FROM IamAccessGrantRightJpaEntity gr WHERE gr.grantId IN :grantIds AND gr.rightId = :rightId")
     Set<UUID> findGrantIdsHavingRight(@Param("grantIds") List<UUID> grantIds, @Param("rightId") UUID rightId);
-
-    @Query("SELECT DISTINCT gr.grantId FROM IamAccessGrantRightJpaEntity gr WHERE gr.grantId IN :grantIds")
-    Set<UUID> findGrantIdsHavingAnyRight(@Param("grantIds") List<UUID> grantIds);
 }

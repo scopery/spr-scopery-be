@@ -39,7 +39,7 @@ public class OpenAiProviderAdapter implements AiProviderAdapter {
         } catch (ResourceAccessException e) {
             throw AiAgentExceptions.openAiApiTimeout();
         } catch (RestClientResponseException e) {
-            throw AiAgentExceptions.openAiApiCallFailed(e.getStatusCode().value(), e.getResponseBodyAsString());
+            throw AiAgentExceptions.openAiApiCallFailed(e.getStatusCode().value());
         }
 
         if (response == null || response.id() == null) {

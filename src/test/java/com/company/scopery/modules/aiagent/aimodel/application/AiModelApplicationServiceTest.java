@@ -1,14 +1,16 @@
 package com.company.scopery.modules.aiagent.aimodel.application;
+import com.company.scopery.modules.aiagent.aimodel.application.action.CreateAiModelAction;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.aiagent.aimodel.application.command.CreateAiModelCommand;
 import com.company.scopery.modules.aiagent.aimodel.application.response.AiModelResponse;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelCode;
-import com.company.scopery.modules.aiagent.aimodel.domain.AiModelRepository;
-import com.company.scopery.modules.aiagent.provider.domain.Provider;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderCode;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderRepository;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderStatus;
+import com.company.scopery.modules.aiagent.aimodel.domain.valueobject.AiModelCode;
+import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModelRepository;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.valueobject.ProviderCode;
+import com.company.scopery.modules.aiagent.provider.domain.model.ProviderRepository;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderStatus;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderType;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AiModelApplicationServiceTest {
+class AiModelActionTest {
 
     @Mock
     private AiModelRepository aiModelRepository;
@@ -38,11 +40,12 @@ class AiModelApplicationServiceTest {
     @Mock
     private AiAgentActivityLogger activityLogger;
 
-    private AiModelApplicationService service;
+
+    private CreateAiModelAction createAiModelAction;
 
     @BeforeEach
     void setUp() {
-        service = new AiModelApplicationService(aiModelRepository, providerRepository, activityLogger);
+        createAiModelAction = new CreateAiModelAction(aiModelRepository, providerRepository, activityLogger);
     }
 
     @Test
@@ -55,7 +58,7 @@ class AiModelApplicationServiceTest {
         when(aiModelRepository.existsByProviderIdAndCode(any(), any())).thenReturn(false);
         when(aiModelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AiModelResponse response = service.createAiModel(command);
+        AiModelResponse response = createAiModelAction.execute(command);
 
         assertThat(response.name()).isEqualTo("GPT-4.1");
         assertThat(response.code()).isEqualTo("GPT_4_1");
@@ -75,7 +78,7 @@ class AiModelApplicationServiceTest {
         when(providerRepository.findById(providerId)).thenReturn(Optional.of(activeProvider(providerId)));
         when(aiModelRepository.existsByProviderIdAndCode(any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createAiModel(command))
+        assertThatThrownBy(() -> createAiModelAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -94,7 +97,7 @@ class AiModelApplicationServiceTest {
 
         when(providerRepository.findById(providerId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createAiModel(command))
+        assertThatThrownBy(() -> createAiModelAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -107,7 +110,7 @@ class AiModelApplicationServiceTest {
 
         when(providerRepository.findById(providerId)).thenReturn(Optional.of(inactiveProvider(providerId)));
 
-        assertThatThrownBy(() -> service.createAiModel(command))
+        assertThatThrownBy(() -> createAiModelAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("non-active")
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -124,7 +127,7 @@ class AiModelApplicationServiceTest {
         when(aiModelRepository.existsByProviderIdAndCode(any(), any())).thenReturn(false);
         when(aiModelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AiModelResponse response = service.createAiModel(command);
+        AiModelResponse response = createAiModelAction.execute(command);
 
         assertThat(response.code()).isEqualTo("GPT_4_1");
     }
@@ -132,12 +135,12 @@ class AiModelApplicationServiceTest {
     // --- helpers ---
 
     private Provider activeProvider(UUID id) {
-        return Provider.reconstitute(id, "OpenAI", ProviderCode.of("OPENAI"), "LLM",
+        return Provider.reconstitute(id, "OpenAI", ProviderCode.of("OPENAI"), ProviderType.LLM,
                 "https://api.openai.com", null, ProviderStatus.ACTIVE, Instant.now(), Instant.now());
     }
 
     private Provider inactiveProvider(UUID id) {
-        return Provider.reconstitute(id, "OpenAI", ProviderCode.of("OPENAI"), "LLM",
+        return Provider.reconstitute(id, "OpenAI", ProviderCode.of("OPENAI"), ProviderType.LLM,
                 "https://api.openai.com", null, ProviderStatus.INACTIVE, Instant.now(), Instant.now());
     }
 }

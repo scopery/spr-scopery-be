@@ -1,10 +1,14 @@
 package com.company.scopery.modules.workspace.team.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.team.domain.TeamMemberRepository;
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeamMember;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.workspace.team.domain.model.TeamMemberRepository;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeamMember;
 import com.company.scopery.modules.workspace.team.infrastructure.mapper.WorkspaceTeamMemberPersistenceMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +62,16 @@ public class JpaWorkspaceTeamMemberRepository implements TeamMemberRepository {
     }
 
     @Override
-    public Page<WorkspaceTeamMember> findByTeamIdPageable(UUID teamId, Pageable pageable) {
-        return springDataRepository.findByTeamId(teamId, pageable).map(mapper::toDomain);
+    public PageResult<WorkspaceTeamMember> findByTeamIdPageable(UUID teamId, PageQuery pageQuery) {
+        Pageable pageable = toPageable(pageQuery);
+        Page<WorkspaceTeamMember> page = springDataRepository.findByTeamId(teamId, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 }

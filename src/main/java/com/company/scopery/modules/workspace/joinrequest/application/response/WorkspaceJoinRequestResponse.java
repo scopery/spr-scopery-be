@@ -1,6 +1,6 @@
 package com.company.scopery.modules.workspace.joinrequest.application.response;
 
-import com.company.scopery.modules.workspace.joinrequest.domain.WorkspaceJoinRequest;
+import com.company.scopery.modules.workspace.joinrequest.domain.model.WorkspaceJoinRequest;
 
 import java.time.Instant;
 import java.util.UUID;

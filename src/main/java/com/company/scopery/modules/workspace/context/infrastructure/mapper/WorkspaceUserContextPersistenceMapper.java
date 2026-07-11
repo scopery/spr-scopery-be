@@ -1,6 +1,6 @@
 package com.company.scopery.modules.workspace.context.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.context.domain.WorkspaceUserContext;
+import com.company.scopery.modules.workspace.context.domain.model.WorkspaceUserContext;
 import com.company.scopery.modules.workspace.context.infrastructure.persistence.WorkspaceUserContextJpaEntity;
 import org.springframework.stereotype.Component;
 

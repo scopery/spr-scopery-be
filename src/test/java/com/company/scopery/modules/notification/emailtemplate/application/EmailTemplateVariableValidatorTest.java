@@ -1,5 +1,8 @@
 package com.company.scopery.modules.notification.emailtemplate.application;
 
+import com.company.scopery.modules.notification.emailtemplate.application.service.EmailTemplateVariableValidator;
+import com.company.scopery.modules.notification.emailtemplate.application.service.SimpleMustacheEmailTemplateRenderer;
+
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.notification.shared.error.NotificationErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;

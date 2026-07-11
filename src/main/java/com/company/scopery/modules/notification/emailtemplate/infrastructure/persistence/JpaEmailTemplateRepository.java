@@ -1,6 +1,9 @@
 package com.company.scopery.modules.notification.emailtemplate.infrastructure.persistence;
 
-import com.company.scopery.modules.notification.emailtemplate.domain.*;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplate;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplateRepository;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplateSearchCriteria;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplateVersion;
 import com.company.scopery.modules.notification.emailtemplate.infrastructure.mapper.EmailTemplatePersistenceMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;

@@ -1,13 +1,17 @@
 package com.company.scopery.modules.iam.roleassignment.infrastructure.persistence;
 
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignment;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignmentRepository;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignmentStatus;
-import com.company.scopery.modules.iam.roleassignment.domain.RoleAssigneeType;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignment;
+import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignmentRepository;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.IamRoleAssignmentStatus;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.RoleAssigneeType;
 import com.company.scopery.modules.iam.roleassignment.infrastructure.mapper.IamRoleAssignmentPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -55,12 +59,21 @@ public class JpaIamRoleAssignmentRepository implements IamRoleAssignmentReposito
     }
 
     @Override
-    public Page<IamRoleAssignment> findAll(UUID roleId, UUID assigneeId,
+    public PageResult<IamRoleAssignment> findAll(UUID roleId, UUID assigneeId,
                                             RoleAssigneeType assigneeType,
                                             IamRoleAssignmentStatus status,
-                                            UUID workspaceId, Pageable pageable) {
+                                            UUID workspaceId, PageQuery pageQuery) {
         Specification<IamRoleAssignmentJpaEntity> spec = buildSpec(roleId, assigneeId, assigneeType, status, workspaceId);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<IamRoleAssignment> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<IamRoleAssignmentJpaEntity> buildSpec(UUID roleId, UUID assigneeId,

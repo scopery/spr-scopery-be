@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.context.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.context.domain.WorkspaceUserContext;
-import com.company.scopery.modules.workspace.context.domain.WorkspaceUserContextRepository;
+import com.company.scopery.modules.workspace.context.domain.model.WorkspaceUserContext;
+import com.company.scopery.modules.workspace.context.domain.model.WorkspaceUserContextRepository;
 import com.company.scopery.modules.workspace.context.infrastructure.mapper.WorkspaceUserContextPersistenceMapper;
 import org.springframework.stereotype.Repository;
 

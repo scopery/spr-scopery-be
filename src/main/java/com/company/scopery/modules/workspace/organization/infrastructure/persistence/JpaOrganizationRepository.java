@@ -1,13 +1,17 @@
 package com.company.scopery.modules.workspace.organization.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.organization.domain.Organization;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationCode;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationRepository;
-import com.company.scopery.modules.workspace.organization.domain.OrganizationStatus;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.workspace.organization.domain.model.Organization;
+import com.company.scopery.modules.workspace.organization.domain.model.OrganizationRepository;
+import com.company.scopery.modules.workspace.organization.domain.enums.OrganizationStatus;
+import com.company.scopery.modules.workspace.organization.domain.valueobject.OrganizationCode;
 import com.company.scopery.modules.workspace.organization.infrastructure.mapper.OrganizationPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -46,9 +50,25 @@ public class JpaOrganizationRepository implements OrganizationRepository {
     }
 
     @Override
-    public Page<Organization> findAll(String keyword, UUID ownerUserId, OrganizationStatus status, Pageable pageable) {
+    public List<Organization> findAllByIds(List<UUID> ids) {
+        return springDataRepository.findAllById(ids).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public PageResult<Organization> findAll(String keyword, UUID ownerUserId, OrganizationStatus status, PageQuery pageQuery) {
         Specification<OrganizationJpaEntity> spec = buildSearchSpec(keyword, ownerUserId, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<Organization> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<OrganizationJpaEntity> buildSearchSpec(String keyword, UUID ownerUserId,

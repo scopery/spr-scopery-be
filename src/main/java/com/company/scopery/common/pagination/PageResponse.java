@@ -27,4 +27,16 @@ public record PageResponse<T>(
 
 
     }
+
+    public static <T> PageResponse<T> fromDomain(PageResult<T> result) {
+        return new PageResponse<>(
+                result.content(),
+                result.page(),
+                result.size(),
+                result.totalElements(),
+                result.totalPages(),
+                result.first(),
+                result.last()
+        );
+    }
 }

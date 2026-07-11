@@ -6,6 +6,5 @@ public record AssignRoleCommand(
         String assigneeType,
         UUID assigneeId,
         UUID roleId,
-        UUID workspaceId,
-        UUID assignedBy) {
+        UUID workspaceId) {
 }

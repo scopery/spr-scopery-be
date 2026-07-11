@@ -4,20 +4,21 @@ import com.company.scopery.common.constant.ApiPaths;
 
 public final class AiAgentApiPaths {
 
-    public static final String API_V1_AI_AGENT              = ApiPaths.V1 + "/ai-agent";
-    public static final String PROVIDERS                    = API_V1_AI_AGENT + "/providers";
-    public static final String MODELS                       = API_V1_AI_AGENT + "/models";
-    public static final String MODEL_DEPLOYMENTS            = API_V1_AI_AGENT + "/model-deployments";
-    public static final String MODEL_PARAMETER_CAPABILITIES = API_V1_AI_AGENT + "/model-parameter-capabilities";
-    public static final String AGENTS                       = API_V1_AI_AGENT + "/agents";
-    public static final String PROMPT_TEMPLATES             = API_V1_AI_AGENT + "/prompt-templates";
-    public static final String PROMPT_VERSIONS              = API_V1_AI_AGENT + "/prompt-versions";
-    public static final String EVENT_CONFIGS                = API_V1_AI_AGENT + "/event-configs";
-    public static final String USAGE_POLICIES               = API_V1_AI_AGENT + "/usage-policies";
-    public static final String EXECUTION_LOGS               = API_V1_AI_AGENT + "/execution-logs";
-    public static final String EXECUTIONS                   = API_V1_AI_AGENT + "/executions";
-    public static final String PROVIDER_SECRETS             = API_V1_AI_AGENT + "/provider-secrets";
-    public static final String PLAYGROUND                   = API_V1_AI_AGENT + "/playground";
+    private static final String BASE = ApiPaths.BASE_PATH + "/ai-agent";
+
+    public static final String PROVIDERS                    = BASE + "/providers";
+    public static final String MODELS                       = BASE + "/models";
+    public static final String MODEL_DEPLOYMENTS            = BASE + "/model-deployments";
+    public static final String MODEL_PARAMETER_CAPABILITIES = BASE + "/model-parameter-capabilities";
+    public static final String AGENTS                       = BASE + "/agents";
+    public static final String PROMPT_TEMPLATES             = BASE + "/prompt-templates";
+    public static final String PROMPT_VERSIONS              = BASE + "/prompt-versions";
+    public static final String EVENT_CONFIGS                = BASE + "/event-configs";
+    public static final String USAGE_POLICIES               = BASE + "/usage-policies";
+    public static final String EXECUTION_LOGS               = BASE + "/execution-logs";
+    public static final String EXECUTIONS                   = BASE + "/executions";
+    public static final String PROVIDER_SECRETS             = BASE + "/provider-secrets";
+    public static final String PLAYGROUND                   = BASE + "/playground";
 
     private AiAgentApiPaths() {}
 }

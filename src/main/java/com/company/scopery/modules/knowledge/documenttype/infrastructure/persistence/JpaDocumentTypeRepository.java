@@ -1,14 +1,18 @@
 package com.company.scopery.modules.knowledge.documenttype.infrastructure.persistence;
 
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentType;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeCode;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeRepository;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeScope;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeStatus;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.knowledge.documenttype.domain.model.DocumentType;
+import com.company.scopery.modules.knowledge.documenttype.domain.valueobject.DocumentTypeCode;
+import com.company.scopery.modules.knowledge.documenttype.domain.model.DocumentTypeRepository;
+import com.company.scopery.modules.knowledge.documenttype.domain.enums.DocumentTypeScope;
+import com.company.scopery.modules.knowledge.documenttype.domain.enums.DocumentTypeStatus;
 import com.company.scopery.modules.knowledge.documenttype.infrastructure.mapper.DocumentTypePersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -52,11 +56,20 @@ public class JpaDocumentTypeRepository implements DocumentTypeRepository {
     }
 
     @Override
-    public Page<DocumentType> findAll(String keyword, UUID workspaceId, DocumentTypeScope documentScope,
-                                       DocumentTypeStatus status, boolean includeDeleted, Pageable pageable) {
+    public PageResult<DocumentType> findAll(String keyword, UUID workspaceId, DocumentTypeScope documentScope,
+                                             DocumentTypeStatus status, boolean includeDeleted, PageQuery pageQuery) {
         Specification<DocumentTypeJpaEntity> spec =
                 buildSpec(keyword, workspaceId, documentScope, status, includeDeleted);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<DocumentType> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<DocumentTypeJpaEntity> buildSpec(String keyword, UUID workspaceId,

@@ -1,10 +1,20 @@
 package com.company.scopery.modules.aiagent.execution.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.execution.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionStatus;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionTriggerSource;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLog;
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLogRepository;
+import com.company.scopery.modules.aiagent.execution.domain.model.UsageAggregate;
+import com.company.scopery.modules.aiagent.execution.domain.valueobject.ExecutionRequestId;
 import com.company.scopery.modules.aiagent.execution.infrastructure.mapper.ExecutionLogPersistenceMapper;
+import com.company.scopery.modules.aiagent.execution.infrastructure.persistence.entity.ExecutionLogJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -45,14 +55,23 @@ public class JpaExecutionLogRepository implements ExecutionLogRepository {
     }
 
     @Override
-    public Page<ExecutionLog> findAll(String requestId, UUID eventConfigId, UUID eventDefinitionId,
-                                       UUID agentId, UUID promptVersionId, UUID modelDeploymentId,
-                                       ExecutionTriggerSource triggerSource, ExecutionStatus status,
-                                       Instant createdFrom, Instant createdTo, Pageable pageable) {
+    public PageResult<ExecutionLog> findAll(String requestId, UUID eventConfigId, UUID eventDefinitionId,
+                                            UUID agentId, UUID promptVersionId, UUID modelDeploymentId,
+                                            ExecutionTriggerSource triggerSource, ExecutionStatus status,
+                                            Instant createdFrom, Instant createdTo, PageQuery pageQuery) {
         Specification<ExecutionLogJpaEntity> spec = buildSearchSpec(requestId, eventConfigId,
                 eventDefinitionId, agentId, promptVersionId, modelDeploymentId,
                 triggerSource, status, createdFrom, createdTo);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<ExecutionLog> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     @Override

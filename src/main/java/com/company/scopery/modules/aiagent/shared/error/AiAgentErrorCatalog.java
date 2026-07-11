@@ -32,6 +32,11 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
             "Invalid provider status",
             HttpStatus.BAD_REQUEST),
 
+    INVALID_PROVIDER_TYPE(
+            "INVALID_PROVIDER_TYPE",
+            "Invalid provider type",
+            HttpStatus.BAD_REQUEST),
+
     // ── AI Model ─────────────────────────────────────────────────────────────
 
     AI_MODEL_NOT_FOUND(
@@ -254,6 +259,11 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
             "Prompt version not found",
             HttpStatus.NOT_FOUND),
 
+    PROMPT_VERSION_NUMBER_CONFLICT(
+            "PROMPT_VERSION_NUMBER_CONFLICT",
+            "Prompt version number was just taken by a concurrent request; retry",
+            HttpStatus.CONFLICT),
+
     PROMPT_VERSION_TEMPLATE_NOT_FOUND(
             "PROMPT_VERSION_TEMPLATE_NOT_FOUND",
             "Prompt template not found for this version",
@@ -277,6 +287,11 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
     ARCHIVED_PROMPT_VERSION_CANNOT_BE_ACTIVATED(
             "ARCHIVED_PROMPT_VERSION_CANNOT_BE_ACTIVATED",
             "Archived prompt version cannot be activated again",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    PROMPT_VERSION_ALREADY_ARCHIVED(
+            "PROMPT_VERSION_ALREADY_ARCHIVED",
+            "Prompt version is already archived",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
     INVALID_PROMPT_VERSION_STATUS(
@@ -305,6 +320,11 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
             "ACTIVE_EVENT_CONFIG_NOT_FOUND",
             "No active event configuration found for this event and environment",
             HttpStatus.NOT_FOUND),
+
+    EVENT_CONFIG_RESOLVE_IDENTIFIER_REQUIRED(
+            "EVENT_CONFIG_RESOLVE_IDENTIFIER_REQUIRED",
+            "Either eventDefinitionId or both sourceSystem and eventKey are required",
+            HttpStatus.BAD_REQUEST),
 
     EVENT_CONFIG_CODE_ALREADY_EXISTS(
             "EVENT_CONFIG_CODE_ALREADY_EXISTS",
@@ -796,6 +816,28 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
     PLAYGROUND_PROMPT_PREVIEW_FAILED(
             "PLAYGROUND_PROMPT_PREVIEW_FAILED",
             "Prompt preview failed",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    PLAYGROUND_DISABLED_IN_ENVIRONMENT(
+            "PLAYGROUND_DISABLED_IN_ENVIRONMENT",
+            "Playground direct execution is disabled in this environment",
+            HttpStatus.FORBIDDEN),
+
+    // ── Execution Lifecycle ───────────────────────────────────────────────────
+
+    EXECUTION_LIFECYCLE_WRITE_RESTRICTED(
+            "EXECUTION_LIFECYCLE_WRITE_RESTRICTED",
+            "Execution lifecycle writes are restricted to internal services only",
+            HttpStatus.FORBIDDEN),
+
+    AI_INVALID_INPUT_VARIABLES(
+            "AI_INVALID_INPUT_VARIABLES",
+            "AI execution input does not match the approved schema",
+            HttpStatus.BAD_REQUEST),
+
+    AI_INVALID_OUTPUT(
+            "AI_INVALID_OUTPUT",
+            "AI output does not match the approved schema",
             HttpStatus.UNPROCESSABLE_ENTITY);
 
     private final String code;

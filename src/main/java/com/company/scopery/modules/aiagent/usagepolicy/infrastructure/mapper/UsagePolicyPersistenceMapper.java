@@ -1,7 +1,12 @@
 package com.company.scopery.modules.aiagent.usagepolicy.infrastructure.mapper;
 
-import com.company.scopery.modules.aiagent.usagepolicy.domain.*;
-import com.company.scopery.modules.aiagent.usagepolicy.infrastructure.persistence.UsagePolicyJpaEntity;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyAction;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyPeriod;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyStatus;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.enums.UsagePolicyTargetType;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.model.UsagePolicy;
+import com.company.scopery.modules.aiagent.usagepolicy.domain.valueobject.UsagePolicyCode;
+import com.company.scopery.modules.aiagent.usagepolicy.infrastructure.persistence.entity.UsagePolicyJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component

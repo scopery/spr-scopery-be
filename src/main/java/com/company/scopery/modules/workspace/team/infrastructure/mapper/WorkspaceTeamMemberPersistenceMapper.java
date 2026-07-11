@@ -1,6 +1,6 @@
 package com.company.scopery.modules.workspace.team.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.team.domain.WorkspaceTeamMember;
+import com.company.scopery.modules.workspace.team.domain.model.WorkspaceTeamMember;
 import com.company.scopery.modules.workspace.team.infrastructure.persistence.WorkspaceTeamMemberJpaEntity;
 import org.springframework.stereotype.Component;
 

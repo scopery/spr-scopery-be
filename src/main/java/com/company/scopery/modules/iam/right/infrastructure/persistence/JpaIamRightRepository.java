@@ -1,13 +1,17 @@
 package com.company.scopery.modules.iam.right.infrastructure.persistence;
 
-import com.company.scopery.modules.iam.right.domain.IamRight;
-import com.company.scopery.modules.iam.right.domain.IamRightCode;
-import com.company.scopery.modules.iam.right.domain.IamRightRepository;
-import com.company.scopery.modules.iam.right.domain.IamRightStatus;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.iam.right.domain.model.IamRight;
+import com.company.scopery.modules.iam.right.domain.valueobject.IamRightCode;
+import com.company.scopery.modules.iam.right.domain.model.IamRightRepository;
+import com.company.scopery.modules.iam.right.domain.enums.IamRightStatus;
 import com.company.scopery.modules.iam.right.infrastructure.mapper.IamRightPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -51,9 +55,18 @@ public class JpaIamRightRepository implements IamRightRepository {
     }
 
     @Override
-    public Page<IamRight> findAll(String keyword, String module, IamRightStatus status, Pageable pageable) {
+    public PageResult<IamRight> findAll(String keyword, String module, IamRightStatus status, PageQuery pageQuery) {
         Specification<IamRightJpaEntity> spec = buildSpec(keyword, module, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<IamRight> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<IamRightJpaEntity> buildSpec(String keyword, String module, IamRightStatus status) {

@@ -1,8 +1,8 @@
 package com.company.scopery.modules.iam.roleassignment.infrastructure.mapper;
 
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignment;
-import com.company.scopery.modules.iam.roleassignment.domain.IamRoleAssignmentStatus;
-import com.company.scopery.modules.iam.roleassignment.domain.RoleAssigneeType;
+import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignment;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.IamRoleAssignmentStatus;
+import com.company.scopery.modules.iam.roleassignment.domain.enums.RoleAssigneeType;
 import com.company.scopery.modules.iam.roleassignment.infrastructure.persistence.IamRoleAssignmentJpaEntity;
 import org.springframework.stereotype.Component;
 

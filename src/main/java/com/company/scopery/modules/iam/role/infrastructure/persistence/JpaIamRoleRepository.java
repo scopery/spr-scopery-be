@@ -1,15 +1,19 @@
 package com.company.scopery.modules.iam.role.infrastructure.persistence;
 
-import com.company.scopery.modules.iam.role.domain.IamRole;
-import com.company.scopery.modules.iam.role.domain.IamRoleCode;
-import com.company.scopery.modules.iam.role.domain.IamRoleRepository;
-import com.company.scopery.modules.iam.role.domain.IamRoleScope;
-import com.company.scopery.modules.iam.role.domain.IamRoleSource;
-import com.company.scopery.modules.iam.role.domain.IamRoleStatus;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.iam.role.domain.model.IamRole;
+import com.company.scopery.modules.iam.role.domain.valueobject.IamRoleCode;
+import com.company.scopery.modules.iam.role.domain.model.IamRoleRepository;
+import com.company.scopery.modules.iam.role.domain.enums.IamRoleScope;
+import com.company.scopery.modules.iam.role.domain.enums.IamRoleSource;
+import com.company.scopery.modules.iam.role.domain.enums.IamRoleStatus;
 import com.company.scopery.modules.iam.role.infrastructure.mapper.IamRolePersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -58,11 +62,20 @@ public class JpaIamRoleRepository implements IamRoleRepository {
     }
 
     @Override
-    public Page<IamRole> findAll(String keyword, UUID workspaceId, IamRoleScope roleScope,
+    public PageResult<IamRole> findAll(String keyword, UUID workspaceId, IamRoleScope roleScope,
                                   IamRoleSource roleSource, IamRoleStatus status,
-                                  boolean includeDeleted, Pageable pageable) {
+                                  boolean includeDeleted, PageQuery pageQuery) {
         Specification<IamRoleJpaEntity> spec = buildSpec(keyword, workspaceId, roleScope, roleSource, status, includeDeleted);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<IamRole> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<IamRoleJpaEntity> buildSpec(String keyword, UUID workspaceId,

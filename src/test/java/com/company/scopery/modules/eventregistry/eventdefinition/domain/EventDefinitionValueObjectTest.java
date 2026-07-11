@@ -1,5 +1,8 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.domain;
 
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

@@ -1,12 +1,16 @@
 package com.company.scopery.modules.workspace.member.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMember;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberRepository;
-import com.company.scopery.modules.workspace.member.domain.WorkspaceMemberStatus;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.member.domain.enums.WorkspaceMemberStatus;
 import com.company.scopery.modules.workspace.member.infrastructure.mapper.WorkspaceMemberPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -56,10 +60,19 @@ public class JpaWorkspaceMemberRepository implements WorkspaceMemberRepository {
     }
 
     @Override
-    public Page<WorkspaceMember> findAll(UUID workspaceId, UUID userId, WorkspaceMemberStatus status,
-                                          Pageable pageable) {
+    public PageResult<WorkspaceMember> findAll(UUID workspaceId, UUID userId, WorkspaceMemberStatus status,
+                                                PageQuery pageQuery) {
         Specification<WorkspaceMemberJpaEntity> spec = buildSearchSpec(workspaceId, userId, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<WorkspaceMember> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     private Specification<WorkspaceMemberJpaEntity> buildSearchSpec(UUID workspaceId, UUID userId,

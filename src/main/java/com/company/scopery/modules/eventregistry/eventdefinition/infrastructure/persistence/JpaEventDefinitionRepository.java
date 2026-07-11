@@ -1,10 +1,20 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.infrastructure.persistence;
 
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.*;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventVariable;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
 import com.company.scopery.modules.eventregistry.eventdefinition.infrastructure.mapper.EventDefinitionPersistenceMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,10 +73,19 @@ public class JpaEventDefinitionRepository implements EventDefinitionRepository {
     }
 
     @Override
-    public Page<EventDefinition> findAll(String keyword, String sourceSystem, String eventKey,
-                                          EventDefinitionStatus status, Pageable pageable) {
+    public PageResult<EventDefinition> findAll(String keyword, String sourceSystem, String eventKey,
+                                                EventDefinitionStatus status, PageQuery pageQuery) {
         Specification<EventDefinitionJpaEntity> spec = buildSearchSpec(keyword, sourceSystem, eventKey, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<EventDefinition> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
     }
 
     @Override

@@ -1,11 +1,21 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.application;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.action.ActivateEventDefinitionAction;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.action.CreateEventDefinitionAction;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.action.DeactivateEventDefinitionAction;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.service.EventDefinitionQueryService;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.*;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.response.*;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.*;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
 import com.company.scopery.modules.eventregistry.shared.activity.EventRegistryActivityLogger;
 import com.company.scopery.modules.eventregistry.shared.error.EventRegistryErrorCatalog;
+import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,16 +32,24 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EventDefinitionApplicationServiceTest {
+class EventDefinitionActionTest {
 
     @Mock private EventDefinitionRepository repository;
     @Mock private EventRegistryActivityLogger activityLogger;
+    @Mock private IamSystemAuthorizationService systemAuthorizationService;
 
-    private EventDefinitionApplicationService service;
+
+    private ActivateEventDefinitionAction activateEventDefinitionAction;
+    private CreateEventDefinitionAction createEventDefinitionAction;
+    private DeactivateEventDefinitionAction deactivateEventDefinitionAction;
+    private EventDefinitionQueryService eventDefinitionQueryService;
 
     @BeforeEach
     void setUp() {
-        service = new EventDefinitionApplicationService(repository, activityLogger);
+        activateEventDefinitionAction = new ActivateEventDefinitionAction(repository, activityLogger, systemAuthorizationService);
+        createEventDefinitionAction = new CreateEventDefinitionAction(repository, activityLogger, systemAuthorizationService);
+        deactivateEventDefinitionAction = new DeactivateEventDefinitionAction(repository, activityLogger, systemAuthorizationService);
+        eventDefinitionQueryService = new EventDefinitionQueryService(repository);
     }
 
     @Test
@@ -43,7 +61,7 @@ class EventDefinitionApplicationServiceTest {
         when(repository.existsBySourceSystemAndEventKey(any(), any())).thenReturn(false);
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        EventDefinitionResponse response = service.createEventDefinition(command);
+        EventDefinitionResponse response = createEventDefinitionAction.execute(command);
 
         assertThat(response.code()).isEqualTo("HRM_CV_UPLOADED");
         assertThat(response.sourceSystem()).isEqualTo("HRM");
@@ -57,7 +75,7 @@ class EventDefinitionApplicationServiceTest {
 
         when(repository.existsByCode(any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createEventDefinition(command))
+        assertThatThrownBy(() -> createEventDefinitionAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -77,7 +95,7 @@ class EventDefinitionApplicationServiceTest {
         when(repository.existsByCode(any())).thenReturn(false);
         when(repository.existsBySourceSystemAndEventKey(any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createEventDefinition(command))
+        assertThatThrownBy(() -> createEventDefinitionAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -95,7 +113,7 @@ class EventDefinitionApplicationServiceTest {
         when(repository.existsByCode(any())).thenReturn(false);
         when(repository.existsBySourceSystemAndEventKey(any(), any())).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createEventDefinition(command))
+        assertThatThrownBy(() -> createEventDefinitionAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -110,7 +128,7 @@ class EventDefinitionApplicationServiceTest {
         UUID id = UUID.randomUUID();
         when(repository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getEventDefinitionDetail(
+        assertThatThrownBy(() -> eventDefinitionQueryService.getEventDefinitionDetail(
                 new com.company.scopery.modules.eventregistry.eventdefinition.application.query.GetEventDefinitionDetailQuery(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
@@ -126,7 +144,7 @@ class EventDefinitionApplicationServiceTest {
 
         when(repository.findById(id)).thenReturn(Optional.of(deprecated));
 
-        assertThatThrownBy(() -> service.activateEventDefinition(new ActivateEventDefinitionCommand(id)))
+        assertThatThrownBy(() -> activateEventDefinitionAction.execute(new ActivateEventDefinitionCommand(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> {
                     AppException ae = (AppException) e;
@@ -147,7 +165,7 @@ class EventDefinitionApplicationServiceTest {
         when(repository.findById(id)).thenReturn(Optional.of(active));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        EventDefinitionDetailResponse response = service.deactivateEventDefinition(
+        EventDefinitionDetailResponse response = deactivateEventDefinitionAction.execute(
                 new DeactivateEventDefinitionCommand(id));
 
         assertThat(response.status()).isEqualTo("INACTIVE");

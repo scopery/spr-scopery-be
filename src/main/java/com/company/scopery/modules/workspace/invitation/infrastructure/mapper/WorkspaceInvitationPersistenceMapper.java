@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.invitation.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitation;
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitationStatus;
+import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitation;
+import com.company.scopery.modules.workspace.invitation.domain.enums.WorkspaceInvitationStatus;
 import com.company.scopery.modules.workspace.invitation.infrastructure.persistence.WorkspaceInvitationJpaEntity;
 import org.springframework.stereotype.Component;
 

@@ -42,4 +42,7 @@ public class OrganizationJpaEntity extends AuditableJpaEntity {
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 
+    @Version @Column(name = "version", nullable = false)
+    private Integer version;
+
 }

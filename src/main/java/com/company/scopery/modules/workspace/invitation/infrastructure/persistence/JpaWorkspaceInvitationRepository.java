@@ -1,7 +1,7 @@
 package com.company.scopery.modules.workspace.invitation.infrastructure.persistence;
 
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitation;
-import com.company.scopery.modules.workspace.invitation.domain.WorkspaceInvitationRepository;
+import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitation;
+import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitationRepository;
 import com.company.scopery.modules.workspace.invitation.infrastructure.mapper.WorkspaceInvitationPersistenceMapper;
 import org.springframework.stereotype.Repository;
 

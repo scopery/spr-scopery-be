@@ -1,12 +1,21 @@
 package com.company.scopery.modules.aiagent.prompt.application;
+import com.company.scopery.modules.aiagent.prompt.application.action.ActivatePromptTemplateAction;
+import com.company.scopery.modules.aiagent.prompt.application.action.CreatePromptTemplateAction;
 
 import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.aiagent.agent.domain.*;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
+import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
 import com.company.scopery.modules.aiagent.prompt.application.command.CreatePromptTemplateCommand;
 import com.company.scopery.modules.aiagent.prompt.application.command.ActivatePromptTemplateCommand;
 import com.company.scopery.modules.aiagent.prompt.application.response.PromptTemplateResponse;
 import com.company.scopery.modules.aiagent.prompt.application.response.PromptTemplateDetailResponse;
-import com.company.scopery.modules.aiagent.prompt.domain.*;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptTemplateStatus;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplateRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.valueobject.PromptTemplateCode;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,17 +34,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PromptTemplateApplicationServiceTest {
+class PromptTemplateActionTest {
 
     @Mock private PromptTemplateRepository templateRepository;
     @Mock private AgentRepository agentRepository;
     @Mock private AiAgentActivityLogger activityLogger;
 
-    private PromptTemplateApplicationService service;
+
+    private ActivatePromptTemplateAction activatePromptTemplateAction;
+    private CreatePromptTemplateAction createPromptTemplateAction;
 
     @BeforeEach
     void setUp() {
-        service = new PromptTemplateApplicationService(templateRepository, agentRepository, activityLogger);
+        activatePromptTemplateAction = new ActivatePromptTemplateAction(templateRepository, agentRepository, activityLogger);
+        createPromptTemplateAction = new CreatePromptTemplateAction(templateRepository, agentRepository, activityLogger);
     }
 
     @Test
@@ -48,7 +60,7 @@ class PromptTemplateApplicationServiceTest {
         when(templateRepository.existsByAgentIdAndCode(eq(agentId), any())).thenReturn(false);
         when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PromptTemplateResponse response = service.createPromptTemplate(command);
+        PromptTemplateResponse response = createPromptTemplateAction.execute(command);
 
         assertThat(response.code()).isEqualTo("CV_EXTRACTION_PROMPT");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -67,7 +79,7 @@ class PromptTemplateApplicationServiceTest {
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(activeAgent(agentId)));
         when(templateRepository.existsByAgentIdAndCode(eq(agentId), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createPromptTemplate(command))
+        assertThatThrownBy(() -> createPromptTemplateAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("CV_EXTRACTION_PROMPT")
                 .satisfies(e -> {
@@ -88,7 +100,7 @@ class PromptTemplateApplicationServiceTest {
 
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(deprecatedAgent(agentId)));
 
-        assertThatThrownBy(() -> service.createPromptTemplate(command))
+        assertThatThrownBy(() -> createPromptTemplateAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("deprecated")
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus())
@@ -105,7 +117,7 @@ class PromptTemplateApplicationServiceTest {
 
         when(agentRepository.findById(agentId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createPromptTemplate(command))
+        assertThatThrownBy(() -> createPromptTemplateAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -119,7 +131,7 @@ class PromptTemplateApplicationServiceTest {
 
         when(templateRepository.findById(templateId)).thenReturn(Optional.of(deprecated));
 
-        assertThatThrownBy(() -> service.activatePromptTemplate(new ActivatePromptTemplateCommand(templateId)))
+        assertThatThrownBy(() -> activatePromptTemplateAction.execute(new ActivatePromptTemplateCommand(templateId)))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("Deprecated")
                 .satisfies(e -> {

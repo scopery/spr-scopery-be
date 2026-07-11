@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.deployment.application.response;
 
-import com.company.scopery.modules.aiagent.deployment.domain.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
 
 import java.math.BigDecimal;
 import java.time.Instant;

@@ -1,13 +1,19 @@
 package com.company.scopery.modules.aiagent.provider.infrastructure.persistence;
 
-import com.company.scopery.modules.aiagent.provider.domain.Provider;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderCode;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderRepository;
-import com.company.scopery.modules.aiagent.provider.domain.ProviderStatus;
+import com.company.scopery.common.pagination.PageQuery;
+import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderStatus;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderType;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.model.ProviderRepository;
+import com.company.scopery.modules.aiagent.provider.domain.valueobject.ProviderCode;
 import com.company.scopery.modules.aiagent.provider.infrastructure.mapper.ProviderPersistenceMapper;
+import com.company.scopery.modules.aiagent.provider.infrastructure.persistence.entity.ProviderJpaEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -48,12 +54,21 @@ public class JpaProviderRepository implements ProviderRepository {
     }
 
     @Override
-    public Page<Provider> findAll(String keyword, String type, ProviderStatus status, Pageable pageable) {
+    public PageResult<Provider> findAll(String keyword, ProviderType type, ProviderStatus status, PageQuery pageQuery) {
         Specification<ProviderJpaEntity> spec = buildSearchSpec(keyword, type, status);
-        return springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        Pageable pageable = toPageable(pageQuery);
+        Page<Provider> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
     }
 
-    private Specification<ProviderJpaEntity> buildSearchSpec(String keyword, String type, ProviderStatus status) {
+    private Pageable toPageable(PageQuery pageQuery) {
+        Sort sort = pageQuery.sortBy() != null
+                ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())
+                : Sort.unsorted();
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
+    }
+
+    private Specification<ProviderJpaEntity> buildSearchSpec(String keyword, ProviderType type, ProviderStatus status) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (keyword != null && !keyword.isBlank()) {
@@ -63,8 +78,8 @@ public class JpaProviderRepository implements ProviderRepository {
                         cb.like(cb.lower(root.get("code")), pattern)
                 ));
             }
-            if (type != null && !type.isBlank()) {
-                predicates.add(cb.equal(cb.lower(root.get("type")), type.toLowerCase()));
+            if (type != null) {
+                predicates.add(cb.equal(root.get("type"), type.name()));
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status.name()));

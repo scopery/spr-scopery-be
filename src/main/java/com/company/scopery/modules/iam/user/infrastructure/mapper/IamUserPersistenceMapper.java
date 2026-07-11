@@ -1,9 +1,9 @@
 package com.company.scopery.modules.iam.user.infrastructure.mapper;
 
-import com.company.scopery.modules.iam.user.domain.EmailAddress;
-import com.company.scopery.modules.iam.user.domain.IamUser;
-import com.company.scopery.modules.iam.user.domain.IamUserStatus;
-import com.company.scopery.modules.iam.user.domain.Username;
+import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
+import com.company.scopery.modules.iam.user.domain.model.IamUser;
+import com.company.scopery.modules.iam.user.domain.enums.IamUserStatus;
+import com.company.scopery.modules.iam.user.domain.valueobject.Username;
 import com.company.scopery.modules.iam.user.infrastructure.persistence.IamUserJpaEntity;
 import org.springframework.stereotype.Component;
 

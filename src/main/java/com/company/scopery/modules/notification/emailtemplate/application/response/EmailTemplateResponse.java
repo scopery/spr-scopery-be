@@ -1,6 +1,6 @@
 package com.company.scopery.modules.notification.emailtemplate.application.response;
 
-import com.company.scopery.modules.notification.emailtemplate.domain.EmailTemplate;
+import com.company.scopery.modules.notification.emailtemplate.domain.model.EmailTemplate;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,6 +1,9 @@
 package com.company.scopery.modules.notification.emailrule.infrastructure.mapper;
 
-import com.company.scopery.modules.notification.emailrule.domain.*;
+import com.company.scopery.modules.notification.emailrule.domain.model.EmailRule;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRecipientStrategy;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleScope;
+import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleStatus;
 import com.company.scopery.modules.notification.emailrule.infrastructure.persistence.EmailRuleJpaEntity;
 import org.springframework.stereotype.Component;
 

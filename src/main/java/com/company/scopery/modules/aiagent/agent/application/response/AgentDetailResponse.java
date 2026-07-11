@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.agent.application.response;
 
-import com.company.scopery.modules.aiagent.agent.domain.Agent;
+import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
 
 import java.time.Instant;
 import java.util.UUID;

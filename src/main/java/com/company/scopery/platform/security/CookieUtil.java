@@ -1,13 +1,12 @@
 package com.company.scopery.platform.security;
 
+import com.company.scopery.common.constant.ApiPaths;
 import org.springframework.http.ResponseCookie;
 
 public final class CookieUtil {
 
     public static final String ACCESS_TOKEN_COOKIE  = "access_token";
     public static final String REFRESH_TOKEN_COOKIE = "refresh_token";
-
-    private static final String REFRESH_COOKIE_PATH = "/api/v1/iam/auth";
 
     private CookieUtil() {}
 
@@ -26,7 +25,7 @@ public final class CookieUtil {
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite("Strict")
-                .path(REFRESH_COOKIE_PATH)
+                .path(ApiPaths.IAM_AUTH)
                 .maxAge(expirationMs / 1000)
                 .build();
     }
@@ -46,7 +45,7 @@ public final class CookieUtil {
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite("Strict")
-                .path(REFRESH_COOKIE_PATH)
+                .path(ApiPaths.IAM_AUTH)
                 .maxAge(0)
                 .build();
     }

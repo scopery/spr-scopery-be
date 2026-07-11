@@ -1,10 +1,16 @@
 package com.company.scopery.modules.aiagent.provider.application;
+import com.company.scopery.modules.aiagent.provider.application.action.CreateProviderAction;
+import com.company.scopery.modules.aiagent.provider.application.service.ProviderQueryService;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.aiagent.provider.application.command.CreateProviderCommand;
 import com.company.scopery.modules.aiagent.provider.application.query.GetProviderDetailQuery;
 import com.company.scopery.modules.aiagent.provider.application.response.ProviderResponse;
-import com.company.scopery.modules.aiagent.provider.domain.*;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderStatus;
+import com.company.scopery.modules.aiagent.provider.domain.enums.ProviderType;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
+import com.company.scopery.modules.aiagent.provider.domain.model.ProviderRepository;
+import com.company.scopery.modules.aiagent.provider.domain.valueobject.ProviderCode;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ProviderApplicationServiceTest {
+class ProviderActionTest {
 
     @Mock
     private ProviderRepository providerRepository;
@@ -31,11 +37,14 @@ class ProviderApplicationServiceTest {
     @Mock
     private AiAgentActivityLogger activityLogger;
 
-    private ProviderApplicationService service;
+
+    private CreateProviderAction createProviderAction;
+    private ProviderQueryService providerQueryService;
 
     @BeforeEach
     void setUp() {
-        service = new ProviderApplicationService(providerRepository, activityLogger);
+        createProviderAction = new CreateProviderAction(providerRepository, activityLogger);
+        providerQueryService = new ProviderQueryService(providerRepository);
     }
 
     @Test
@@ -46,7 +55,7 @@ class ProviderApplicationServiceTest {
         when(providerRepository.existsByCode(any())).thenReturn(false);
         when(providerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProviderResponse response = service.createProvider(command);
+        ProviderResponse response = createProviderAction.execute(command);
 
         assertThat(response.name()).isEqualTo("OpenAI");
         assertThat(response.code()).isEqualTo("OPENAI");
@@ -63,7 +72,7 @@ class ProviderApplicationServiceTest {
 
         when(providerRepository.existsByCode(any())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.createProvider(command))
+        assertThatThrownBy(() -> createProviderAction.execute(command))
                 .isInstanceOf(AppException.class)
                 .hasMessageContaining("OPENAI")
                 .satisfies(e -> {
@@ -80,7 +89,7 @@ class ProviderApplicationServiceTest {
         UUID id = UUID.randomUUID();
         when(providerRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getProviderDetail(new GetProviderDetailQuery(id)))
+        assertThatThrownBy(() -> providerQueryService.getProviderDetail(new GetProviderDetailQuery(id)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
@@ -93,7 +102,7 @@ class ProviderApplicationServiceTest {
         when(providerRepository.existsByCode(any())).thenReturn(false);
         when(providerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProviderResponse response = service.createProvider(command);
+        ProviderResponse response = createProviderAction.execute(command);
 
         assertThat(response.code()).isEqualTo("GOOGLE_GEMINI");
     }
@@ -103,7 +112,7 @@ class ProviderApplicationServiceTest {
     @SuppressWarnings("unused")
     private Provider existingProvider(ProviderStatus status) {
         return Provider.reconstitute(
-                UUID.randomUUID(), "OpenAI", ProviderCode.of("OPENAI"), "LLM",
+                UUID.randomUUID(), "OpenAI", ProviderCode.of("OPENAI"), ProviderType.LLM,
                 "https://api.openai.com", null, status, Instant.now(), Instant.now());
     }
 }

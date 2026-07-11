@@ -1,5 +1,9 @@
 package com.company.scopery.modules.aiagent.execution.domain;
 
+import com.company.scopery.modules.aiagent.execution.domain.model.ExecutionLog;
+import com.company.scopery.modules.aiagent.execution.domain.valueobject.ExecutionRequestId;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionStatus;
+import com.company.scopery.modules.aiagent.execution.domain.enums.ExecutionTriggerSource;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

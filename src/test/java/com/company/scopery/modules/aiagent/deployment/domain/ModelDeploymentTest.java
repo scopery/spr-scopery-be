@@ -1,5 +1,10 @@
 package com.company.scopery.modules.aiagent.deployment.domain;
 
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeployment;
+import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDeploymentCode;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentEnvironment;
+import com.company.scopery.modules.aiagent.deployment.domain.enums.ModelDeploymentStatus;
+import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

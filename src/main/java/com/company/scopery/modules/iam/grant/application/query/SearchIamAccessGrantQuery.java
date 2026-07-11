@@ -5,6 +5,7 @@ import java.util.UUID;
 public record SearchIamAccessGrantQuery(
         UUID subjectId,
         UUID resourceId,
+        UUID workspaceId,
         String status,
         int page,
         int size) {

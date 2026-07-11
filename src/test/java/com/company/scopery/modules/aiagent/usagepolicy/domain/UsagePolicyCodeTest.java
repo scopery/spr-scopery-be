@@ -1,5 +1,6 @@
 package com.company.scopery.modules.aiagent.usagepolicy.domain;
 
+import com.company.scopery.modules.aiagent.usagepolicy.domain.valueobject.UsagePolicyCode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

@@ -1,7 +1,7 @@
 package com.company.scopery.modules.eventregistry.shared.util;
 
 import com.company.scopery.common.exception.ValidationException;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.VariableType;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.VariableType;
 import com.company.scopery.modules.eventregistry.shared.error.EventRegistryErrorCatalog;
 
 public final class EventRegistryEnumParser {

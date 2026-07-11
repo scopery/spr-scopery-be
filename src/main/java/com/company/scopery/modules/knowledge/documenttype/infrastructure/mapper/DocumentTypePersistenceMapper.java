@@ -1,9 +1,9 @@
 package com.company.scopery.modules.knowledge.documenttype.infrastructure.mapper;
 
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentType;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeCode;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeScope;
-import com.company.scopery.modules.knowledge.documenttype.domain.DocumentTypeStatus;
+import com.company.scopery.modules.knowledge.documenttype.domain.model.DocumentType;
+import com.company.scopery.modules.knowledge.documenttype.domain.valueobject.DocumentTypeCode;
+import com.company.scopery.modules.knowledge.documenttype.domain.enums.DocumentTypeScope;
+import com.company.scopery.modules.knowledge.documenttype.domain.enums.DocumentTypeStatus;
 import com.company.scopery.modules.knowledge.documenttype.infrastructure.persistence.DocumentTypeJpaEntity;
 import org.springframework.stereotype.Component;
 

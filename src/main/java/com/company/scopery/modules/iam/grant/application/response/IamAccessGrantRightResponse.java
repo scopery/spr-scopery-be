@@ -1,6 +1,6 @@
 package com.company.scopery.modules.iam.grant.application.response;
 
-import com.company.scopery.modules.iam.grant.domain.IamAccessGrantRight;
+import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrantRight;
 
 import java.time.Instant;
 import java.util.UUID;

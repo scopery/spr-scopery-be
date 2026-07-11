@@ -1,6 +1,6 @@
 package com.company.scopery.modules.aiagent.prompt.application.response;
 
-import com.company.scopery.modules.aiagent.prompt.domain.PromptTemplate;
+import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
 
 import java.time.Instant;
 import java.util.UUID;

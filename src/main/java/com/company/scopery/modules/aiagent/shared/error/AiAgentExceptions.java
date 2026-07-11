@@ -196,6 +196,12 @@ public final class AiAgentExceptions {
                 Map.of("templateCode", templateCode));
     }
 
+    public static AppException promptVersionNumberConflict(UUID templateId) {
+        return new AppException(AiAgentErrorCatalog.PROMPT_VERSION_NUMBER_CONFLICT,
+                "Prompt version number was just taken by a concurrent request for template "
+                        + templateId + "; retry", Map.of("templateId", templateId));
+    }
+
     public static AppException promptVersionTemplateDeprecated(String templateCode) {
         return new AppException(AiAgentErrorCatalog.PROMPT_VERSION_TEMPLATE_DEPRECATED,
                 "Cannot create prompt version under a deprecated template: " + templateCode,
@@ -211,6 +217,12 @@ public final class AiAgentExceptions {
     public static AppException archivedPromptVersionCannotBeActivated(int versionNumber) {
         return new AppException(AiAgentErrorCatalog.ARCHIVED_PROMPT_VERSION_CANNOT_BE_ACTIVATED,
                 "Archived prompt version cannot be activated again: v" + versionNumber,
+                Map.of("versionNumber", versionNumber));
+    }
+
+    public static AppException promptVersionAlreadyArchived(int versionNumber) {
+        return new AppException(AiAgentErrorCatalog.PROMPT_VERSION_ALREADY_ARCHIVED,
+                "Prompt version is already archived: v" + versionNumber,
                 Map.of("versionNumber", versionNumber));
     }
 
@@ -230,6 +242,10 @@ public final class AiAgentExceptions {
                 "No active event configuration for event definition " + eventDefinitionId
                         + " in environment " + environment,
                 Map.of("eventDefinitionId", eventDefinitionId, "environment", environment));
+    }
+
+    public static AppException eventConfigResolveIdentifierRequired() {
+        return new AppException(AiAgentErrorCatalog.EVENT_CONFIG_RESOLVE_IDENTIFIER_REQUIRED);
     }
 
     public static AppException eventConfigCodeAlreadyExists(String code) {
@@ -558,7 +574,7 @@ public final class AiAgentExceptions {
         return new AppException(AiAgentErrorCatalog.OPENAI_API_KEY_MISSING);
     }
 
-    public static AppException openAiApiCallFailed(int statusCode, String responseBody) {
+    public static AppException openAiApiCallFailed(int statusCode) {
         return new AppException(AiAgentErrorCatalog.OPENAI_API_CALL_FAILED,
                 "OpenAI API call failed with status " + statusCode,
                 Map.of("statusCode", statusCode));
@@ -679,5 +695,27 @@ public final class AiAgentExceptions {
     public static AppException playgroundModelDeploymentNotActive(UUID id) {
         return new AppException(AiAgentErrorCatalog.PLAYGROUND_MODEL_DEPLOYMENT_NOT_ACTIVE,
                 "Model deployment is not active: " + id, Map.of("id", id));
+    }
+
+    public static AppException playgroundDisabledInEnvironment(String environment) {
+        return new AppException(AiAgentErrorCatalog.PLAYGROUND_DISABLED_IN_ENVIRONMENT,
+                "Playground direct execution is disabled in environment: " + environment,
+                Map.of("environment", environment));
+    }
+
+    // ── Execution Lifecycle ───────────────────────────────────────────────────
+
+    public static AppException executionLifecycleWriteRestricted() {
+        return new AppException(AiAgentErrorCatalog.EXECUTION_LIFECYCLE_WRITE_RESTRICTED);
+    }
+
+    public static AppException invalidExecutionInput(String reason) {
+        return new AppException(AiAgentErrorCatalog.AI_INVALID_INPUT_VARIABLES,
+                "AI execution input is invalid: " + reason, Map.of("reason", reason));
+    }
+
+    public static AppException invalidExecutionOutput(String reason) {
+        return new AppException(AiAgentErrorCatalog.AI_INVALID_OUTPUT,
+                "AI execution output is invalid: " + reason, Map.of("reason", reason));
     }
 }
