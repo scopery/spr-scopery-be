@@ -15,5 +15,7 @@ public record CreateEmailRuleRequest(
         @NotNull UUID templateId,
         @NotBlank String recipientStrategy,
         String recipientConfigJson,
-        int priority
+        int priority,
+        Boolean mandatory,
+        Boolean allowSensitiveVariables
 ) {}

@@ -5,6 +5,7 @@ import com.company.scopery.modules.iam.role.domain.model.IamRoleRepository;
 import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignment;
 import com.company.scopery.modules.iam.roleassignment.domain.model.IamRoleAssignmentRepository;
 import com.company.scopery.modules.iam.roleassignment.domain.enums.RoleAssigneeType;
+import com.company.scopery.modules.iam.user.domain.enums.IamRegistrationSource;
 import com.company.scopery.modules.iam.user.domain.valueobject.EmailAddress;
 import com.company.scopery.modules.iam.user.domain.model.IamUser;
 import com.company.scopery.modules.iam.user.domain.model.IamUserRepository;
@@ -65,7 +66,8 @@ public class AdminUserSeedInitializer implements ApplicationListener<Application
             return;
         }
 
-        IamUser admin = IamUser.create(username, EmailAddress.of(adminEmail), "Admin")
+        IamUser admin = IamUser.create(username, EmailAddress.of(adminEmail), "Admin",
+                        IamRegistrationSource.SYSTEM_BOOTSTRAP)
                 .withPassword(passwordEncoder.encode(adminPassword));
         IamUser saved = userRepository.save(admin);
 

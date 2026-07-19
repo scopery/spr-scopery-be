@@ -15,6 +15,18 @@ public interface SpringDataModelDeploymentJpaRepository
 
     boolean existsByModelIdAndCode(UUID modelId, String code);
 
+    boolean existsByModelIdAndStatus(UUID modelId, String status);
+
+    @Query("""
+           SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END
+           FROM ModelDeploymentJpaEntity d
+           WHERE d.status = 'ACTIVE'
+             AND d.modelId IN (
+                 SELECT m.id FROM AiModelJpaEntity m WHERE m.providerId = :providerId
+             )
+           """)
+    boolean existsActiveByProviderId(@Param("providerId") UUID providerId);
+
     List<ModelDeploymentJpaEntity> findByStatus(String status);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

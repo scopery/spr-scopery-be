@@ -10,6 +10,8 @@ public final class NotificationApiPaths {
     public static final String EMAIL_RULES      = BASE + "/email-rules";
     public static final String EMAIL_DELIVERIES = BASE + "/email-deliveries";
     public static final String EMAIL_OUTBOX     = BASE + "/email-outbox";
+    /** In-app inbox — under /api/notifications (not /api/notification/...). */
+    public static final String NOTIFICATIONS    = ApiPaths.BASE_PATH + "/notifications";
 
     private NotificationApiPaths() {}
 }

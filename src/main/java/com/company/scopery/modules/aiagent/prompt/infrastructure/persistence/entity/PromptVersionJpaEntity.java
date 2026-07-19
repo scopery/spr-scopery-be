@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -52,6 +54,33 @@ public class PromptVersionJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "change_note", columnDefinition = "TEXT")
     private String changeNote;
+
+    @Column(name = "system_prompt", columnDefinition = "TEXT")
+    private String systemPrompt;
+
+    @Column(name = "user_prompt_template", columnDefinition = "TEXT")
+    private String userPromptTemplate;
+
+    @Column(name = "response_format", length = 100)
+    private String responseFormat;
+
+    @Column(name = "response_schema_json", columnDefinition = "TEXT")
+    private String responseSchemaJson;
+
+    @Column(name = "temperature", precision = 5, scale = 2)
+    private BigDecimal temperature;
+
+    @Column(name = "top_p", precision = 5, scale = 2)
+    private BigDecimal topP;
+
+    @Column(name = "max_tokens")
+    private Integer maxTokens;
+
+    @Column(name = "activated_at")
+    private Instant activatedAt;
+
+    @Column(name = "activated_by", length = 100)
+    private String activatedBy;
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;

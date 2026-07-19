@@ -15,6 +15,7 @@ public class EmailOutbox {
     private final String htmlBody;
     private final String textBody;
     private final EmailProviderType providerType;
+    private final String dedupKey;
     private EmailOutboxStatus status;
     private String failureReason;
     private String providerMessageId;
@@ -26,9 +27,9 @@ public class EmailOutbox {
 
     private EmailOutbox(UUID id, UUID deliveryId, String toEmail, String subject,
                         String htmlBody, String textBody, EmailProviderType providerType,
-                        EmailOutboxStatus status, String failureReason, String providerMessageId,
-                        int retryCount, Instant scheduledAt, Instant sentAt,
-                        Instant createdAt, Instant updatedAt) {
+                        String dedupKey, EmailOutboxStatus status, String failureReason,
+                        String providerMessageId, int retryCount, Instant scheduledAt,
+                        Instant sentAt, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.deliveryId = deliveryId;
         this.toEmail = toEmail;
@@ -36,6 +37,7 @@ public class EmailOutbox {
         this.htmlBody = htmlBody;
         this.textBody = textBody;
         this.providerType = providerType;
+        this.dedupKey = dedupKey;
         this.status = status;
         this.failureReason = failureReason;
         this.providerMessageId = providerMessageId;
@@ -46,22 +48,31 @@ public class EmailOutbox {
         this.updatedAt = updatedAt;
     }
 
-    public static EmailOutbox create(UUID deliveryId, EmailMessage message, EmailProviderType providerType) {
+    public static EmailOutbox create(UUID deliveryId, EmailMessage message,
+                                     EmailProviderType providerType, String dedupKey) {
+        if (dedupKey == null || dedupKey.isBlank()) {
+            throw new IllegalArgumentException("dedupKey must not be blank");
+        }
         Instant now = Instant.now();
         return new EmailOutbox(UUID.randomUUID(), deliveryId,
                 message.toEmail(), message.subject(), message.htmlBody(), message.textBody(),
-                providerType, EmailOutboxStatus.PENDING, null, null,
+                providerType, dedupKey.trim(), EmailOutboxStatus.PENDING, null, null,
                 0, now, null, now, now);
+    }
+
+    /** @deprecated Prefer create(deliveryId, message, providerType, dedupKey). */
+    public static EmailOutbox create(UUID deliveryId, EmailMessage message, EmailProviderType providerType) {
+        return create(deliveryId, message, providerType, UUID.randomUUID().toString());
     }
 
     public static EmailOutbox reconstitute(UUID id, UUID deliveryId, String toEmail, String subject,
                                             String htmlBody, String textBody, EmailProviderType providerType,
-                                            EmailOutboxStatus status, String failureReason,
+                                            String dedupKey, EmailOutboxStatus status, String failureReason,
                                             String providerMessageId, int retryCount,
                                             Instant scheduledAt, Instant sentAt,
                                             Instant createdAt, Instant updatedAt) {
         return new EmailOutbox(id, deliveryId, toEmail, subject, htmlBody, textBody, providerType,
-                status, failureReason, providerMessageId, retryCount,
+                dedupKey, status, failureReason, providerMessageId, retryCount,
                 scheduledAt, sentAt, createdAt, updatedAt);
     }
 
@@ -84,15 +95,28 @@ public class EmailOutbox {
     }
 
     public void scheduleRetry(int delaySeconds) {
-        this.status = EmailOutboxStatus.PENDING;
+        this.status = EmailOutboxStatus.RETRY_SCHEDULED;
         this.retryCount++;
         this.scheduledAt = Instant.now().plusSeconds(delaySeconds);
         this.failureReason = null;
         this.updatedAt = Instant.now();
     }
 
+    public void markDeadLetter(String reason) {
+        this.status = EmailOutboxStatus.DEAD_LETTER;
+        this.failureReason = reason;
+        this.updatedAt = Instant.now();
+    }
+
     public void markCancelled() {
         this.status = EmailOutboxStatus.CANCELLED;
+        this.updatedAt = Instant.now();
+    }
+
+    public void resetForManualRetry() {
+        this.status = EmailOutboxStatus.PENDING;
+        this.scheduledAt = Instant.now();
+        this.failureReason = null;
         this.updatedAt = Instant.now();
     }
 
@@ -103,6 +127,7 @@ public class EmailOutbox {
     public String htmlBody() { return htmlBody; }
     public String textBody() { return textBody; }
     public EmailProviderType providerType() { return providerType; }
+    public String dedupKey() { return dedupKey; }
     public EmailOutboxStatus status() { return status; }
     public String failureReason() { return failureReason; }
     public String providerMessageId() { return providerMessageId; }

@@ -50,7 +50,9 @@ public class AgentController {
 
         CreateAgentCommand command = new CreateAgentCommand(
                 request.name(), request.code(), request.type(), request.description(),
-                request.defaultModelDeploymentId(), request.outputFormat());
+                request.defaultModelDeploymentId(), request.outputFormat(),
+                request.autonomyLevel(), request.scope(),
+                request.organizationId(), request.workspaceId());
 
         AgentResponse response = createAction.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
@@ -64,7 +66,9 @@ public class AgentController {
 
         UpdateAgentCommand command = new UpdateAgentCommand(
                 id, request.name(), request.type(), request.description(),
-                request.defaultModelDeploymentId(), request.outputFormat());
+                request.defaultModelDeploymentId(), request.outputFormat(),
+                request.autonomyLevel(), request.scope(),
+                request.organizationId(), request.workspaceId());
 
         AgentDetailResponse response = updateAction.execute(command);
         return ResponseEntity.ok(ApiResponse.success(response));

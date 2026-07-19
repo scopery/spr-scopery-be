@@ -24,6 +24,10 @@ public interface ModelDeploymentRepository {
 
     List<ModelDeployment> findAllByStatus(ModelDeploymentStatus status);
 
+    boolean existsActiveByModelId(UUID modelId);
+
+    boolean existsActiveByProviderId(UUID providerId);
+
     /**
      * Unsets is_default for deployments under the same model and environment.
      * Pass null as excludeId to clear ALL defaults (used during create).

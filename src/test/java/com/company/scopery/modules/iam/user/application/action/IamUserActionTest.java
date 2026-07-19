@@ -1,5 +1,6 @@
 package com.company.scopery.modules.iam.user.application.action;
 
+import com.company.scopery.common.audit.ImmutableAuditEventService;
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
 import com.company.scopery.modules.iam.shared.activity.IamActivityLogger;
@@ -36,6 +37,7 @@ class IamUserActionTest {
     @Mock private IamActivityLogger activityLogger;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private IamSystemAuthorizationService systemAuthorizationService;
+    @Mock private ImmutableAuditEventService auditEventService;
 
     private CreateIamUserAction createAction;
     private UpdateIamUserAction updateAction;
@@ -49,14 +51,14 @@ class IamUserActionTest {
     void setUp() {
         createAction = new CreateIamUserAction(userRepository, activityLogger, passwordEncoder);
         updateAction = new UpdateIamUserAction(userRepository, systemAuthorizationService, activityLogger);
-        suspendAction = new SuspendIamUserAction(userRepository, systemAuthorizationService, activityLogger);
+        suspendAction = new SuspendIamUserAction(userRepository, systemAuthorizationService, activityLogger, auditEventService);
         queryService = new IamUserQueryService(userRepository, systemAuthorizationService);
 
         Instant now = Instant.now();
-        activeUser = new IamUser(UUID.randomUUID(), Username.of("johndoe"),
+        activeUser = IamUser.of(UUID.randomUUID(), Username.of("johndoe"),
                 EmailAddress.of("john@example.com"), "John Doe",
                 null, IamUserStatus.ACTIVE, now, now);
-        suspendedUser = new IamUser(UUID.randomUUID(), Username.of("suspended.user"),
+        suspendedUser = IamUser.of(UUID.randomUUID(), Username.of("suspended.user"),
                 EmailAddress.of("suspended@example.com"), "Suspended User",
                 null, IamUserStatus.SUSPENDED, now, now);
     }

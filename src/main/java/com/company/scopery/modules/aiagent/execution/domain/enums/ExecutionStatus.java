@@ -5,9 +5,10 @@ public enum ExecutionStatus {
     RUNNING,
     SUCCEEDED,
     FAILED,
-    CANCELLED;
+    CANCELLED,
+    BLOCKED;
 
     public boolean isTerminal() {
-        return this == SUCCEEDED || this == FAILED || this == CANCELLED;
+        return this == SUCCEEDED || this == FAILED || this == CANCELLED || this == BLOCKED;
     }
 }

@@ -2,6 +2,7 @@ package com.company.scopery.modules.notification.emailoutbox.http.controller;
 
 import com.company.scopery.common.pagination.PageResponse;
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.modules.notification.emailoutbox.application.action.CancelEmailOutboxAction;
 import com.company.scopery.modules.notification.emailoutbox.application.action.RetryEmailOutboxAction;
 import com.company.scopery.modules.notification.emailoutbox.application.query.SearchEmailOutboxQuery;
 import com.company.scopery.modules.notification.emailoutbox.application.response.EmailOutboxResponse;
@@ -14,17 +15,20 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Tag(name = "Notification - Email Outbox", description = "View and retry email outbox records")
+@Tag(name = "Notification - Email Outbox", description = "View, retry, and cancel email outbox records")
 @RestController
 @RequestMapping(NotificationApiPaths.EMAIL_OUTBOX)
 public class EmailOutboxController {
 
     private final RetryEmailOutboxAction retryAction;
+    private final CancelEmailOutboxAction cancelAction;
     private final EmailOutboxQueryService queryService;
 
     public EmailOutboxController(RetryEmailOutboxAction retryAction,
+                                  CancelEmailOutboxAction cancelAction,
                                   EmailOutboxQueryService queryService) {
         this.retryAction = retryAction;
+        this.cancelAction = cancelAction;
         this.queryService = queryService;
     }
 
@@ -46,9 +50,15 @@ public class EmailOutboxController {
         return ResponseEntity.ok(ApiResponse.success(queryService.searchOutbox(query)));
     }
 
-    @Operation(summary = "Retry failed outbox record")
+    @Operation(summary = "Retry failed or dead-lettered outbox record")
     @PostMapping("/{id}/retry")
     public ResponseEntity<ApiResponse<EmailOutboxResponse>> retry(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(retryAction.execute(id)));
+    }
+
+    @Operation(summary = "Cancel pending/retryable outbox record")
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<EmailOutboxResponse>> cancel(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(cancelAction.execute(id)));
     }
 }

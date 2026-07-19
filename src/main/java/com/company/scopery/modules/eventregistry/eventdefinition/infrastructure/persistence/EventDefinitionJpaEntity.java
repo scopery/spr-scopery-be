@@ -36,7 +36,7 @@ public class EventDefinitionJpaEntity extends AuditableJpaEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "code", nullable = false, length = 100, updatable = false)
+    @Column(name = "code", nullable = false, length = 150, updatable = false)
     private String code;
 
     @Column(name = "name", nullable = false, length = 255)
@@ -66,4 +66,22 @@ public class EventDefinitionJpaEntity extends AuditableJpaEntity {
     @Column(name = "sample_payload_json", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private String samplePayloadJson;
+
+    @Column(name = "data_classification", length = 50)
+    private String dataClassification;
+
+    @Column(name = "owner_module", length = 100)
+    private String ownerModule;
+
+    @Column(name = "is_system_event", nullable = false)
+    private boolean systemEvent = true;
+
+    @Column(name = "deprecated_at")
+    private java.time.Instant deprecatedAt;
+
+    @Column(name = "deprecated_by")
+    private UUID deprecatedBy;
+
+    @Column(name = "replacement_event_definition_id")
+    private UUID replacementEventDefinitionId;
 }

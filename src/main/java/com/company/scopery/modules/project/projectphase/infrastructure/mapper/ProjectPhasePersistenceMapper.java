@@ -20,6 +20,9 @@ public class ProjectPhasePersistenceMapper {
                 entity.getPlannedStartDate(),
                 entity.getPlannedEndDate(),
                 ProjectPhaseStatus.valueOf(entity.getStatus()),
+                entity.getStartedAt(),
+                entity.getCompletedAt(),
+                entity.getArchivedAt(),
                 entity.getVersion() != null ? entity.getVersion() : 0,
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
@@ -38,9 +41,12 @@ public class ProjectPhasePersistenceMapper {
         entity.setPlannedStartDate(domain.plannedStartDate());
         entity.setPlannedEndDate(domain.plannedEndDate());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
+        entity.setStartedAt(domain.startedAt());
+        entity.setCompletedAt(domain.completedAt());
+        entity.setArchivedAt(domain.archivedAt());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
         }
         return entity;
     }

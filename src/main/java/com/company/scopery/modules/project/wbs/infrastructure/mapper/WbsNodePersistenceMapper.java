@@ -43,9 +43,9 @@ public class WbsNodePersistenceMapper {
         entity.setPath(domain.path());
         entity.setSortOrder(domain.sortOrder());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
         }
         return entity;
     }

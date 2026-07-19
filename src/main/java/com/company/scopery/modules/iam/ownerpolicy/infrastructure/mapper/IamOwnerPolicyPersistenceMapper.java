@@ -40,7 +40,7 @@ public class IamOwnerPolicyPersistenceMapper {
             entity.setInheritanceScope(domain.inheritanceScope().name());
             entity.setCanDelegate(domain.canDelegate()); entity.setDelegationDepth(domain.delegationDepth());
             entity.setEffectiveFrom(domain.effectiveFrom()); entity.setEffectiveTo(domain.effectiveTo());
-            entity.setVersion(domain.version()); entity.setCreatedAt(domain.createdAt());
+            if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); entity.setVersion(domain.version()); }
             return entity;
         } catch (Exception e) {
             throw new IllegalStateException("Cannot persist IAM owner policy action bundle", e);

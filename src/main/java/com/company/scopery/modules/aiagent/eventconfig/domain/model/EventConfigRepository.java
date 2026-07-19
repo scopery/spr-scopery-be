@@ -26,6 +26,8 @@ public interface EventConfigRepository {
     Optional<EventConfig> findActiveByEventDefinitionIdAndEnvironment(UUID eventDefinitionId,
                                                                        EventConfigEnvironment environment);
 
+    boolean existsActiveByEventDefinitionId(UUID eventDefinitionId);
+
     List<EventConfig> findAllByStatus(EventConfigStatus status);
 
     PageResult<EventConfig> findAll(String keyword, UUID eventDefinitionId,

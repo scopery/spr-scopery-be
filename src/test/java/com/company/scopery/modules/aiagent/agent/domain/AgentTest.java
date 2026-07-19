@@ -2,7 +2,9 @@ package com.company.scopery.modules.aiagent.agent.domain;
 
 import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
 import com.company.scopery.modules.aiagent.agent.domain.valueobject.AgentCode;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentAutonomyLevel;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentScope;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,8 @@ class AgentTest {
         assertThat(agent.code().value()).isEqualTo("CV_EXTRACTION_AGENT");
         assertThat(agent.outputFormat()).isEqualTo(AgentOutputFormat.JSON);
         assertThat(agent.defaultModelDeploymentId()).isNull();
+        assertThat(agent.autonomyLevel()).isEqualTo(AgentAutonomyLevel.SUGGEST_ONLY);
+        assertThat(agent.scope()).isEqualTo(AgentScope.SYSTEM);
     }
 
     @Test

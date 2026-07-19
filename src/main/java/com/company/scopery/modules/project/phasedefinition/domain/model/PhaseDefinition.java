@@ -9,11 +9,16 @@ import java.util.UUID;
 public record PhaseDefinition(
         UUID id,
         PhaseDefinitionScope scope,
+        UUID organizationId,
         UUID workspaceId,
         String code,
         String name,
         String description,
         int displayOrder,
+        /**
+         * Built-in / seed catalog flag ({@code is_system_default}).
+         * Built-in definitions cannot be hard-deleted or archived.
+         */
         boolean isSystemDefault,
         PhaseDefinitionStatus status,
         int version,
@@ -31,11 +36,35 @@ public record PhaseDefinition(
                 UUID.randomUUID(),
                 PhaseDefinitionScope.SYSTEM,
                 null,
+                null,
                 code,
                 name,
                 description,
                 displayOrder,
                 isSystemDefault,
+                PhaseDefinitionStatus.ACTIVE,
+                0,
+                null,
+                null
+        );
+    }
+
+    public static PhaseDefinition createOrganization(
+            UUID organizationId,
+            String code,
+            String name,
+            String description,
+            int displayOrder) {
+        return new PhaseDefinition(
+                UUID.randomUUID(),
+                PhaseDefinitionScope.ORGANIZATION,
+                organizationId,
+                null,
+                code,
+                name,
+                description,
+                displayOrder,
+                false,
                 PhaseDefinitionStatus.ACTIVE,
                 0,
                 null,
@@ -52,6 +81,7 @@ public record PhaseDefinition(
         return new PhaseDefinition(
                 UUID.randomUUID(),
                 PhaseDefinitionScope.WORKSPACE,
+                null,
                 workspaceId,
                 code,
                 name,
@@ -69,6 +99,7 @@ public record PhaseDefinition(
         return new PhaseDefinition(
                 this.id,
                 this.scope,
+                this.organizationId,
                 this.workspaceId,
                 this.code,
                 name,
@@ -82,10 +113,47 @@ public record PhaseDefinition(
         );
     }
 
+    public PhaseDefinition activate() {
+        return new PhaseDefinition(
+                this.id,
+                this.scope,
+                this.organizationId,
+                this.workspaceId,
+                this.code,
+                this.name,
+                this.description,
+                this.displayOrder,
+                this.isSystemDefault,
+                PhaseDefinitionStatus.ACTIVE,
+                this.version,
+                this.createdAt,
+                this.updatedAt
+        );
+    }
+
+    public PhaseDefinition deactivate() {
+        return new PhaseDefinition(
+                this.id,
+                this.scope,
+                this.organizationId,
+                this.workspaceId,
+                this.code,
+                this.name,
+                this.description,
+                this.displayOrder,
+                this.isSystemDefault,
+                PhaseDefinitionStatus.INACTIVE,
+                this.version,
+                this.createdAt,
+                this.updatedAt
+        );
+    }
+
     public PhaseDefinition archive() {
         return new PhaseDefinition(
                 this.id,
                 this.scope,
+                this.organizationId,
                 this.workspaceId,
                 this.code,
                 this.name,

@@ -103,7 +103,7 @@ public class IamAccessGrantController {
                 new CreateIamAccessGrantCommand(request.subjectType(), request.subjectId(),
                         request.resourceId(), request.roleId(),
                         request.effect(), request.scopeType(), request.scopeRefId(),
-                        request.workspaceId()))));
+                        request.workspaceId(), request.expiresAt()))));
     }
 
     @Operation(summary = "Get access grant by ID")

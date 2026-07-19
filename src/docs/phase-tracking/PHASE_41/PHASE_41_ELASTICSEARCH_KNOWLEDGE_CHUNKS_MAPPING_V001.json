@@ -1,0 +1,152 @@
+{
+  "index_patterns": [
+    "scopery-*-knowledge-chunks-v001-*"
+  ],
+  "priority": 410,
+  "template": {
+    "settings": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0",
+      "analysis": {
+        "normalizer": {
+          "scopery_lowercase": {
+            "type": "custom",
+            "filter": [
+              "lowercase"
+            ]
+          }
+        },
+        "analyzer": {
+          "scopery_folded": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          }
+        }
+      }
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "chunkId": {
+          "type": "keyword"
+        },
+        "workspaceId": {
+          "type": "keyword"
+        },
+        "projectId": {
+          "type": "keyword",
+          "null_value": "__NONE__"
+        },
+        "sourceType": {
+          "type": "keyword"
+        },
+        "sourceId": {
+          "type": "keyword"
+        },
+        "sourceRefId": {
+          "type": "keyword"
+        },
+        "sourceVersionId": {
+          "type": "keyword"
+        },
+        "projectionVersion": {
+          "type": "integer"
+        },
+        "chunkOrdinal": {
+          "type": "integer"
+        },
+        "strategyVersion": {
+          "type": "keyword"
+        },
+        "chunkType": {
+          "type": "keyword"
+        },
+        "title": {
+          "type": "text",
+          "analyzer": "standard",
+          "fields": {
+            "folded": {
+              "type": "text",
+              "analyzer": "scopery_folded"
+            },
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 512,
+              "normalizer": "scopery_lowercase"
+            }
+          }
+        },
+        "headingPath": {
+          "type": "text",
+          "analyzer": "standard",
+          "fields": {
+            "folded": {
+              "type": "text",
+              "analyzer": "scopery_folded"
+            }
+          }
+        },
+        "content": {
+          "type": "text",
+          "analyzer": "standard",
+          "fields": {
+            "folded": {
+              "type": "text",
+              "analyzer": "scopery_folded"
+            }
+          }
+        },
+        "embedding": {
+          "type": "dense_vector",
+          "dims": 1536,
+          "index": true,
+          "similarity": "cosine"
+        },
+        "language": {
+          "type": "keyword"
+        },
+        "classification": {
+          "type": "keyword"
+        },
+        "sourceStatus": {
+          "type": "keyword"
+        },
+        "isCurrent": {
+          "type": "boolean"
+        },
+        "aclTokens": {
+          "type": "keyword"
+        },
+        "permissionSignature": {
+          "type": "keyword"
+        },
+        "contentHash": {
+          "type": "keyword"
+        },
+        "sourceUpdatedAt": {
+          "type": "date"
+        },
+        "indexedAt": {
+          "type": "date"
+        },
+        "appRoute": {
+          "type": "keyword",
+          "index": false,
+          "doc_values": false
+        },
+        "metadata": {
+          "type": "flattened"
+        }
+      }
+    }
+  },
+  "_meta": {
+    "schemaVersion": "v001",
+    "embeddingProfile": "OPENAI_TEXT_EMBEDDING_3_SMALL_1536_V1",
+    "chunkStrategy": "chunk-v1"
+  }
+}

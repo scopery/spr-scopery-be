@@ -10,5 +10,9 @@ public record UpdateAgentRequest(
         @NotBlank String type,
         String description,
         UUID defaultModelDeploymentId,
-        String outputFormat
+        String outputFormat,
+        String autonomyLevel,
+        String scope,
+        UUID organizationId,
+        UUID workspaceId
 ) {}

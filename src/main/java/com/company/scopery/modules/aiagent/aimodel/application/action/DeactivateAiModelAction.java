@@ -4,6 +4,7 @@ import com.company.scopery.modules.aiagent.aimodel.application.command.Deactivat
 import com.company.scopery.modules.aiagent.aimodel.application.response.AiModelDetailResponse;
 import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModel;
 import com.company.scopery.modules.aiagent.aimodel.domain.model.AiModelRepository;
+import com.company.scopery.modules.aiagent.deployment.domain.model.ModelDeploymentRepository;
 import com.company.scopery.modules.aiagent.provider.domain.model.Provider;
 import com.company.scopery.modules.aiagent.provider.domain.model.ProviderRepository;
 import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger;
@@ -20,13 +21,16 @@ public class DeactivateAiModelAction {
 
     private final AiModelRepository aiModelRepository;
     private final ProviderRepository providerRepository;
+    private final ModelDeploymentRepository modelDeploymentRepository;
     private final AiAgentActivityLogger activityLogger;
 
     public DeactivateAiModelAction(AiModelRepository aiModelRepository,
                                    ProviderRepository providerRepository,
+                                   ModelDeploymentRepository modelDeploymentRepository,
                                    AiAgentActivityLogger activityLogger) {
         this.aiModelRepository = aiModelRepository;
         this.providerRepository = providerRepository;
+        this.modelDeploymentRepository = modelDeploymentRepository;
         this.activityLogger = activityLogger;
     }
 
@@ -34,6 +38,10 @@ public class DeactivateAiModelAction {
     public AiModelDetailResponse execute(DeactivateAiModelCommand command) {
         AiModel model = aiModelRepository.findById(command.id())
                 .orElseThrow(() -> AiAgentExceptions.aiModelNotFound(command.id()));
+
+        if (modelDeploymentRepository.existsActiveByModelId(model.id())) {
+            throw AiAgentExceptions.aiModelHasActiveDeployments(model.id());
+        }
 
         model.deactivate();
         AiModel saved = aiModelRepository.save(model);

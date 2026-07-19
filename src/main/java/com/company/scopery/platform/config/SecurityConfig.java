@@ -2,17 +2,23 @@ package com.company.scopery.platform.config;
 
 import com.company.scopery.common.constant.ApiPaths;
 import com.company.scopery.common.response.ErrorResponse;
+import com.company.scopery.platform.security.CorsProperties;
 import com.company.scopery.platform.security.JwtAuthFilter;
+import com.company.scopery.platform.security.SecurityPathPolicy;
+import com.company.scopery.platform.security.SwaggerAccessPolicy;
+import com.company.scopery.platform.web.idempotency.IdempotencyKeyFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,10 +30,10 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
-import com.company.scopery.platform.web.idempotency.IdempotencyKeyFilter;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -36,48 +42,58 @@ import java.time.Instant;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_PATHS = {
-            ApiPaths.IAM_AUTH + "/**",
-            ApiPaths.HEALTH,
-            "/actuator/health",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/v3/api-docs/**"
-    };
-
     private final JwtAuthFilter jwtAuthFilter;
-    private final ObjectMapper  objectMapper;
+    private final ObjectMapper objectMapper;
     private final IdempotencyKeyFilter idempotencyKeyFilter;
+    private final CorsProperties corsProperties;
+    private final SwaggerAccessPolicy swaggerAccessPolicy;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter, ObjectMapper objectMapper,
-                          IdempotencyKeyFilter idempotencyKeyFilter) {
+                          IdempotencyKeyFilter idempotencyKeyFilter,
+                          CorsProperties corsProperties,
+                          SwaggerAccessPolicy swaggerAccessPolicy) {
         this.jwtAuthFilter = jwtAuthFilter;
-        this.objectMapper  = objectMapper;
+        this.objectMapper = objectMapper;
         this.idempotencyKeyFilter = idempotencyKeyFilter;
+        this.corsProperties = corsProperties;
+        this.swaggerAccessPolicy = swaggerAccessPolicy;
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        corsProperties.validateForCredentialedRequests();
+
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        config.setAllowCredentials(corsProperties.isAllowCredentials());
+        config.setAllowedMethods(corsProperties.getAllowedMethods());
+        config.setAllowedHeaders(corsProperties.getAllowedHeaders());
+        config.setExposedHeaders(corsProperties.getExposedHeaders());
+        config.setMaxAge(corsProperties.getMaxAgeSeconds());
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(Customizer.withDefaults())
                 // CSRF — Double Submit Cookie pattern (JS reads XSRF-TOKEN cookie, sends as X-XSRF-TOKEN header)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers(ApiPaths.IAM_AUTH + "/**")
-                        .ignoringRequestMatchers(
-                                new AntPathRequestMatcher(ApiPaths.IAM_AUTH_PASSWORD_RESET_REQUEST, HttpMethod.POST.name()),
-                                new AntPathRequestMatcher(ApiPaths.IAM_AUTH_PASSWORD_RESET_CONFIRM, HttpMethod.POST.name()))
-                        .ignoringRequestMatchers(
-                                new AntPathRequestMatcher(ApiPaths.IAM_USERS, HttpMethod.POST.name())))
+                        .ignoringRequestMatchers(SecurityPathPolicy.csrfIgnoredMatchers()))
                 // Force deferred CSRF token to materialise on every response so the cookie is always set
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_PATHS).permitAll()
-                        .requestMatchers(HttpMethod.POST, ApiPaths.IAM_USERS).permitAll()
+                        .requestMatchers(HttpMethod.GET, SecurityPathPolicy.healthPath()).permitAll()
+                        .requestMatchers(swaggerAccessPolicy.infraPublicPaths().toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.POST,
-                                ApiPaths.IAM_AUTH_PASSWORD_RESET_REQUEST,
-                                ApiPaths.IAM_AUTH_PASSWORD_RESET_CONFIRM).permitAll()
+                                SecurityPathPolicy.publicAuthPostPaths().toArray(String[]::new)).permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiPaths.IAM_USERS).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, e) ->

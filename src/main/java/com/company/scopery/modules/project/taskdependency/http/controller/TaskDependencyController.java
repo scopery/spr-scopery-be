@@ -63,7 +63,7 @@ public class TaskDependencyController {
     public ResponseEntity<ApiResponse<TaskDependencyResponse>> getTaskDependency(
             @PathVariable UUID projectId,
             @PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(queryService.getTaskDependency(id)));
+        return ResponseEntity.ok(ApiResponse.success(queryService.getTaskDependency(projectId, id)));
     }
 
     @Operation(summary = "Search task dependencies")

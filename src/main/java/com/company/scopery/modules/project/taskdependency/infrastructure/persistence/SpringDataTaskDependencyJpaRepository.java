@@ -17,4 +17,9 @@ public interface SpringDataTaskDependencyJpaRepository
 
     @Query("SELECT d FROM TaskDependencyJpaEntity d WHERE d.successorTaskId = :taskId AND d.status = 'ACTIVE'")
     List<TaskDependencyJpaEntity> findActiveDependenciesFrom(@Param("taskId") UUID taskId);
+
+    @Query("SELECT d FROM TaskDependencyJpaEntity d WHERE d.predecessorTaskId = :taskId AND d.status = 'ACTIVE'")
+    List<TaskDependencyJpaEntity> findActiveDependenciesOutgoing(@Param("taskId") UUID taskId);
+
+    List<TaskDependencyJpaEntity> findAllByProjectIdAndStatus(UUID projectId, String status);
 }

@@ -4,7 +4,7 @@ COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B -q
 COPY src ./src
-RUN ./mvnw package -DskipTests -B -q
+RUN ./mvnw package -Dmaven.test.skip=true -B -q
 
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S scopery && adduser -S scopery -G scopery

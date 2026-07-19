@@ -5,6 +5,7 @@ import com.company.scopery.modules.iam.authorization.application.service.IamSyst
 import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
 import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.knowledge.documenttype.application.response.DocumentTypeResponse;
+import com.company.scopery.modules.knowledge.documenttype.application.support.DocumentTypePlatformPublisher;
 import com.company.scopery.modules.knowledge.documenttype.domain.model.DocumentType;
 import com.company.scopery.modules.knowledge.documenttype.domain.model.DocumentTypeRepository;
 import com.company.scopery.modules.knowledge.shared.activity.KnowledgeActivityLogger;
@@ -24,27 +25,30 @@ public class DeactivateDocumentTypeAction {
     private final WorkspaceIamIntegrationService workspaceIamIntegrationService;
     private final IamSystemAuthorizationService systemAuthorizationService;
     private final KnowledgeActivityLogger activityLogger;
+    private final DocumentTypePlatformPublisher platformPublisher;
 
     public DeactivateDocumentTypeAction(DocumentTypeRepository documentTypeRepository,
                                         CurrentUserAuthorizationService currentUserAuthorizationService,
                                         WorkspaceIamIntegrationService workspaceIamIntegrationService,
                                         IamSystemAuthorizationService systemAuthorizationService,
-                                        KnowledgeActivityLogger activityLogger) {
+                                        KnowledgeActivityLogger activityLogger,
+                                        DocumentTypePlatformPublisher platformPublisher) {
         this.documentTypeRepository = documentTypeRepository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.workspaceIamIntegrationService = workspaceIamIntegrationService;
         this.systemAuthorizationService = systemAuthorizationService;
         this.activityLogger = activityLogger;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public DocumentTypeResponse execute(UUID id) {
         DocumentType dt = documentTypeRepository.findById(id)
                 .orElseThrow(() -> KnowledgeExceptions.documentTypeNotFound(id));
-        if (dt.isDeleted()) {
-            throw KnowledgeExceptions.documentTypeDeletedCannotBeModified(dt.id());
+        if (dt.isArchived()) {
+            throw KnowledgeExceptions.documentTypeArchivedCannotBeModified(dt.id());
         }
-        if (dt.isSystem()) {
+        if (dt.isSystem() || dt.isOrganization()) {
             systemAuthorizationService.requireSystemRight(
                     IamAuthorities.SYSTEM_GOVERNANCE_MANAGE_DOCUMENT_TYPE.legacyRightCode());
         } else {
@@ -56,6 +60,7 @@ public class DeactivateDocumentTypeAction {
         activityLogger.logSuccess(KnowledgeEntityTypes.DOCUMENT_TYPE, saved.id(),
                 KnowledgeActivityActions.DEACTIVATE_DOCUMENT_TYPE,
                 "Document type deactivated: " + saved.code().value());
+        platformPublisher.enqueue(saved, "DOCUMENT_TYPE_DEACTIVATED");
         return DocumentTypeResponse.from(saved);
     }
 }

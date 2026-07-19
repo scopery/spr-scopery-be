@@ -1,0 +1,51 @@
+-- Phase 24 fix: rename project_* scope tables to scope_* module prefix (CLAUDE.md §12)
+
+ALTER TABLE IF EXISTS project_scope_package RENAME TO scope_package;
+ALTER TABLE IF EXISTS project_scope_item RENAME TO scope_item;
+ALTER TABLE IF EXISTS project_scope_item_wbs_mapping RENAME TO scope_item_wbs_mapping;
+ALTER TABLE IF EXISTS project_deliverable RENAME TO scope_deliverable;
+ALTER TABLE IF EXISTS project_deliverable_task_mapping RENAME TO scope_deliverable_task_mapping;
+ALTER TABLE IF EXISTS project_acceptance_criteria RENAME TO scope_acceptance_criteria;
+ALTER TABLE IF EXISTS project_acceptance_evidence RENAME TO scope_acceptance_evidence;
+ALTER TABLE IF EXISTS project_deliverable_review RENAME TO scope_deliverable_review;
+ALTER TABLE IF EXISTS project_deliverable_acceptance RENAME TO scope_deliverable_acceptance;
+
+-- Primary keys
+ALTER TABLE scope_package RENAME CONSTRAINT pk_project_scope_package TO pk_scope_package;
+ALTER TABLE scope_item RENAME CONSTRAINT pk_project_scope_item TO pk_scope_item;
+ALTER TABLE scope_item_wbs_mapping RENAME CONSTRAINT pk_project_scope_item_wbs_mapping TO pk_scope_item_wbs_mapping;
+ALTER TABLE scope_deliverable RENAME CONSTRAINT pk_project_deliverable TO pk_scope_deliverable;
+ALTER TABLE scope_deliverable_task_mapping RENAME CONSTRAINT pk_project_deliverable_task_mapping TO pk_scope_deliverable_task_mapping;
+ALTER TABLE scope_acceptance_criteria RENAME CONSTRAINT pk_project_acceptance_criteria TO pk_scope_acceptance_criteria;
+ALTER TABLE scope_acceptance_evidence RENAME CONSTRAINT pk_project_acceptance_evidence TO pk_scope_acceptance_evidence;
+ALTER TABLE scope_deliverable_review RENAME CONSTRAINT pk_project_deliverable_review TO pk_scope_deliverable_review;
+ALTER TABLE scope_deliverable_acceptance RENAME CONSTRAINT pk_project_deliverable_acceptance TO pk_scope_deliverable_acceptance;
+
+-- Foreign keys
+ALTER TABLE scope_package RENAME CONSTRAINT fk_project_scope_package_project TO fk_scope_package_project_project;
+ALTER TABLE scope_item RENAME CONSTRAINT fk_project_scope_item_package TO fk_scope_item_scope_package;
+ALTER TABLE scope_item_wbs_mapping RENAME CONSTRAINT fk_project_scope_item_wbs_mapping_item TO fk_scope_item_wbs_mapping_scope_item;
+ALTER TABLE scope_deliverable RENAME CONSTRAINT fk_project_deliverable_project TO fk_scope_deliverable_project_project;
+ALTER TABLE scope_deliverable_task_mapping RENAME CONSTRAINT fk_project_deliverable_task_mapping_deliverable TO fk_scope_deliverable_task_mapping_scope_deliverable;
+ALTER TABLE scope_acceptance_criteria RENAME CONSTRAINT fk_project_acceptance_criteria_deliverable TO fk_scope_acceptance_criteria_scope_deliverable;
+ALTER TABLE scope_acceptance_evidence RENAME CONSTRAINT fk_project_acceptance_evidence_deliverable TO fk_scope_acceptance_evidence_scope_deliverable;
+ALTER TABLE scope_deliverable_review RENAME CONSTRAINT fk_project_deliverable_review_deliverable TO fk_scope_deliverable_review_scope_deliverable;
+ALTER TABLE scope_deliverable_acceptance RENAME CONSTRAINT fk_project_deliverable_acceptance_deliverable TO fk_scope_deliverable_acceptance_scope_deliverable;
+
+-- Unique / check constraints
+ALTER TABLE scope_package RENAME CONSTRAINT uq_project_scope_package_code TO uq_scope_package_code;
+ALTER TABLE scope_package RENAME CONSTRAINT ck_project_scope_package_status TO ck_scope_package_status;
+ALTER TABLE scope_item RENAME CONSTRAINT ck_project_scope_item_flags TO ck_scope_item_flags;
+ALTER TABLE scope_item RENAME CONSTRAINT ck_project_scope_item_status TO ck_scope_item_status;
+ALTER TABLE scope_item_wbs_mapping RENAME CONSTRAINT ck_project_scope_item_wbs_mapping_type TO ck_scope_item_wbs_mapping_type;
+ALTER TABLE scope_deliverable RENAME CONSTRAINT ck_project_deliverable_status TO ck_scope_deliverable_status;
+ALTER TABLE scope_acceptance_criteria RENAME CONSTRAINT ck_project_acceptance_criteria_status TO ck_scope_acceptance_criteria_status;
+ALTER TABLE scope_deliverable_review RENAME CONSTRAINT ck_project_deliverable_review_status TO ck_scope_deliverable_review_status;
+ALTER TABLE scope_deliverable_acceptance RENAME CONSTRAINT ck_project_deliverable_acceptance_outcome TO ck_scope_deliverable_acceptance_outcome;
+
+-- Indexes
+ALTER INDEX IF EXISTS uq_project_scope_package_current RENAME TO uq_scope_package_current;
+ALTER INDEX IF EXISTS idx_project_scope_item_package RENAME TO idx_scope_item_package;
+ALTER INDEX IF EXISTS uq_project_scope_item_wbs_mapping_active RENAME TO uq_scope_item_wbs_mapping_active;
+ALTER INDEX IF EXISTS idx_project_deliverable_project RENAME TO idx_scope_deliverable_project;
+ALTER INDEX IF EXISTS uq_project_deliverable_task_mapping_active RENAME TO uq_scope_deliverable_task_mapping_active;

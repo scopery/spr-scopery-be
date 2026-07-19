@@ -16,12 +16,24 @@ public class AiModel {
     private String providerModelId;
     private AiModelType type;
     private String description;
+    private boolean supportsChat;
+    private boolean supportsEmbedding;
+    private boolean supportsToolCalling;
+    private boolean supportsJsonMode;
+    private Integer contextWindowTokens;
+    private Integer maxOutputTokens;
+    private String modelFamily;
+    private String capabilitiesJson;
     private AiModelStatus status;
     private final Instant createdAt;
     private Instant updatedAt;
 
     private AiModel(UUID id, UUID providerId, String name, AiModelCode code,
                     String providerModelId, AiModelType type, String description,
+                    boolean supportsChat, boolean supportsEmbedding,
+                    boolean supportsToolCalling, boolean supportsJsonMode,
+                    Integer contextWindowTokens, Integer maxOutputTokens,
+                    String modelFamily, String capabilitiesJson,
                     AiModelStatus status, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.providerId = providerId;
@@ -30,6 +42,14 @@ public class AiModel {
         this.providerModelId = providerModelId;
         this.type = type;
         this.description = description;
+        this.supportsChat = supportsChat;
+        this.supportsEmbedding = supportsEmbedding;
+        this.supportsToolCalling = supportsToolCalling;
+        this.supportsJsonMode = supportsJsonMode;
+        this.contextWindowTokens = contextWindowTokens;
+        this.maxOutputTokens = maxOutputTokens;
+        this.modelFamily = modelFamily;
+        this.capabilitiesJson = capabilitiesJson;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -37,23 +57,62 @@ public class AiModel {
 
     public static AiModel create(UUID providerId, String name, AiModelCode code,
                                   String providerModelId, AiModelType type, String description) {
+        return create(providerId, name, code, providerModelId, type, description,
+                false, false, false, false, null, null, null, null);
+    }
+
+    public static AiModel create(UUID providerId, String name, AiModelCode code,
+                                  String providerModelId, AiModelType type, String description,
+                                  Boolean supportsChat, Boolean supportsEmbedding,
+                                  Boolean supportsToolCalling, Boolean supportsJsonMode,
+                                  Integer contextWindowTokens, Integer maxOutputTokens,
+                                  String modelFamily, String capabilitiesJson) {
         validateProviderId(providerId);
         validateName(name);
         validateProviderModelId(providerModelId);
         validateType(type);
         Instant now = Instant.now();
         return new AiModel(UUID.randomUUID(), providerId, name, code, providerModelId,
-                           type, description, AiModelStatus.ACTIVE, now, now);
+                           type, description,
+                           Boolean.TRUE.equals(supportsChat),
+                           Boolean.TRUE.equals(supportsEmbedding),
+                           Boolean.TRUE.equals(supportsToolCalling),
+                           Boolean.TRUE.equals(supportsJsonMode),
+                           contextWindowTokens, maxOutputTokens, modelFamily, capabilitiesJson,
+                           AiModelStatus.ACTIVE, now, now);
     }
 
     public static AiModel reconstitute(UUID id, UUID providerId, String name, AiModelCode code,
                                         String providerModelId, AiModelType type, String description,
                                         AiModelStatus status, Instant createdAt, Instant updatedAt) {
+        return reconstitute(id, providerId, name, code, providerModelId, type, description,
+                false, false, false, false, null, null, null, null, status, createdAt, updatedAt);
+    }
+
+    public static AiModel reconstitute(UUID id, UUID providerId, String name, AiModelCode code,
+                                        String providerModelId, AiModelType type, String description,
+                                        boolean supportsChat, boolean supportsEmbedding,
+                                        boolean supportsToolCalling, boolean supportsJsonMode,
+                                        Integer contextWindowTokens, Integer maxOutputTokens,
+                                        String modelFamily, String capabilitiesJson,
+                                        AiModelStatus status, Instant createdAt, Instant updatedAt) {
         return new AiModel(id, providerId, name, code, providerModelId, type, description,
+                           supportsChat, supportsEmbedding, supportsToolCalling, supportsJsonMode,
+                           contextWindowTokens, maxOutputTokens, modelFamily, capabilitiesJson,
                            status, createdAt, updatedAt);
     }
 
     public void update(String name, String providerModelId, AiModelType type, String description) {
+        update(name, providerModelId, type, description,
+                this.supportsChat, this.supportsEmbedding, this.supportsToolCalling, this.supportsJsonMode,
+                this.contextWindowTokens, this.maxOutputTokens, this.modelFamily, this.capabilitiesJson);
+    }
+
+    public void update(String name, String providerModelId, AiModelType type, String description,
+                       Boolean supportsChat, Boolean supportsEmbedding,
+                       Boolean supportsToolCalling, Boolean supportsJsonMode,
+                       Integer contextWindowTokens, Integer maxOutputTokens,
+                       String modelFamily, String capabilitiesJson) {
         validateName(name);
         validateProviderModelId(providerModelId);
         validateType(type);
@@ -61,6 +120,14 @@ public class AiModel {
         this.providerModelId = providerModelId;
         this.type = type;
         this.description = description;
+        if (supportsChat != null) this.supportsChat = supportsChat;
+        if (supportsEmbedding != null) this.supportsEmbedding = supportsEmbedding;
+        if (supportsToolCalling != null) this.supportsToolCalling = supportsToolCalling;
+        if (supportsJsonMode != null) this.supportsJsonMode = supportsJsonMode;
+        this.contextWindowTokens = contextWindowTokens;
+        this.maxOutputTokens = maxOutputTokens;
+        this.modelFamily = modelFamily;
+        this.capabilitiesJson = capabilitiesJson;
         this.updatedAt = Instant.now();
     }
 
@@ -108,6 +175,14 @@ public class AiModel {
     public String providerModelId() { return providerModelId; }
     public AiModelType type() { return type; }
     public String description() { return description; }
+    public boolean supportsChat() { return supportsChat; }
+    public boolean supportsEmbedding() { return supportsEmbedding; }
+    public boolean supportsToolCalling() { return supportsToolCalling; }
+    public boolean supportsJsonMode() { return supportsJsonMode; }
+    public Integer contextWindowTokens() { return contextWindowTokens; }
+    public Integer maxOutputTokens() { return maxOutputTokens; }
+    public String modelFamily() { return modelFamily; }
+    public String capabilitiesJson() { return capabilitiesJson; }
     public AiModelStatus status() { return status; }
     public Instant createdAt() { return createdAt; }
     public Instant updatedAt() { return updatedAt; }

@@ -1,15 +1,12 @@
 package com.company.scopery.modules.iam.right.application.listeners;
 
-import com.company.scopery.modules.iam.right.domain.model.IamRight;
-import com.company.scopery.modules.iam.right.domain.valueobject.IamRightCode;
-import com.company.scopery.modules.iam.right.domain.model.IamRightRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,23 +16,25 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
 
     private static final Logger log = LoggerFactory.getLogger(IamRightCatalogInitializer.class);
 
-    private final IamRightRepository rightRepository;
+    private static final String UPSERT_SQL =
+            "INSERT INTO iam_right (id, code, name, description, module, status, " +
+            "                       created_at, updated_at, created_by, updated_by) " +
+            "VALUES (gen_random_uuid(), ?, ?, ?, ?, 'ACTIVE', now(), now(), 'SYSTEM', 'SYSTEM') " +
+            "ON CONFLICT ON CONSTRAINT uq_iam_right_code DO NOTHING";
 
-    public IamRightCatalogInitializer(IamRightRepository rightRepository) {
-        this.rightRepository = rightRepository;
+    private final JdbcTemplate jdbc;
+
+    public IamRightCatalogInitializer(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
     @Override
-    @Transactional
     public void onApplicationEvent(ApplicationReadyEvent event) {
         List<RightDef> catalog = buildCatalog();
         int seeded = 0;
         for (RightDef def : catalog) {
-            IamRightCode code = IamRightCode.of(def.code);
-            if (!rightRepository.existsByCode(code)) {
-                rightRepository.save(IamRight.create(code, def.name, def.description, def.module));
-                seeded++;
-            }
+            int rows = jdbc.update(UPSERT_SQL, def.code, def.name, def.description, def.module);
+            seeded += rows;
         }
         if (seeded > 0) {
             log.info("IAM right catalog: seeded {} rights", seeded);
@@ -101,8 +100,46 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
                 new RightDef("VIEW_DOCUMENT_TYPE",   "View Document Type",   "View document type configuration",              "DOCUMENT_TYPE"),
                 new RightDef("CREATE_DOCUMENT_TYPE", "Create Document Type", "Create a workspace document type",              "DOCUMENT_TYPE"),
                 new RightDef("UPDATE_DOCUMENT_TYPE", "Update Document Type", "Update a workspace document type",              "DOCUMENT_TYPE"),
-                new RightDef("DELETE_DOCUMENT_TYPE", "Delete Document Type", "Soft-delete a workspace document type",         "DOCUMENT_TYPE"),
+                new RightDef("DELETE_DOCUMENT_TYPE", "Delete Document Type", "Soft-delete a workspace document type (legacy)", "DOCUMENT_TYPE"),
+                new RightDef("ARCHIVE_DOCUMENT_TYPE", "Archive Document Type", "Archive a workspace document type",           "DOCUMENT_TYPE"),
                 new RightDef("MANAGE_DOCUMENT_TYPE", "Manage Document Type", "Full management of workspace document types",   "DOCUMENT_TYPE"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_VIEW", "Knowledge Document Type View", "Alias: view document types", "DOCUMENT_TYPE"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_CREATE", "Knowledge Document Type Create", "Alias: create document types", "DOCUMENT_TYPE"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_UPDATE", "Knowledge Document Type Update", "Alias: update document types", "DOCUMENT_TYPE"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_ARCHIVE", "Knowledge Document Type Archive", "Alias: archive document types", "DOCUMENT_TYPE"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_MANAGE", "Knowledge Document Type Manage", "Alias: manage document types", "DOCUMENT_TYPE"),
+                // DOCUMENT TYPE FIELD
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_FIELD_VIEW", "View Document Type Field", "View document type metadata fields", "DOCUMENT_TYPE_FIELD"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_FIELD_CREATE", "Create Document Type Field", "Create document type metadata fields", "DOCUMENT_TYPE_FIELD"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_FIELD_UPDATE", "Update Document Type Field", "Update document type metadata fields", "DOCUMENT_TYPE_FIELD"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_FIELD_ARCHIVE", "Archive Document Type Field", "Archive document type metadata fields", "DOCUMENT_TYPE_FIELD"),
+                new RightDef("KNOWLEDGE_DOCUMENT_TYPE_FIELD_MANAGE", "Manage Document Type Field", "Full management of document type fields", "DOCUMENT_TYPE_FIELD"),
+                // CLASSIFICATION
+                new RightDef("KNOWLEDGE_CLASSIFICATION_VIEW", "View Document Classification", "View document classification vocabulary", "KNOWLEDGE_CLASSIFICATION"),
+                // PROJECT
+                new RightDef("VIEW_PROJECT",    "View Project",    "View projects in a workspace",           "PROJECT"),
+                new RightDef("CREATE_PROJECT",  "Create Project",  "Create a project in a workspace",        "PROJECT"),
+                new RightDef("UPDATE_PROJECT",  "Update Project",  "Update project metadata and lifecycle", "PROJECT"),
+                new RightDef("ARCHIVE_PROJECT", "Archive Project", "Archive a project",                      "PROJECT"),
+                new RightDef("MANAGE_PROJECT",  "Manage Project",  "Full project management",                "PROJECT"),
+                // PROJECT PHASE
+                new RightDef("VIEW_PROJECT_PHASE",    "View Project Phase",    "View project phases",    "PROJECT_PHASE"),
+                new RightDef("CREATE_PROJECT_PHASE",  "Create Project Phase",  "Create project phases",  "PROJECT_PHASE"),
+                new RightDef("UPDATE_PROJECT_PHASE",  "Update Project Phase",  "Update project phases",  "PROJECT_PHASE"),
+                new RightDef("ARCHIVE_PROJECT_PHASE", "Archive Project Phase", "Archive project phases", "PROJECT_PHASE"),
+                new RightDef("MANAGE_PROJECT_PHASE",  "Manage Project Phase",  "Full project phase management", "PROJECT_PHASE"),
+                // WBS
+                new RightDef("VIEW_WBS_NODE",    "View WBS Node",    "View WBS nodes",    "WBS"),
+                new RightDef("CREATE_WBS_NODE",  "Create WBS Node",  "Create WBS nodes",  "WBS"),
+                new RightDef("UPDATE_WBS_NODE",  "Update WBS Node",  "Update WBS nodes",  "WBS"),
+                new RightDef("ARCHIVE_WBS_NODE", "Archive WBS Node", "Archive WBS nodes", "WBS"),
+                new RightDef("MANAGE_WBS_NODE",  "Manage WBS Node",  "Full WBS management", "WBS"),
+                // TASK
+                new RightDef("VIEW_TASK",    "View Task",    "View tasks",    "TASK"),
+                new RightDef("CREATE_TASK",  "Create Task",  "Create tasks",  "TASK"),
+                new RightDef("UPDATE_TASK",  "Update Task",  "Update tasks",  "TASK"),
+                new RightDef("ARCHIVE_TASK", "Archive Task", "Archive tasks", "TASK"),
+                new RightDef("MANAGE_TASK",  "Manage Task",  "Full task management", "TASK"),
                 // PHASE DEFINITION
                 new RightDef("VIEW_PHASE_DEFINITION",    "View Phase Definition",    "View phase definition templates",             "PHASE_DEFINITION"),
                 new RightDef("CREATE_PHASE_DEFINITION",  "Create Phase Definition",  "Create a workspace phase definition template", "PHASE_DEFINITION"),
@@ -110,6 +147,246 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
                 new RightDef("ARCHIVE_PHASE_DEFINITION", "Archive Phase Definition", "Archive a workspace phase definition template", "PHASE_DEFINITION"),
                 new RightDef("MANAGE_PHASE_DEFINITION",  "Manage Phase Definition",  "Full management of workspace phase definitions", "PHASE_DEFINITION"),
                 new RightDef("SYSTEM_MANAGE_PHASE_DEFINITION", "System Manage Phase Definition", "Create, update, and archive system phase definitions", "GOVERNANCE"),
+                // PROJECT TEMPLATE
+                new RightDef("VIEW_PROJECT_TEMPLATE",    "View Project Template",    "View project templates",           "PROJECT_TEMPLATE"),
+                new RightDef("CREATE_PROJECT_TEMPLATE",  "Create Project Template",  "Create project templates",         "PROJECT_TEMPLATE"),
+                new RightDef("UPDATE_PROJECT_TEMPLATE",  "Update Project Template",  "Update project templates",         "PROJECT_TEMPLATE"),
+                new RightDef("PUBLISH_PROJECT_TEMPLATE", "Publish Project Template", "Publish a project template version", "PROJECT_TEMPLATE"),
+                new RightDef("ARCHIVE_PROJECT_TEMPLATE", "Archive Project Template", "Archive project templates",        "PROJECT_TEMPLATE"),
+                new RightDef("APPLY_PROJECT_TEMPLATE",   "Apply Project Template",   "Apply a template to a project",    "PROJECT_TEMPLATE"),
+                new RightDef("MANAGE_PROJECT_TEMPLATE",  "Manage Project Template",  "Full project template management", "PROJECT_TEMPLATE"),
+                // RESOURCE CAPACITY (Phase 12)
+                new RightDef("CAPACITY_CALENDAR_VIEW",    "View Working Calendar",    "View working calendars",             "CAPACITY"),
+                new RightDef("CAPACITY_CALENDAR_CREATE",  "Create Working Calendar",  "Create a working calendar",          "CAPACITY"),
+                new RightDef("CAPACITY_CALENDAR_UPDATE",  "Update Working Calendar",  "Update a working calendar",          "CAPACITY"),
+                new RightDef("CAPACITY_CALENDAR_ARCHIVE", "Archive Working Calendar", "Archive a working calendar",         "CAPACITY"),
+                new RightDef("CAPACITY_CALENDAR_MANAGE",  "Manage Working Calendar",  "Full working calendar management",   "CAPACITY"),
+                new RightDef("CAPACITY_PROFILE_VIEW",    "View Capacity Profile",    "View user capacity profiles",         "CAPACITY"),
+                new RightDef("CAPACITY_PROFILE_CREATE",  "Create Capacity Profile",  "Create a user capacity profile",      "CAPACITY"),
+                new RightDef("CAPACITY_PROFILE_UPDATE",  "Update Capacity Profile",  "Update a user capacity profile",      "CAPACITY"),
+                new RightDef("CAPACITY_PROFILE_ARCHIVE", "Archive Capacity Profile", "Archive a user capacity profile",     "CAPACITY"),
+                new RightDef("CAPACITY_PROFILE_MANAGE",  "Manage Capacity Profile",  "Full user capacity profile management", "CAPACITY"),
+                new RightDef("PROJECT_ALLOCATION_VIEW",    "View Project Allocation",    "View project resource allocations",    "CAPACITY"),
+                new RightDef("PROJECT_ALLOCATION_CREATE",  "Create Project Allocation",  "Create a project resource allocation", "CAPACITY"),
+                new RightDef("PROJECT_ALLOCATION_UPDATE",  "Update Project Allocation",  "Update a project resource allocation", "CAPACITY"),
+                new RightDef("PROJECT_ALLOCATION_ARCHIVE", "Archive Project Allocation", "Archive a project resource allocation", "CAPACITY"),
+                new RightDef("PROJECT_ALLOCATION_MANAGE",  "Manage Project Allocation",  "Full project resource allocation management", "CAPACITY"),
+                new RightDef("CAPACITY_VIEW",      "View Capacity",      "View capacity availability, overview, and allocation summaries", "CAPACITY"),
+                new RightDef("CAPACITY_CALCULATE", "Calculate Capacity", "Run capacity calculations",                                      "CAPACITY"),
+                // RATE CARD (Phase 15)
+                new RightDef("COST_ROLE_VIEW",    "View Cost Role",    "View planning cost roles",             "RATE_CARD"),
+                new RightDef("COST_ROLE_CREATE",  "Create Cost Role",  "Create a planning cost role",          "RATE_CARD"),
+                new RightDef("COST_ROLE_UPDATE",  "Update Cost Role",  "Update a planning cost role",          "RATE_CARD"),
+                new RightDef("COST_ROLE_ARCHIVE", "Archive Cost Role", "Archive a planning cost role",         "RATE_CARD"),
+                new RightDef("COST_ROLE_MANAGE",  "Manage Cost Role",  "Full cost role management",            "RATE_CARD"),
+                new RightDef("RATE_CARD_VIEW",    "View Rate Card",    "View rate cards",                      "RATE_CARD"),
+                new RightDef("RATE_CARD_CREATE",  "Create Rate Card",  "Create a rate card",                   "RATE_CARD"),
+                new RightDef("RATE_CARD_UPDATE",  "Update Rate Card",  "Update a rate card",                   "RATE_CARD"),
+                new RightDef("RATE_CARD_PUBLISH", "Publish Rate Card", "Publish a rate card version",          "RATE_CARD"),
+                new RightDef("RATE_CARD_ARCHIVE", "Archive Rate Card", "Archive a rate card",                  "RATE_CARD"),
+                new RightDef("RATE_CARD_MANAGE",  "Manage Rate Card",  "Full rate card management",            "RATE_CARD"),
+                new RightDef("RATE_CARD_LINE_VIEW",   "View Rate Card Line",   "View rate card lines",   "RATE_CARD"),
+                new RightDef("RATE_CARD_LINE_CREATE", "Create Rate Card Line", "Create rate card lines", "RATE_CARD"),
+                new RightDef("RATE_CARD_LINE_UPDATE", "Update Rate Card Line", "Update rate card lines", "RATE_CARD"),
+                new RightDef("RATE_CARD_LINE_DELETE", "Delete Rate Card Line", "Delete rate card lines", "RATE_CARD"),
+                new RightDef("INFLATION_POLICY_VIEW",    "View Inflation Policy",    "View inflation policies",    "RATE_CARD"),
+                new RightDef("INFLATION_POLICY_CREATE",  "Create Inflation Policy",  "Create inflation policies",  "RATE_CARD"),
+                new RightDef("INFLATION_POLICY_UPDATE",  "Update Inflation Policy",  "Update inflation policies",  "RATE_CARD"),
+                new RightDef("INFLATION_POLICY_ARCHIVE", "Archive Inflation Policy", "Archive inflation policies", "RATE_CARD"),
+                new RightDef("INFLATION_POLICY_MANAGE",  "Manage Inflation Policy",  "Full inflation policy management", "RATE_CARD"),
+                new RightDef("RATE_RESOLUTION_VIEW",    "View Rate Resolution",    "Resolve applicable rates",              "RATE_CARD"),
+                new RightDef("RATE_RESOLUTION_PREVIEW", "Preview Rate Resolution", "Preview task estimated labor cost",     "RATE_CARD"),
+                new RightDef("MEMBER_COST_ROLE_VIEW",   "View Member Cost Role",   "View member cost role assignments",     "RATE_CARD"),
+                new RightDef("MEMBER_COST_ROLE_ASSIGN", "Assign Member Cost Role", "Assign default cost roles to members",  "RATE_CARD"),
+                new RightDef("MEMBER_COST_ROLE_MANAGE", "Manage Member Cost Role", "Full member cost role management",      "RATE_CARD"),
+                // ESTIMATION (Phase 16)
+                new RightDef("ESTIMATION_VIEW", "View Estimation", "View estimation runs and summaries", "ESTIMATION"),
+                new RightDef("ESTIMATION_RUN_CREATE", "Create Estimation Run", "Create and execute estimation runs", "ESTIMATION"),
+                new RightDef("ESTIMATION_RUN_CANCEL", "Cancel Estimation Run", "Cancel pending or running estimation runs", "ESTIMATION"),
+                new RightDef("ESTIMATION_MARK_CURRENT", "Mark Estimation Current", "Mark an estimation run as current", "ESTIMATION"),
+                new RightDef("ESTIMATION_TASK_VIEW", "View Estimation Tasks", "View task estimate snapshots", "ESTIMATION"),
+                new RightDef("ESTIMATION_WBS_VIEW", "View Estimation WBS", "View WBS estimate roll-ups", "ESTIMATION"),
+                new RightDef("ESTIMATION_PHASE_VIEW", "View Estimation Phases", "View phase estimate roll-ups", "ESTIMATION"),
+                new RightDef("ESTIMATION_SUMMARY_VIEW", "View Estimation Summary", "View project estimate summary", "ESTIMATION"),
+                new RightDef("ESTIMATION_RATE_DETAIL_VIEW", "View Estimation Rate Detail", "View rate snapshot detail on estimates", "ESTIMATION"),
+                // PROJECT FINANCE (Phase 17)
+                new RightDef("PROJECT_FINANCE_VIEW", "View Project Finance", "View finance scenarios and summaries", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_CREATE", "Create Project Finance", "Create finance scenarios", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_UPDATE", "Update Project Finance", "Update draft finance scenarios", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_RECALCULATE", "Recalculate Project Finance", "Recalculate draft finance scenarios", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_APPROVE", "Approve Project Finance", "Approve finance scenarios", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_MARK_CURRENT", "Mark Finance Current", "Mark finance scenario as current", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_ARCHIVE", "Archive Project Finance", "Archive finance scenarios", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_MANAGE", "Manage Project Finance", "Full project finance management", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_COST_VIEW", "View Finance Costs", "View custom and vendor costs", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_COST_CREATE", "Create Finance Costs", "Create custom and vendor costs", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_COST_UPDATE", "Update Finance Costs", "Update custom and vendor costs", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_COST_ARCHIVE", "Archive Finance Costs", "Archive custom and vendor costs", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_REVENUE_VIEW", "View Finance Revenue", "View planned revenue split", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_REVENUE_UPDATE", "Update Finance Revenue", "Update planned revenue split", "PROJECT_FINANCE"),
+                new RightDef("PROJECT_FINANCE_MARGIN_VIEW", "View Finance Margin", "View gross margin and PBT", "PROJECT_FINANCE"),
+                // QUOTE (Phase 18)
+                new RightDef("QUOTE_VIEW", "View Quote", "View quotes, versions, lines, terms, and summaries", "QUOTE"),
+                new RightDef("QUOTE_CREATE", "Create Quote", "Create quote shells", "QUOTE"),
+                new RightDef("QUOTE_UPDATE", "Update Quote", "Update quote shells", "QUOTE"),
+                new RightDef("QUOTE_ARCHIVE", "Archive Quote", "Archive quotes", "QUOTE"),
+                new RightDef("QUOTE_MANAGE", "Manage Quote", "Full quote management", "QUOTE"),
+                new RightDef("QUOTE_VERSION_CREATE", "Create Quote Version", "Create quote versions from finance", "QUOTE"),
+                new RightDef("QUOTE_VERSION_UPDATE", "Update Quote Version", "Update draft quote versions", "QUOTE"),
+                new RightDef("QUOTE_VERSION_ARCHIVE", "Archive Quote Version", "Archive quote versions", "QUOTE"),
+                new RightDef("QUOTE_VERSION_DUPLICATE", "Duplicate Quote Version", "Duplicate quote versions", "QUOTE"),
+                new RightDef("QUOTE_LINE_CREATE", "Create Quote Line", "Create quote lines", "QUOTE"),
+                new RightDef("QUOTE_LINE_UPDATE", "Update Quote Line", "Update quote lines", "QUOTE"),
+                new RightDef("QUOTE_LINE_DELETE", "Delete Quote Line", "Delete quote lines", "QUOTE"),
+                new RightDef("QUOTE_TERM_CREATE", "Create Quote Term", "Create quote terms", "QUOTE"),
+                new RightDef("QUOTE_TERM_UPDATE", "Update Quote Term", "Update quote terms", "QUOTE"),
+                new RightDef("QUOTE_TERM_DELETE", "Delete Quote Term", "Delete quote terms", "QUOTE"),
+                new RightDef("QUOTE_SOLVER_USE", "Use Quote Solver", "Use target margin solver", "QUOTE"),
+                new RightDef("QUOTE_RECALCULATE", "Recalculate Quote", "Recalculate quote summaries", "QUOTE"),
+                new RightDef("QUOTE_SUBMIT", "Submit Quote", "Submit quote versions", "QUOTE"),
+                new RightDef("QUOTE_APPROVE", "Approve Quote", "Approve quote versions", "QUOTE"),
+                new RightDef("QUOTE_REJECT", "Reject Quote", "Reject quote versions", "QUOTE"),
+                new RightDef("QUOTE_SEND", "Send Quote", "Mark quote versions as sent", "QUOTE"),
+                new RightDef("QUOTE_MARK_ACCEPTED", "Mark Quote Accepted", "Mark quote versions as accepted", "QUOTE"),
+                new RightDef("QUOTE_MARK_CURRENT", "Mark Quote Current", "Mark quote versions as current", "QUOTE"),
+                new RightDef("QUOTE_MARGIN_VIEW", "View Quote Margin", "View quote margin and PBT fields", "QUOTE"),
+                new RightDef("QUOTE_DISCOUNT_UPDATE", "Update Quote Discount", "Update quote discounts", "QUOTE"),
+                new RightDef("QUOTE_DISCOUNT_APPROVE", "Approve Quote Discount", "Approve discounts above threshold", "QUOTE"),
+                new RightDef("PROJECT_BASELINE_VIEW", "View Project Baseline", "View project baselines", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_CREATE", "Create Project Baseline", "Create draft baselines", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_UPDATE", "Update Project Baseline", "Update draft baselines", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_VALIDATE", "Validate Project Baseline", "Validate baseline readiness", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_APPROVE", "Approve Project Baseline", "Approve baselines", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_MARK_CURRENT", "Mark Baseline Current", "Mark baseline as current", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_ARCHIVE", "Archive Project Baseline", "Archive baselines", "PROJECT_BASELINE"),
+                new RightDef("PROJECT_BASELINE_COMPARE", "Compare Project Baseline", "Compare baselines", "PROJECT_BASELINE"),
+                new RightDef("CHANGE_REQUEST_VIEW", "View Change Request", "View change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_CREATE", "Create Change Request", "Create change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_UPDATE", "Update Change Request", "Update draft change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_SUBMIT", "Submit Change Request", "Submit change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_APPROVE", "Approve Change Request", "Approve change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_REJECT", "Reject Change Request", "Reject change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_CANCEL", "Cancel Change Request", "Cancel change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_APPLY", "Apply Change Request", "Apply approved change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_ARCHIVE", "Archive Change Request", "Archive change requests", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_ITEM_VIEW", "View Change Request Item", "View change request items", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_ITEM_CREATE", "Create Change Request Item", "Create change request items", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_ITEM_UPDATE", "Update Change Request Item", "Update change request items", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_REQUEST_ITEM_DELETE", "Delete Change Request Item", "Delete change request items", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_IMPACT_VIEW", "View Change Impact", "View change impact", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_IMPACT_UPDATE", "Update Change Impact", "Update change impact", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_IMPACT_CALCULATE", "Calculate Change Impact", "Calculate change impact", "CHANGE_REQUEST"),
+                new RightDef("CHANGE_ORDER_VIEW", "View Change Order", "View change orders", "CHANGE_ORDER"),
+                new RightDef("CHANGE_ORDER_CREATE", "Create Change Order", "Create change orders", "CHANGE_ORDER"),
+                new RightDef("CHANGE_ORDER_UPDATE", "Update Change Order", "Update change orders", "CHANGE_ORDER"),
+                new RightDef("CHANGE_ORDER_APPROVE", "Approve Change Order", "Approve change orders", "CHANGE_ORDER"),
+                new RightDef("CHANGE_ORDER_REJECT", "Reject Change Order", "Reject change orders", "CHANGE_ORDER"),
+                new RightDef("CHANGE_ORDER_ARCHIVE", "Archive Change Order", "Archive change orders", "CHANGE_ORDER"),
+                new RightDef("PROJECT_NOTIFICATION_VIEW", "View Project Notifications", "View project notification subscriptions", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_SUBSCRIBE_SELF", "Subscribe Project Notifications", "Subscribe self to project notifications", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_MANAGE_SUBSCRIBERS", "Manage Project Notification Subscribers", "Manage other project notification subscribers", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_PREFERENCE_VIEW", "View Project Notification Preferences", "View project notification preferences", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_PREFERENCE_UPDATE", "Update Project Notification Preferences", "Update project notification preferences", "PROJECT_NOTIFICATION"),
+                new RightDef("TASK_NOTIFICATION_VIEW", "View Task Notifications", "View task notification subscriptions", "PROJECT_NOTIFICATION"),
+                new RightDef("TASK_NOTIFICATION_SUBSCRIBE_SELF", "Subscribe Task Notifications", "Subscribe self to task notifications", "PROJECT_NOTIFICATION"),
+                new RightDef("TASK_NOTIFICATION_MANAGE_SUBSCRIBERS", "Manage Task Notification Subscribers", "Manage other task notification subscribers", "PROJECT_NOTIFICATION"),
+                new RightDef("TASK_NOTIFICATION_PREFERENCE_VIEW", "View Task Notification Preferences", "View task notification preferences", "PROJECT_NOTIFICATION"),
+                new RightDef("TASK_NOTIFICATION_PREFERENCE_UPDATE", "Update Task Notification Preferences", "Update task notification preferences", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_RULE_VIEW", "View Project Notification Rules", "View project notification rules", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_RULE_MANAGE", "Manage Project Notification Rules", "Manage project notification rules", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_REMINDER_RUN", "Run Project Reminders", "Run project due-date reminder jobs", "PROJECT_NOTIFICATION"),
+                new RightDef("PROJECT_NOTIFICATION_DELIVERY_VIEW", "View Project Notification Delivery", "View project notification delivery status", "PROJECT_NOTIFICATION"),
+                new RightDef("AI_PROJECT_PLANNING_VIEW", "View AI Planning", "View AI planning runs and suggestions", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLANNING_RUN", "Run AI Planning", "Create AI planning runs", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLANNING_REVIEW", "Review AI Suggestions", "Start AI suggestion review", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLANNING_ACCEPT", "Accept AI Suggestions", "Accept AI suggestions/items", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLANNING_REJECT", "Reject AI Suggestions", "Reject AI suggestions/items", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLANNING_APPLY", "Apply AI Suggestions", "Safely apply accepted AI suggestions", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLANNING_ARCHIVE", "Archive AI Suggestions", "Archive AI suggestions", "AI_PLANNING"),
+                new RightDef("AI_PROJECT_PLAN_DRAFT", "AI Plan Draft", "Run project plan draft AI", "AI_PLANNING"),
+                new RightDef("AI_TASK_ESTIMATE_SUGGEST", "AI Task Estimate Suggest", "Run task estimate AI", "AI_PLANNING"),
+                new RightDef("AI_COST_ROLE_SUGGEST", "AI Cost Role Suggest", "Run cost role AI", "AI_PLANNING"),
+                new RightDef("AI_SCHEDULE_RISK_EXPLAIN", "AI Schedule Risk Explain", "Run schedule risk AI", "AI_PLANNING"),
+                new RightDef("AI_FINANCE_INSIGHT", "AI Finance Insight", "Run finance insight AI", "AI_PLANNING"),
+                new RightDef("AI_QUOTE_DRAFT", "AI Quote Draft", "Run quote draft AI", "AI_PLANNING"),
+                new RightDef("AI_CHANGE_REQUEST_DRAFT", "AI Change Request Draft", "Run change request draft AI", "AI_PLANNING"),
+                new RightDef("AI_SUGGESTION_APPLY_WBS", "AI Apply WBS", "Apply AI WBS suggestions", "AI_PLANNING"),
+                new RightDef("AI_SUGGESTION_APPLY_TASK", "AI Apply Task", "Apply AI task suggestions", "AI_PLANNING"),
+                new RightDef("AI_SUGGESTION_APPLY_ESTIMATE", "AI Apply Estimate", "Apply AI estimate suggestions", "AI_PLANNING"),
+                new RightDef("AI_SUGGESTION_APPLY_DEPENDENCY", "AI Apply Dependency", "Apply AI dependency suggestions", "AI_PLANNING"),
+                new RightDef("AI_SUGGESTION_APPLY_QUOTE_TERM", "AI Apply Quote Term", "Apply AI quote term suggestions", "AI_PLANNING"),
+                new RightDef("AI_SUGGESTION_APPLY_CHANGE_REQUEST", "AI Apply Change Request", "Apply AI change request suggestions", "AI_PLANNING"),
+                new RightDef("REPORTING_DASHBOARD_VIEW", "View Reporting Dashboard", "View project dashboards", "REPORTING"),
+                new RightDef("REPORTING_HEALTH_VIEW", "View Project Health", "View project health scores", "REPORTING"),
+                new RightDef("REPORTING_KPI_VIEW", "View Project KPIs", "View project KPI snapshots", "REPORTING"),
+                new RightDef("REPORTING_REPORT_VIEW", "View Reports", "View report definitions and runs", "REPORTING"),
+                new RightDef("REPORTING_REPORT_RUN", "Run Reports", "Execute report runs", "REPORTING"),
+                new RightDef("REPORTING_REPORT_EXPORT", "Export Reports", "Export report outputs", "REPORTING"),
+                new RightDef("REPORTING_DEFINITION_VIEW", "View Report Definitions", "View report definitions", "REPORTING"),
+                new RightDef("REPORTING_DEFINITION_MANAGE", "Manage Report Definitions", "Manage report definitions", "REPORTING"),
+                new RightDef("SCOPE_VIEW", "View Scope", "View scope packages and items", "SCOPE"),
+                new RightDef("SCOPE_CREATE", "Create Scope", "Create scope packages and items", "SCOPE"),
+                new RightDef("SCOPE_UPDATE", "Update Scope", "Update scope packages and items", "SCOPE"),
+                new RightDef("SCOPE_APPROVE", "Approve Scope", "Approve scope packages", "SCOPE"),
+                new RightDef("SCOPE_ARCHIVE", "Archive Scope", "Archive scope packages", "SCOPE"),
+                new RightDef("DELIVERABLE_VIEW", "View Deliverable", "View deliverables and acceptance", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_CREATE", "Create Deliverable", "Create deliverables and criteria", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_UPDATE", "Update Deliverable", "Update deliverables and evidence", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_SUBMIT_REVIEW", "Submit Deliverable Review", "Submit deliverable for review", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_ACCEPT", "Accept Deliverable", "Formally accept deliverables", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_REJECT", "Reject Deliverable", "Reject deliverables", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_REOPEN", "Reopen Deliverable", "Reopen accepted deliverables", "DELIVERABLE"),
+                new RightDef("DELIVERABLE_ARCHIVE", "Archive Deliverable", "Archive deliverables", "DELIVERABLE"),
+                new RightDef("ACCEPTANCE_CRITERIA_WAIVE", "Waive Acceptance Criteria", "Waive mandatory acceptance criteria", "DELIVERABLE"),
+                new RightDef("RAID_VIEW", "View RAID", "View RAID items and actions", "RAID"),
+                new RightDef("RAID_CREATE", "Create RAID", "Create RAID items and actions", "RAID"),
+                new RightDef("RAID_UPDATE", "Update RAID", "Update RAID items and actions", "RAID"),
+                new RightDef("RAID_ESCALATE", "Escalate RAID", "Escalate RAID items", "RAID"),
+                new RightDef("RAID_CONVERT", "Convert RAID", "Convert risk to issue or create CR", "RAID"),
+                new RightDef("RAID_ARCHIVE", "Archive RAID", "Archive RAID items", "RAID"),
+                new RightDef("DECISION_VIEW", "View Decision", "View decision records", "DECISION"),
+                new RightDef("DECISION_CREATE", "Create Decision", "Create decision records", "DECISION"),
+                new RightDef("DECISION_UPDATE", "Update Decision", "Update decision records", "DECISION"),
+                new RightDef("DECISION_DECIDE", "Decide", "Mark decision as decided", "DECISION"),
+                new RightDef("DECISION_ARCHIVE", "Archive Decision", "Archive decision records", "DECISION"),
+                new RightDef("PROJECT_MEETING_VIEW", "View Meetings", "View project meetings", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_CREATE", "Create Meetings", "Create project meetings", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_UPDATE", "Update Meetings", "Update project meetings", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_CANCEL", "Cancel Meetings", "Cancel project meetings", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_ARCHIVE", "Archive Meetings", "Archive project meetings", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_SERIES_MANAGE", "Manage Meeting Series", "Manage meeting series", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_PARTICIPANT_MANAGE", "Manage Meeting Participants", "Manage meeting participants", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_AGENDA_MANAGE", "Manage Meeting Agenda", "Manage meeting agenda", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_MINUTES_VIEW", "View Meeting Minutes", "View meeting minutes", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_MINUTES_UPDATE", "Update Meeting Minutes", "Create/update/submit minutes", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_MINUTES_APPROVE", "Approve Meeting Minutes", "Approve or reject minutes", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_NOTE_UPDATE", "Manage Meeting Notes", "Manage meeting notes", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_ACTION_UPDATE", "Manage Meeting Actions", "Manage meeting action items", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_ACTION_COMPLETE", "Complete Meeting Actions", "Complete meeting action items", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_ACTION_CREATE_TASK", "Link Task From Action", "Link task to meeting action", "COLLABORATION"),
+                new RightDef("PROJECT_MEETING_LINK_MANAGE", "Manage Meeting Links", "Manage meeting artifact links", "COLLABORATION"),
+                new RightDef("PROJECT_COMMENT_THREAD_VIEW", "View Comment Threads", "View comment threads", "COMMENT"),
+                new RightDef("PROJECT_COMMENT_THREAD_CREATE", "Create Comment Threads", "Create/resolve/archive threads", "COMMENT"),
+                new RightDef("PROJECT_COMMENT_CREATE", "Create Comments", "Create comments", "COMMENT"),
+                new RightDef("PROJECT_COMMENT_UPDATE", "Update Comments", "Update or soft-delete comments", "COMMENT"),
+                new RightDef("PROJECT_MEETING_REPORT_VIEW", "View Meeting Reports", "View collaboration reports", "COLLABORATION"),
+                new RightDef("GLOBAL_SEARCH_USE", "Use Global Search", "Use permission-aware global search", "PRODUCTIVITY"),
+                new RightDef("SAVED_SEARCH_CREATE", "Create Saved Search", "Create saved searches", "PRODUCTIVITY"),
+                new RightDef("FAVORITE_MANAGE", "Manage Favorites", "Manage favorite items", "PRODUCTIVITY"),
+                new RightDef("WORK_INBOX_VIEW", "View Work Inbox", "View personal work inbox", "PRODUCTIVITY"),
+                new RightDef("NAVIGATION_VIEW", "View Navigation", "View navigation metadata", "PRODUCTIVITY"),
+                new RightDef("CUSTOM_FIELD_VIEW", "View Custom Fields", "View custom field definitions", "CONFIGURATION"),
+                new RightDef("CUSTOM_FIELD_CREATE", "Create Custom Fields", "Create custom field definitions", "CONFIGURATION"),
+                new RightDef("CUSTOM_FIELD_UPDATE", "Update Custom Fields", "Update custom field definitions", "CONFIGURATION"),
+                new RightDef("GOVERNANCE_POLICY_VIEW", "View Governance Policy", "View governance policies", "GOVERNANCE"),
+                new RightDef("OBJECT_OWNERSHIP_ASSIGN", "Assign Object Ownership", "Assign object ownership", "GOVERNANCE"),
+                new RightDef("OBJECT_VERSION_VIEW", "View Object Versions", "View governance versions", "GOVERNANCE"),
+                new RightDef("OBJECT_LOCK_CREATE", "Create Object Lock", "Lock/finalize objects", "GOVERNANCE"),
+                new RightDef("NOTIFICATION_PREFERENCE_UPDATE", "Update Notification Preferences", "Update personal notification preferences", "NOTIFICATION"),
+                new RightDef("PROFITABILITY_PROFILE_VIEW", "View Profitability Profile", "View project profitability profile", "PROFITABILITY"),
+                new RightDef("PROFITABILITY_PROFILE_UPDATE", "Update Profitability Profile", "Update project profitability profile", "PROFITABILITY"),
+                new RightDef("PROFITABILITY_SUMMARY_VIEW", "View Profitability Summary", "View profitability summary", "PROFITABILITY"),
+
                 // DOCUMENT ACCESS BY TYPE
                 new RightDef("VIEW_DOCUMENT_BY_TYPE",   "View Document by Type",   "View documents of a specific document type",   "DOCUMENT"),
                 new RightDef("CREATE_DOCUMENT_BY_TYPE", "Create Document by Type", "Create documents of a specific document type", "DOCUMENT"),
@@ -135,12 +412,67 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
                 // EVENT REGISTRY
                 new RightDef("SYSTEM_MANAGE_EVENT_REGISTRY", "System Manage Event Registry", "Create, update, activate, and deactivate shared event definitions", "EVENT_REGISTRY"),
                 // AI AGENT (enforced by AiAgentSecurityInterceptor via IamSystemAuthorizationService)
-                new RightDef("AI_PLATFORM_MANAGE",        "AI Platform Manage",         "Manage AI providers and model deployments",     "AI_AGENT"),
+                new RightDef("AI_PLATFORM_MANAGE",        "AI Platform Manage",         "Manage AI providers, models, agents, prompt templates, usage policies, and model deployments",     "AI_AGENT"),
                 new RightDef("AI_PROVIDER_SECRET_MANAGE",  "AI Provider Secret Manage",  "Manage AI provider API keys/secrets",           "AI_AGENT"),
                 new RightDef("AI_PLAYGROUND_RUN",          "AI Playground Run",         "Run AI playground executions",                  "AI_AGENT"),
                 new RightDef("AI_EXECUTION_VIEW_OR_RUN",   "AI Execution View or Run",  "View or trigger AI execution logs",             "AI_AGENT"),
                 new RightDef("AI_PROMPT_PUBLISH",          "AI Prompt Publish",         "Publish AI prompt versions",                    "AI_AGENT"),
-                new RightDef("AI_EVENT_CONFIG_MANAGE",     "AI Event Config Manage",    "Manage AI Agent event configurations",          "AI_AGENT")
+                new RightDef("AI_EVENT_CONFIG_MANAGE",     "AI Event Config Manage",    "Manage AI Agent event configurations",          "AI_AGENT"),
+                new RightDef("AI_TOOL_MANAGE",             "AI Tool Manage",            "Register and manage AiTool catalog, permissions, and agent bindings", "AI_AGENT"),
+                new RightDef("AI_TOOL_EXECUTE",            "AI Tool Execute",           "Execute registered AI tools and view tool execution logs", "AI_AGENT"),
+                // QUALITY
+                new RightDef("QUALITY_VIEW",    "View Quality",    "View quality plans and checklists",  "QUALITY"),
+                new RightDef("QUALITY_CREATE",  "Create Quality",  "Create quality plans",               "QUALITY"),
+                new RightDef("QUALITY_UPDATE",  "Update Quality",  "Update quality plans",               "QUALITY"),
+                new RightDef("QUALITY_APPROVE", "Approve Quality", "Approve quality plans",              "QUALITY"),
+                // TEST
+                new RightDef("TEST_VIEW",    "View Test",    "View test plans, cases, and runs",   "TEST"),
+                new RightDef("TEST_CREATE",  "Create Test",  "Create test plans and cases",        "TEST"),
+                new RightDef("TEST_UPDATE",  "Update Test",  "Update test plans and cases",        "TEST"),
+                new RightDef("TEST_EXECUTE", "Execute Test", "Execute test runs",                  "TEST"),
+                // DEFECT
+                new RightDef("DEFECT_VIEW",    "View Defect",    "View defects",                    "DEFECT"),
+                new RightDef("DEFECT_CREATE",  "Create Defect",  "Create defects",                  "DEFECT"),
+                new RightDef("DEFECT_UPDATE",  "Update Defect",  "Update defects",                  "DEFECT"),
+                new RightDef("DEFECT_RESOLVE", "Resolve Defect", "Resolve and close defects",       "DEFECT"),
+                // RELEASE
+                new RightDef("RELEASE_VIEW",    "View Release",    "View release packages",          "RELEASE"),
+                new RightDef("RELEASE_CREATE",  "Create Release",  "Create release packages",        "RELEASE"),
+                new RightDef("RELEASE_UPDATE",  "Update Release",  "Update release packages",        "RELEASE"),
+                new RightDef("RELEASE_APPROVE", "Approve Release", "Approve release readiness",      "RELEASE"),
+                // DEPLOYMENT
+                new RightDef("DEPLOYMENT_VIEW",   "View Deployment",   "View deployment environments and history", "DEPLOYMENT"),
+                new RightDef("DEPLOYMENT_MANAGE", "Manage Deployment", "Record and manage deployments",            "DEPLOYMENT"),
+                // DOCUMENT HUB
+                new RightDef("DOCUMENT_HUB_VIEW",    "View Document Hub",    "View project documents",           "DOCUMENT_HUB"),
+                new RightDef("DOCUMENT_HUB_CREATE",  "Create Document Hub",  "Upload and create project documents", "DOCUMENT_HUB"),
+                new RightDef("DOCUMENT_HUB_UPDATE",  "Update Document Hub",  "Update project documents",         "DOCUMENT_HUB"),
+                new RightDef("DOCUMENT_HUB_APPROVE", "Approve Document Hub", "Approve project documents",        "DOCUMENT_HUB"),
+                // REQUIREMENT
+                new RightDef("REQUIREMENT_VIEW",    "View Requirement",    "View requirements",                  "REQUIREMENT"),
+                new RightDef("REQUIREMENT_CREATE",  "Create Requirement",  "Create requirements",                "REQUIREMENT"),
+                new RightDef("REQUIREMENT_UPDATE",  "Update Requirement",  "Update requirements",                "REQUIREMENT"),
+                new RightDef("REQUIREMENT_APPROVE", "Approve Requirement", "Approve requirements",               "REQUIREMENT"),
+                // EXTERNAL PARTY
+                new RightDef("EXTERNAL_PARTY_VIEW",   "View External Party",   "View external organizations and contacts", "EXTERNAL_PARTY"),
+                new RightDef("EXTERNAL_PARTY_CREATE", "Create External Party", "Create external organizations",           "EXTERNAL_PARTY"),
+                new RightDef("EXTERNAL_PARTY_UPDATE", "Update External Party", "Update external organizations",           "EXTERNAL_PARTY"),
+                // CLIENT PORTAL
+                new RightDef("CLIENT_PORTAL_VIEW",   "View Client Portal",   "View client portal access and review requests", "CLIENT_PORTAL"),
+                new RightDef("CLIENT_PORTAL_MANAGE", "Manage Client Portal", "Manage client portal access grants",            "CLIENT_PORTAL"),
+                // GOVERNANCE (additions)
+                new RightDef("GOVERNANCE_POLICY_UPDATE", "Update Governance Policy", "Update workspace governance policies", "GOVERNANCE"),
+                new RightDef("OBJECT_OWNERSHIP_VIEW",    "View Object Ownership",    "View ownership assignments",           "GOVERNANCE"),
+                // COLLABORATION (addition)
+                new RightDef("PROJECT_MEETING_MINUTES_GENERATE_DOCUMENT", "Generate Meeting Minutes Document", "Generate documents from meeting minutes", "COLLABORATION"),
+                // NOTIFICATION (additions)
+                new RightDef("DIGEST_RULE_MANAGE",   "Manage Digest Rules",   "Manage notification digest rules",   "NOTIFICATION"),
+                new RightDef("REMINDER_RULE_MANAGE", "Manage Reminder Rules", "Manage notification reminder rules", "NOTIFICATION"),
+                new RightDef("ALERT_RULE_MANAGE",    "Manage Alert Rules",    "Manage notification alert rules",    "NOTIFICATION"),
+                // CONFIGURATION (addition)
+                new RightDef("CUSTOM_FORM_VIEW", "View Custom Forms", "View custom form definitions", "CONFIGURATION"),
+                // PRODUCTIVITY (addition)
+                new RightDef("SAVED_VIEW_CREATE", "Create Saved View", "Create saved views", "PRODUCTIVITY")
         );
     }
 

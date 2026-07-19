@@ -1,6 +1,7 @@
 package com.company.scopery.modules.aiagent.execution.application.action;
 
 import com.company.scopery.common.exception.AppException;
+import com.company.scopery.common.outbox.TransactionalOutboxService;
 import com.company.scopery.integration.ai.AiProviderAdapter;
 import com.company.scopery.integration.ai.AiProviderAdapterRegistry;
 import com.company.scopery.integration.ai.AiProviderRequest;
@@ -47,13 +48,17 @@ import com.company.scopery.modules.aiagent.usagepolicy.application.evaluator.Usa
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
 public class ExecuteEventConfigAction {
+
+    private static final String EVENT_USAGE_POLICY_BLOCKED = "AI_USAGE_POLICY_BLOCKED";
 
     private final EventConfigRepository eventConfigRepository;
     private final EventDefinitionRepository eventDefinitionRepository;
@@ -69,6 +74,7 @@ public class ExecuteEventConfigAction {
     private final AiAgentActivityLogger activityLogger;
     private final UsagePolicyEvaluator usagePolicyEvaluator;
     private final AiExecutionSchemaValidator schemaValidator;
+    private final TransactionalOutboxService outboxService;
 
     public ExecuteEventConfigAction(EventConfigRepository eventConfigRepository,
                                      EventDefinitionRepository eventDefinitionRepository,
@@ -83,7 +89,8 @@ public class ExecuteEventConfigAction {
                                      AiProviderAdapterRegistry adapterRegistry,
                                      AiAgentActivityLogger activityLogger,
                                      UsagePolicyEvaluator usagePolicyEvaluator,
-                                     AiExecutionSchemaValidator schemaValidator) {
+                                     AiExecutionSchemaValidator schemaValidator,
+                                     TransactionalOutboxService outboxService) {
         this.eventConfigRepository = eventConfigRepository;
         this.eventDefinitionRepository = eventDefinitionRepository;
         this.agentRepository = agentRepository;
@@ -98,6 +105,7 @@ public class ExecuteEventConfigAction {
         this.activityLogger = activityLogger;
         this.usagePolicyEvaluator = usagePolicyEvaluator;
         this.schemaValidator = schemaValidator;
+        this.outboxService = outboxService;
     }
 
     // CLAUDE.md §21 normally requires @Transactional on every Action.execute(). This is a
@@ -127,8 +135,6 @@ public class ExecuteEventConfigAction {
         return parsed != null ? parsed : defaultSource;
     }
 
-    // No @Transactional — each repository.save() commits in its own transaction,
-    // ensuring FAILED status is persisted even when the provider call throws.
     private ExecutionRunResponse orchestrate(EventConfig eventConfig, String requestId,
                                               java.util.Map<String, String> inputVariables,
                                               ExecutionTriggerSource triggerSource,
@@ -195,22 +201,56 @@ public class ExecuteEventConfigAction {
         }
 
         schemaValidator.validateInput(eventDef.inputSchema(), promptVersion.variableSchema(),
-                promptVersion.content(), inputVariables);
+                promptVersion.resolvedPromptContent(), inputVariables);
 
+        String traceId = MDC.get("traceId");
         UsagePolicyEvaluationContext policyContext = new UsagePolicyEvaluationContext(
                 eventConfig.id(), eventConfig.eventDefinitionId(), agent.id(), deployment.id(),
-                promptVersion.id(), provider.id(), resolvedRequestId, triggerSource.name(), Instant.now());
+                promptVersion.id(), provider.id(), resolvedRequestId, triggerSource.name(), Instant.now(),
+                eventConfig.environment().name(), null);
         UsagePolicyEvaluationResult policyResult = usagePolicyEvaluator.evaluate(policyContext);
         if (policyResult.isBlocked()) {
-            throw AiAgentExceptions.usagePolicyExceeded(
-                    policyResult.violations().isEmpty() ? "" : policyResult.violations().get(0).policyCode());
+            String blockReason = policyResult.violations().isEmpty()
+                    ? "USAGE_POLICY_EXCEEDED"
+                    : policyResult.violations().get(0).metricName();
+            String policyCode = policyResult.violations().isEmpty()
+                    ? "" : policyResult.violations().get(0).policyCode();
+
+            ExecutionLog blockedLog = ExecutionLog.create(
+                    execRequestId, eventConfig.id(), eventConfig.eventDefinitionId(),
+                    agent.id(), promptVersion.id(), promptTemplate.id(),
+                    deployment.id(), provider.id(), aiModel.id(),
+                    eventConfig.environment().name(), null, null, null, traceId,
+                    triggerSource, null);
+            blockedLog.markBlocked(blockReason);
+            executionLogRepository.save(blockedLog);
+
+            outboxService.enqueue("AI_EXECUTION_LOG", blockedLog.id(), EVENT_USAGE_POLICY_BLOCKED,
+                    "SCOPERY_AI_AGENT", 1, Map.of(
+                            "executionLogId", blockedLog.id().toString(),
+                            "requestId", resolvedRequestId,
+                            "eventConfigId", eventConfig.id().toString(),
+                            "policyCode", policyCode,
+                            "blockReasonCode", blockReason,
+                            "traceId", traceId == null ? "" : traceId
+                    ));
+
+            activityLogger.logSuccess(AiAgentEntityTypes.EXECUTION_LOG, blockedLog.id(),
+                    AiAgentActivityActions.EXECUTE_EVENT_CONFIG,
+                    "Execution blocked by usage policy for requestId: " + resolvedRequestId);
+
+            throw AiAgentExceptions.executionPolicyBlocked(
+                    policyCode == null || policyCode.isBlank() ? blockReason : policyCode);
         }
 
-        String renderedPrompt = promptRenderer.render(promptVersion.content(), inputVariables);
+        String renderedPrompt = promptRenderer.render(promptVersion.resolvedPromptContent(), inputVariables);
 
         ExecutionLog log = ExecutionLog.create(
                 execRequestId, eventConfig.id(), eventConfig.eventDefinitionId(),
-                agent.id(), promptVersion.id(), deployment.id(), triggerSource, null);
+                agent.id(), promptVersion.id(), promptTemplate.id(),
+                deployment.id(), provider.id(), aiModel.id(),
+                eventConfig.environment().name(), null, null, null, traceId,
+                triggerSource, null);
         executionLogRepository.save(log);
 
         log.markRunning();
@@ -238,7 +278,7 @@ public class ExecuteEventConfigAction {
 
         } catch (Exception e) {
             String errorCode = e instanceof AppException ae ? ae.getErrorCode() : "PROVIDER_ERROR";
-            String errorMessage = truncate(e.getMessage());
+            String errorMessage = sanitizeError(e.getMessage());
 
             log.markFailed(errorCode, errorMessage, null, null, null, null, null, null);
             executionLogRepository.save(log);
@@ -267,10 +307,12 @@ public class ExecuteEventConfigAction {
                         .toList());
     }
 
-    // Caps what an arbitrary runtime exception can push into a TEXT column, in case a future
-    // provider adapter's exception message ever embeds oversized or sensitive request/response detail.
-    private static String truncate(String message) {
-        if (message == null || message.length() <= 2000) return message;
+    private static String sanitizeError(String message) {
+        if (message == null) return null;
+        String lower = message.toLowerCase();
+        if (lower.contains("api") && lower.contains("key")) return "Provider call failed";
+        if (lower.contains("authorization") || lower.contains("bearer ")) return "Provider auth failed";
+        if (message.length() <= 2000) return message;
         return message.substring(0, 2000) + "...(truncated)";
     }
 }

@@ -10,5 +10,9 @@ public record UpdateEventDefinitionRequest(
 
         String description,
         String inputSchema,
-        String outputSchema
+        String outputSchema,
+        @Size(max = 50)
+        String dataClassification,
+        @Size(max = 100)
+        String ownerModule
 ) {}

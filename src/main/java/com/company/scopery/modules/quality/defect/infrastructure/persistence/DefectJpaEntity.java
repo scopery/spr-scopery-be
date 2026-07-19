@@ -1,0 +1,41 @@
+package com.company.scopery.modules.quality.defect.infrastructure.persistence;
+import com.company.scopery.common.audit.AuditableJpaEntity;
+import com.company.scopery.modules.quality.shared.constant.QualityTableNames;
+import jakarta.persistence.*;
+import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import java.time.Instant; import java.util.UUID;
+@Entity @Table(name = QualityTableNames.DEFECT) @Getter @Setter @NoArgsConstructor
+public class DefectJpaEntity extends AuditableJpaEntity {
+    @Id private UUID id;
+    @Column(name="project_id", nullable=false) private UUID projectId;
+    @Column(name="workspace_id", nullable=false) private UUID workspaceId;
+    private String code;
+    @Column(nullable=false) private String title;
+    @Column(columnDefinition="text") private String description;
+    @Column(nullable=false) private String category;
+    @Column(nullable=false) private String severity;
+    @Column(nullable=false) private String priority;
+    @Column(nullable=false) private String status;
+    @Column(name="assigned_to_user_id") private UUID assignedToUserId;
+    @Column(name="reported_by") private UUID reportedBy;
+    @Column(name="reported_at") private Instant reportedAt;
+    @Column(name="reproduction_steps", columnDefinition="text") private String reproductionSteps;
+    @Column(name="expected_result", columnDefinition="text") private String expectedResult;
+    @Column(name="actual_result", columnDefinition="text") private String actualResult;
+    @Column(name="environment_notes", columnDefinition="text") private String environmentNotes;
+    @Column(name="resolution_type") private String resolutionType;
+    @Column(name="resolution_note", columnDefinition="text") private String resolutionNote;
+    @Column(name="resolved_at") private Instant resolvedAt;
+    @Column(name="resolved_by") private UUID resolvedBy;
+    @Column(name="closed_at") private Instant closedAt;
+    @Column(name="closed_by") private UUID closedBy;
+    @Column(name="reopened_at") private Instant reopenedAt;
+    @Column(name="reopened_by") private UUID reopenedBy;
+    @Column(name="reopen_reason", columnDefinition="text") private String reopenReason;
+    @Column(name="source_test_case_result_id") private UUID sourceTestCaseResultId;
+    @Column(name="source_ai_suggestion_id") private UUID sourceAiSuggestionId;
+    @Column(name="archived_at") private Instant archivedAt;
+    @Column(name="archived_by") private UUID archivedBy;
+    @Column(name="trace_id") private String traceId;
+    @Version private Integer version;
+}

@@ -1,9 +1,6 @@
 package com.company.scopery.modules.project.task.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
-import com.company.scopery.modules.project.project.domain.enums.ProjectStatus;
 import com.company.scopery.modules.project.project.domain.model.Project;
-import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
 import com.company.scopery.modules.project.projectphase.domain.enums.ProjectPhaseStatus;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhase;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhaseRepository;
@@ -12,6 +9,8 @@ import com.company.scopery.modules.project.shared.authorization.ProjectWorkspace
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import com.company.scopery.modules.project.shared.util.ProjectEnumParser;
 import com.company.scopery.modules.project.task.application.command.CreateTaskCommand;
 import com.company.scopery.modules.project.task.application.response.TaskResponse;
@@ -31,39 +30,36 @@ import java.math.BigDecimal;
 public class CreateTaskAction {
 
     private final TaskRepository taskRepository;
-    private final ProjectRepository projectRepository;
     private final ProjectPhaseRepository projectPhaseRepository;
     private final WbsNodeRepository wbsNodeRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public CreateTaskAction(TaskRepository taskRepository,
-                            ProjectRepository projectRepository,
                             ProjectPhaseRepository projectPhaseRepository,
                             WbsNodeRepository wbsNodeRepository,
                             WorkspaceMemberRepository workspaceMemberRepository,
                             ProjectActivityLogger activityLogger,
-                            ProjectWorkspaceAuthorizationService authorizationService) {
+                            ProjectWorkspaceAuthorizationService authorizationService,
+                            ProjectMutationGuard mutationGuard,
+                            ProjectPlatformPublisher platformPublisher) {
         this.taskRepository = taskRepository;
-        this.projectRepository = projectRepository;
         this.projectPhaseRepository = projectPhaseRepository;
         this.wbsNodeRepository = wbsNodeRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public TaskResponse execute(CreateTaskCommand cmd) {
-        authorizationService.requireProjectPermission(cmd.projectId(), IamAuthorities.PROJECT_TASK_CREATE);
-
-        Project project = projectRepository.findById(cmd.projectId())
-                .orElseThrow(() -> ProjectExceptions.projectNotFound(cmd.projectId()));
-
-        if (project.status() != ProjectStatus.DRAFT && project.status() != ProjectStatus.ACTIVE) {
-            throw ProjectExceptions.projectNotActiveOrDraft(cmd.projectId());
-        }
+        authorizationService.requireTaskCreate(cmd.projectId());
+        Project project = mutationGuard.requireMutableProject(cmd.projectId());
 
         ProjectPhase phase = projectPhaseRepository.findById(cmd.projectPhaseId())
                 .orElseThrow(() -> ProjectExceptions.projectPhaseNotFound(cmd.projectPhaseId()));
@@ -76,19 +72,21 @@ public class CreateTaskAction {
             throw ProjectExceptions.projectPhaseNotActive(cmd.projectPhaseId());
         }
 
-        WbsNode wbs = wbsNodeRepository.findById(cmd.wbsNodeId())
-                .orElseThrow(() -> ProjectExceptions.wbsNodeNotFound(cmd.wbsNodeId()));
+        if (cmd.wbsNodeId() != null) {
+            WbsNode wbs = wbsNodeRepository.findById(cmd.wbsNodeId())
+                    .orElseThrow(() -> ProjectExceptions.wbsNodeNotFound(cmd.wbsNodeId()));
 
-        if (!wbs.projectId().equals(cmd.projectId())) {
-            throw ProjectExceptions.taskEntityMismatch("WbsNode", cmd.wbsNodeId(), cmd.projectId());
-        }
+            if (!wbs.projectId().equals(cmd.projectId())) {
+                throw ProjectExceptions.taskEntityMismatch("WbsNode", cmd.wbsNodeId(), cmd.projectId());
+            }
 
-        if (!wbs.projectPhaseId().equals(cmd.projectPhaseId())) {
-            throw ProjectExceptions.taskEntityMismatch("WbsNode", cmd.wbsNodeId(), cmd.projectId());
-        }
+            if (!wbs.projectPhaseId().equals(cmd.projectPhaseId())) {
+                throw ProjectExceptions.taskEntityMismatch("WbsNode", cmd.wbsNodeId(), cmd.projectId());
+            }
 
-        if (wbs.status() != WbsNodeStatus.ACTIVE) {
-            throw ProjectExceptions.wbsNodeAlreadyArchived(cmd.wbsNodeId());
+            if (wbs.status() != WbsNodeStatus.ACTIVE) {
+                throw ProjectExceptions.wbsNodeAlreadyArchived(cmd.wbsNodeId());
+            }
         }
 
         if (cmd.plannedStartDate() != null && cmd.dueDate() != null
@@ -105,7 +103,10 @@ public class CreateTaskAction {
             throw ProjectExceptions.taskAssigneeNotWorkspaceMember(cmd.inChargeUserId());
         }
 
-        if (cmd.estimateHours() != null && cmd.estimateHours().compareTo(BigDecimal.ZERO) <= 0) {
+        if (cmd.estimateHours() == null) {
+            throw ProjectExceptions.taskEstimateRequired();
+        }
+        if (cmd.estimateHours().compareTo(BigDecimal.ZERO) <= 0) {
             throw ProjectExceptions.taskInvalidEstimate();
         }
 
@@ -132,6 +133,11 @@ public class CreateTaskAction {
         );
 
         Task saved = taskRepository.save(task);
+
+        platformPublisher.enqueueTask(saved, "TASK_CREATED");
+        if (saved.inChargeUserId() != null) {
+            platformPublisher.enqueueTask(saved, "TASK_ASSIGNED");
+        }
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.TASK,

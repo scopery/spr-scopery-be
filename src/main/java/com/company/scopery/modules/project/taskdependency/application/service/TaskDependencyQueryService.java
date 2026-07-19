@@ -2,7 +2,6 @@ package com.company.scopery.modules.project.taskdependency.application.service;
 
 import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.constant.ProjectSortFields;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
@@ -30,16 +29,21 @@ public class TaskDependencyQueryService {
     }
 
     @Transactional(readOnly = true)
-    public TaskDependencyResponse getTaskDependency(UUID id) {
+    public TaskDependencyResponse getTaskDependency(UUID projectId, UUID id) {
         TaskDependency dep = taskDependencyRepository.findById(id)
                 .orElseThrow(() -> ProjectExceptions.taskDependencyNotFound(id));
-        authorizationService.requireProjectPermission(dep.projectId(), IamAuthorities.PROJECT_TASK_VIEW);
+
+        if (!dep.projectId().equals(projectId)) {
+            throw ProjectExceptions.taskDependencyProjectMismatch(id, projectId);
+        }
+
+        authorizationService.requireTaskDependencyView(projectId);
         return TaskDependencyResponse.from(dep);
     }
 
     @Transactional(readOnly = true)
     public PageResult<TaskDependencyResponse> searchTaskDependencies(SearchTaskDependencyQuery query) {
-        authorizationService.requireProjectPermission(query.projectId(), IamAuthorities.PROJECT_TASK_VIEW);
+        authorizationService.requireTaskDependencyView(query.projectId());
 
         TaskDependencyStatus status = ProjectEnumParser.parseOptional(
                 TaskDependencyStatus.class, query.status(),

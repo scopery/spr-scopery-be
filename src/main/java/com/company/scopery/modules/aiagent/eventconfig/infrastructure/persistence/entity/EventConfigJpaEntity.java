@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -62,6 +63,24 @@ public class EventConfigJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "input_mapping_json", columnDefinition = "TEXT")
+    private String inputMappingJson;
+
+    @Column(name = "output_mapping_json", columnDefinition = "TEXT")
+    private String outputMappingJson;
+
+    @Column(name = "activated_at")
+    private Instant activatedAt;
+
+    @Column(name = "activated_by", length = 100)
+    private String activatedBy;
+
+    @Column(name = "deactivated_at")
+    private Instant deactivatedAt;
+
+    @Column(name = "deactivated_by", length = 100)
+    private String deactivatedBy;
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;

@@ -1,11 +1,12 @@
 package com.company.scopery.modules.project.wbs.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import com.company.scopery.modules.project.wbs.application.command.MoveWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.response.WbsNodeResponse;
 import com.company.scopery.modules.project.wbs.domain.enums.WbsNodeStatus;
@@ -24,18 +25,25 @@ public class MoveWbsNodeAction {
     private final WbsNodeRepository wbsNodeRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public MoveWbsNodeAction(WbsNodeRepository wbsNodeRepository,
-                              ProjectActivityLogger activityLogger,
-                              ProjectWorkspaceAuthorizationService authorizationService) {
+                             ProjectActivityLogger activityLogger,
+                             ProjectWorkspaceAuthorizationService authorizationService,
+                             ProjectMutationGuard mutationGuard,
+                             ProjectPlatformPublisher platformPublisher) {
         this.wbsNodeRepository = wbsNodeRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public WbsNodeResponse execute(MoveWbsNodeCommand cmd) {
-        authorizationService.requireProjectPermission(cmd.projectId(), IamAuthorities.PROJECT_WBS_UPDATE);
+        authorizationService.requireWbsMove(cmd.projectId());
+        mutationGuard.requireMutableProject(cmd.projectId());
 
         WbsNode node = wbsNodeRepository.findById(cmd.id())
                 .orElseThrow(() -> ProjectExceptions.wbsNodeNotFound(cmd.id()));
@@ -80,6 +88,8 @@ public class MoveWbsNodeAction {
             int updatedLevel = newLevel + desc.level() - node.level();
             wbsNodeRepository.save(desc.withPath(updatedPath, updatedLevel));
         }
+
+        platformPublisher.enqueueWbs(moved, "WBS_NODE_MOVED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.WBS_NODE,

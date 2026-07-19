@@ -84,4 +84,10 @@ public class JpaEmailRuleRepository implements EmailRuleRepository {
         return springRepo.findActiveWorkspaceRulesForEvent(eventDefinitionId, workspaceId)
                 .stream().map(mapper::toDomain).toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsActiveEnabledByEventDefinitionId(UUID eventDefinitionId) {
+        return springRepo.existsActiveEnabledByEventDefinitionId(eventDefinitionId);
+    }
 }

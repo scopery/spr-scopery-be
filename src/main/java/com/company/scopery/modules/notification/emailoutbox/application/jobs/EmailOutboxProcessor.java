@@ -1,14 +1,18 @@
 package com.company.scopery.modules.notification.emailoutbox.application.jobs;
 
+import com.company.scopery.common.audit.AuditEventType;
+import com.company.scopery.common.audit.ImmutableAuditEventService;
 import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDelivery;
 import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDeliveryRepository;
 import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailMessage;
 import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutbox;
 import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutboxRepository;
-import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailOutboxStatus;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailProviderResolver;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailSendResult;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailSender;
+import com.company.scopery.modules.notification.shared.NotificationActivityActions;
+import com.company.scopery.modules.notification.shared.NotificationActivityLogger;
+import com.company.scopery.modules.notification.shared.NotificationEntityTypes;
 import com.company.scopery.modules.notification.shared.NotificationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class EmailOutboxProcessor {
@@ -28,15 +33,21 @@ public class EmailOutboxProcessor {
     private final EmailDeliveryRepository deliveryRepository;
     private final EmailProviderResolver providerResolver;
     private final NotificationProperties properties;
+    private final NotificationActivityLogger activityLogger;
+    private final ImmutableAuditEventService auditEventService;
 
     public EmailOutboxProcessor(EmailOutboxRepository outboxRepository,
                                  EmailDeliveryRepository deliveryRepository,
                                  EmailProviderResolver providerResolver,
-                                 NotificationProperties properties) {
+                                 NotificationProperties properties,
+                                 NotificationActivityLogger activityLogger,
+                                 ImmutableAuditEventService auditEventService) {
         this.outboxRepository = outboxRepository;
         this.deliveryRepository = deliveryRepository;
         this.providerResolver = providerResolver;
         this.properties = properties;
+        this.activityLogger = activityLogger;
+        this.auditEventService = auditEventService;
     }
 
     @Scheduled(fixedDelayString = "${notification.email.outbox.fixed-delay-ms:10000}")
@@ -90,10 +101,17 @@ public class EmailOutboxProcessor {
             log.warn("[EmailOutboxProcessor] Outbox {} failed (retry {}/{}): {}",
                     outbox.id(), outbox.retryCount(), maxRetry, reason);
         } else {
-            outbox.markFailed(reason);
+            outbox.markDeadLetter(reason);
             outboxRepository.save(outbox);
             updateDeliveryFailed(outbox, reason);
-            log.error("[EmailOutboxProcessor] Outbox {} permanently failed after {} retries: {}",
+            activityLogger.logSuccess(NotificationEntityTypes.EMAIL_OUTBOX, outbox.id(),
+                    NotificationActivityActions.EMAIL_DELIVERY_DEAD_LETTERED,
+                    "Email outbox dead-lettered after max retries");
+            auditEventService.record(AuditEventType.EMAIL_DELIVERY_DEAD_LETTERED, null, "SYSTEM",
+                    NotificationEntityTypes.EMAIL_OUTBOX, outbox.id(), null, null,
+                    null, Map.of("reason", reason == null ? "" : reason, "retryCount", outbox.retryCount()),
+                    reason);
+            log.error("[EmailOutboxProcessor] Outbox {} dead-lettered after {} retries: {}",
                     outbox.id(), maxRetry, reason);
         }
     }

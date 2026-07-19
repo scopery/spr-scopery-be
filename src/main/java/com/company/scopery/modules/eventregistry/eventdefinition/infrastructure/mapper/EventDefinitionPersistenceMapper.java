@@ -1,5 +1,6 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.infrastructure.mapper;
 
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDataClassification;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.VariableType;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
@@ -27,6 +28,13 @@ public class EventDefinitionPersistenceMapper {
         entity.setStatus(domain.status().name());
         entity.setEventVersion(domain.eventVersion());
         entity.setSamplePayloadJson(domain.samplePayloadJson());
+        entity.setDataClassification(
+                domain.dataClassification() != null ? domain.dataClassification().name() : null);
+        entity.setOwnerModule(domain.ownerModule());
+        entity.setSystemEvent(domain.systemEvent());
+        entity.setDeprecatedAt(domain.deprecatedAt());
+        entity.setDeprecatedBy(domain.deprecatedBy());
+        entity.setReplacementEventDefinitionId(domain.replacementEventDefinitionId());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
         }
@@ -46,6 +54,12 @@ public class EventDefinitionPersistenceMapper {
                 EventDefinitionStatus.valueOf(entity.getStatus()),
                 entity.getEventVersion(),
                 entity.getSamplePayloadJson(),
+                parseClassification(entity.getDataClassification()),
+                entity.getOwnerModule(),
+                entity.isSystemEvent(),
+                entity.getDeprecatedAt(),
+                entity.getDeprecatedBy(),
+                entity.getReplacementEventDefinitionId(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
@@ -59,6 +73,7 @@ public class EventDefinitionPersistenceMapper {
         entity.setVariableLabel(domain.variableLabel());
         entity.setVariableType(domain.variableType().name());
         entity.setRequired(domain.required());
+        entity.setSensitive(domain.sensitive());
         entity.setDescription(domain.description());
         entity.setExampleValue(domain.exampleValue());
         if (domain.createdAt() != null) {
@@ -75,10 +90,18 @@ public class EventDefinitionPersistenceMapper {
                 entity.getVariableLabel(),
                 VariableType.valueOf(entity.getVariableType()),
                 entity.isRequired(),
+                entity.isSensitive(),
                 entity.getDescription(),
                 entity.getExampleValue(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+    }
+
+    private static EventDataClassification parseClassification(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return EventDataClassification.valueOf(raw);
     }
 }

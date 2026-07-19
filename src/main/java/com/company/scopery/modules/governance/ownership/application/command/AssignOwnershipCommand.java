@@ -1,0 +1,3 @@
+package com.company.scopery.modules.governance.ownership.application.command;
+import java.util.UUID;
+public record AssignOwnershipCommand(UUID projectId, String objectTypeCode, UUID targetId, String ownerTargetType, UUID ownerTargetId) {}

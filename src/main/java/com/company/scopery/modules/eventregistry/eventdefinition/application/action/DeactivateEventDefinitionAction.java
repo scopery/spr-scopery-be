@@ -1,16 +1,18 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.application.action;
 
-import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.DeactivateEventDefinitionCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.response.EventDefinitionDetailResponse;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.response.EventVariableResponse;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.service.EventDefinitionConsumerSafetyService;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
 import com.company.scopery.modules.eventregistry.shared.activity.EventRegistryActivityLogger;
 import com.company.scopery.modules.eventregistry.shared.constant.EventRegistryActivityActions;
 import com.company.scopery.modules.eventregistry.shared.constant.EventRegistryEntityTypes;
 import com.company.scopery.modules.eventregistry.shared.error.EventRegistryExceptions;
+import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
+import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +25,16 @@ public class DeactivateEventDefinitionAction {
     private final EventDefinitionRepository repository;
     private final EventRegistryActivityLogger activityLogger;
     private final IamSystemAuthorizationService systemAuthorizationService;
+    private final EventDefinitionConsumerSafetyService consumerSafetyService;
 
     public DeactivateEventDefinitionAction(EventDefinitionRepository repository,
                                            EventRegistryActivityLogger activityLogger,
-                                           IamSystemAuthorizationService systemAuthorizationService) {
+                                           IamSystemAuthorizationService systemAuthorizationService,
+                                           EventDefinitionConsumerSafetyService consumerSafetyService) {
         this.repository = repository;
         this.activityLogger = activityLogger;
         this.systemAuthorizationService = systemAuthorizationService;
+        this.consumerSafetyService = consumerSafetyService;
     }
 
     @Transactional
@@ -38,6 +43,13 @@ public class DeactivateEventDefinitionAction {
                 IamAuthorities.SYSTEM_EVENT_REGISTRY_MANAGE.legacyRightCode());
 
         EventDefinition eventDefinition = findOrThrow(command.id());
+        if (eventDefinition.status() == EventDefinitionStatus.DEPRECATED) {
+            throw EventRegistryExceptions.eventDefinitionDeprecatedCannotBeUpdated(eventDefinition.code().value());
+        }
+
+        if (consumerSafetyService.hasActiveConsumers(eventDefinition.id())) {
+            throw EventRegistryExceptions.eventDefinitionHasActiveConsumers(eventDefinition.code().value());
+        }
 
         eventDefinition.deactivate();
         EventDefinition saved = repository.save(eventDefinition);

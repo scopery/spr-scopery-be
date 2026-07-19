@@ -18,4 +18,8 @@ public interface EmailOutboxRepository {
     List<EmailOutbox> findPendingBatch(Instant beforeScheduledAt, int limit);
 
     int claimForProcessing(UUID id);
+
+    boolean existsByDedupKey(String dedupKey);
+
+    Optional<EmailOutbox> findByDedupKey(String dedupKey);
 }

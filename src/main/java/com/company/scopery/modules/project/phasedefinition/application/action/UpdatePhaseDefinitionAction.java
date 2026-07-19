@@ -14,6 +14,7 @@ import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,17 +28,20 @@ public class UpdatePhaseDefinitionAction {
     private final WorkspaceIamIntegrationService workspaceIamIntegrationService;
     private final IamSystemAuthorizationService systemAuthorizationService;
     private final ProjectActivityLogger activityLogger;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public UpdatePhaseDefinitionAction(PhaseDefinitionRepository repository,
                                         CurrentUserAuthorizationService currentUserAuthorizationService,
                                         WorkspaceIamIntegrationService workspaceIamIntegrationService,
                                         IamSystemAuthorizationService systemAuthorizationService,
-                                        ProjectActivityLogger activityLogger) {
+                                        ProjectActivityLogger activityLogger,
+                                        ProjectPlatformPublisher platformPublisher) {
         this.repository = repository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.workspaceIamIntegrationService = workspaceIamIntegrationService;
         this.systemAuthorizationService = systemAuthorizationService;
         this.activityLogger = activityLogger;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
@@ -49,7 +53,7 @@ public class UpdatePhaseDefinitionAction {
             throw ProjectExceptions.phaseDefinitionAlreadyArchived(command.id());
         }
 
-        if (pd.scope() == PhaseDefinitionScope.SYSTEM) {
+        if (pd.scope() == PhaseDefinitionScope.SYSTEM || pd.scope() == PhaseDefinitionScope.ORGANIZATION) {
             systemAuthorizationService.requireSystemRight(
                     IamAuthorities.SYSTEM_GOVERNANCE_MANAGE_PHASE_DEFINITION.legacyRightCode());
         } else {
@@ -60,6 +64,8 @@ public class UpdatePhaseDefinitionAction {
 
         PhaseDefinition updated = pd.update(command.name(), command.description(), command.displayOrder());
         PhaseDefinition saved = repository.save(updated);
+
+        platformPublisher.enqueuePhaseDefinition(saved, "PHASE_DEFINITION_UPDATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PHASE_DEFINITION,

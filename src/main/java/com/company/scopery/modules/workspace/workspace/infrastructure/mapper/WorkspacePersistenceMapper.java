@@ -41,8 +41,10 @@ public class WorkspacePersistenceMapper {
         entity.setDefaultVisibility(domain.defaultVisibility().name());
         entity.setJoinPolicy(domain.joinPolicy() != null ? domain.joinPolicy().name() : WorkspaceJoinPolicy.INVITE_ONLY.name());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt()); // required for Spring Data merge()
+        if (domain.createdAt() != null) {
+            entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
+        }
         return entity;
     }
 }

@@ -1,11 +1,14 @@
 package com.company.scopery.modules.project.taskdependency.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.project.project.domain.model.Project;
 import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import com.company.scopery.modules.project.taskdependency.application.command.RemoveTaskDependencyCommand;
 import com.company.scopery.modules.project.taskdependency.application.response.TaskDependencyResponse;
 import com.company.scopery.modules.project.taskdependency.domain.model.TaskDependency;
@@ -19,13 +22,22 @@ public class RemoveTaskDependencyAction {
     private final TaskDependencyRepository taskDependencyRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
+    private final CurrentUserAuthorizationService currentUserAuthorizationService;
 
     public RemoveTaskDependencyAction(TaskDependencyRepository taskDependencyRepository,
                                       ProjectActivityLogger activityLogger,
-                                      ProjectWorkspaceAuthorizationService authorizationService) {
+                                      ProjectWorkspaceAuthorizationService authorizationService,
+                                      ProjectMutationGuard mutationGuard,
+                                      ProjectPlatformPublisher platformPublisher,
+                                      CurrentUserAuthorizationService currentUserAuthorizationService) {
         this.taskDependencyRepository = taskDependencyRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
+        this.currentUserAuthorizationService = currentUserAuthorizationService;
     }
 
     @Transactional
@@ -37,9 +49,15 @@ public class RemoveTaskDependencyAction {
             throw ProjectExceptions.taskDependencyProjectMismatch(dep.id(), cmd.projectId());
         }
 
-        authorizationService.requireProjectPermission(dep.projectId(), IamAuthorities.PROJECT_TASK_UPDATE);
+        authorizationService.requireTaskDependencyRemove(dep.projectId());
+        Project project = mutationGuard.requireMutableProject(dep.projectId());
+
+        var actorId = currentUserAuthorizationService.resolveCurrentUser().id();
 
         taskDependencyRepository.deleteById(dep.id());
+
+        platformPublisher.enqueueDependency(dep, "TASK_DEPENDENCY_REMOVED");
+        platformPublisher.auditDependencyRemoved(actorId, dep, project.organizationId(), project.workspaceId());
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.TASK_DEPENDENCY,

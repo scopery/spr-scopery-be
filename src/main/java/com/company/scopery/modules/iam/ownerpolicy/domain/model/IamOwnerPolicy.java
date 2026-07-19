@@ -33,7 +33,7 @@ public record IamOwnerPolicy(
         Instant now = Instant.now();
         return new IamOwnerPolicy(UUID.randomUUID(), resourceType, policyVersion,
                 IamOwnerPolicyStatus.ACTIVE, List.copyOf(actions), inheritanceScope,
-                canDelegate, delegationDepth, now, null, 0, now, now);
+                canDelegate, delegationDepth, now, null, 0, null, null);
     }
 
     public IamOwnerPolicy supersede() {

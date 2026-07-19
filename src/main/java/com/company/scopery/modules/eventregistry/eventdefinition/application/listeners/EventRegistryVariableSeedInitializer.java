@@ -3,20 +3,24 @@ package com.company.scopery.modules.eventregistry.eventdefinition.application.li
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.VariableType;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventVariable;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
+import com.company.scopery.modules.eventregistry.shared.seed.EventDefinitionSeedSupport;
+import com.company.scopery.modules.eventregistry.shared.seed.EventDefinitionSeedSupport.VariableSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Legacy variable enrichment for SCOPERY-sourced definitions used by email templates.
+ * Uses add-missing-only semantics (never deletes variables).
+ */
 @Component
+@Order(20)
 public class EventRegistryVariableSeedInitializer implements ApplicationListener<ApplicationReadyEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(EventRegistryVariableSeedInitializer.class);
@@ -39,92 +43,66 @@ public class EventRegistryVariableSeedInitializer implements ApplicationListener
     }
 
     private void seedUserSignedUp() {
-        var def = findOrCreate("USER_SIGNED_UP", "User Signed Up", "SCOPERY", "USER_SIGNED_UP",
+        var def = findOrCreate("USER_SIGNED_UP", "User Signed Up", "SCOPERY",
                 "Fired when a new user completes registration");
-        upsertVariables(def.id(), List.of(
-                entry("user.id", "User ID", VariableType.UUID, true),
-                entry("user.email", "User Email", VariableType.EMAIL, true),
-                entry("user.fullName", "User Full Name", VariableType.STRING, true),
-                entry("user.createdAt", "Account Created At", VariableType.DATETIME, false)
+        EventDefinitionSeedSupport.ensureVariables(eventDefinitionRepository, log, def.id(), List.of(
+                VariableSpec.of("user.id", "User ID", VariableType.UUID, true),
+                VariableSpec.sensitive("user.email", "User Email", VariableType.EMAIL, true),
+                VariableSpec.of("user.fullName", "User Full Name", VariableType.STRING, true),
+                VariableSpec.of("user.createdAt", "Account Created At", VariableType.DATETIME, false)
         ));
     }
 
     private void seedWorkspaceInvitationCreated() {
-        var def = findOrCreate("WORKSPACE_INVITATION_CREATED", "Workspace Invitation Created",
-                "SCOPERY", "WORKSPACE_INVITATION_CREATED",
+        var def = findOrCreate("WORKSPACE_INVITATION_CREATED", "Workspace Invitation Created", "SCOPERY",
                 "Fired when a workspace invitation is created");
-        upsertVariables(def.id(), List.of(
-                entry("invitee.email", "Invitee Email", VariableType.EMAIL, true),
-                entry("invitee.name", "Invitee Name", VariableType.STRING, false),
-                entry("workspace.id", "Workspace ID", VariableType.UUID, true),
-                entry("workspace.name", "Workspace Name", VariableType.STRING, true),
-                entry("inviter.name", "Inviter Name", VariableType.STRING, false),
-                entry("invitation.expiresAt", "Invitation Expiry", VariableType.DATETIME, false),
-                entry("invitation.link", "Invitation Link", VariableType.URL, false)
+        EventDefinitionSeedSupport.ensureVariables(eventDefinitionRepository, log, def.id(), List.of(
+                VariableSpec.sensitive("invitee.email", "Invitee Email", VariableType.EMAIL, true),
+                VariableSpec.of("invitee.name", "Invitee Name", VariableType.STRING, false),
+                VariableSpec.of("workspace.id", "Workspace ID", VariableType.UUID, true),
+                VariableSpec.of("workspace.name", "Workspace Name", VariableType.STRING, true),
+                VariableSpec.of("inviter.name", "Inviter Name", VariableType.STRING, false),
+                VariableSpec.of("invitation.expiresAt", "Invitation Expiry", VariableType.DATETIME, false),
+                VariableSpec.sensitive("invitation.link", "Invitation Link", VariableType.URL, false)
         ));
     }
 
     private void seedWorkspaceInvitationAccepted() {
-        var def = findOrCreate("WORKSPACE_INVITATION_ACCEPTED", "Workspace Invitation Accepted",
-                "SCOPERY", "WORKSPACE_INVITATION_ACCEPTED",
+        var def = findOrCreate("WORKSPACE_INVITATION_ACCEPTED", "Workspace Invitation Accepted", "SCOPERY",
                 "Fired when a user accepts a workspace invitation");
-        upsertVariables(def.id(), List.of(
-                entry("acceptor.email", "Acceptor Email", VariableType.EMAIL, true),
-                entry("acceptor.name", "Acceptor Name", VariableType.STRING, false),
-                entry("workspace.id", "Workspace ID", VariableType.UUID, true),
-                entry("workspace.name", "Workspace Name", VariableType.STRING, true)
+        EventDefinitionSeedSupport.ensureVariables(eventDefinitionRepository, log, def.id(), List.of(
+                VariableSpec.sensitive("acceptor.email", "Acceptor Email", VariableType.EMAIL, true),
+                VariableSpec.of("acceptor.name", "Acceptor Name", VariableType.STRING, false),
+                VariableSpec.of("workspace.id", "Workspace ID", VariableType.UUID, true),
+                VariableSpec.of("workspace.name", "Workspace Name", VariableType.STRING, true)
         ));
     }
 
     private void seedWorkspaceJoinRequestCreated() {
-        var def = findOrCreate("WORKSPACE_JOIN_REQUEST_CREATED", "Workspace Join Request Created",
-                "SCOPERY", "WORKSPACE_JOIN_REQUEST_CREATED",
+        var def = findOrCreate("WORKSPACE_JOIN_REQUEST_CREATED", "Workspace Join Request Created", "SCOPERY",
                 "Fired when a user submits a join request for a workspace");
-        upsertVariables(def.id(), List.of(
-                entry("requester.name", "Requester Name", VariableType.STRING, false),
-                entry("requester.email", "Requester Email", VariableType.EMAIL, true),
-                entry("workspace.id", "Workspace ID", VariableType.UUID, true),
-                entry("workspace.name", "Workspace Name", VariableType.STRING, true)
+        EventDefinitionSeedSupport.ensureVariables(eventDefinitionRepository, log, def.id(), List.of(
+                VariableSpec.of("requester.name", "Requester Name", VariableType.STRING, false),
+                VariableSpec.sensitive("requester.email", "Requester Email", VariableType.EMAIL, true),
+                VariableSpec.of("workspace.id", "Workspace ID", VariableType.UUID, true),
+                VariableSpec.of("workspace.name", "Workspace Name", VariableType.STRING, true)
         ));
     }
 
     private void seedWorkspaceJoinRequestApproved() {
-        var def = findOrCreate("WORKSPACE_JOIN_REQUEST_APPROVED", "Workspace Join Request Approved",
-                "SCOPERY", "WORKSPACE_JOIN_REQUEST_APPROVED",
+        var def = findOrCreate("WORKSPACE_JOIN_REQUEST_APPROVED", "Workspace Join Request Approved", "SCOPERY",
                 "Fired when a workspace join request is approved");
-        upsertVariables(def.id(), List.of(
-                entry("requester.email", "Requester Email", VariableType.EMAIL, true),
-                entry("requester.name", "Requester Name", VariableType.STRING, false),
-                entry("workspace.id", "Workspace ID", VariableType.UUID, true),
-                entry("workspace.name", "Workspace Name", VariableType.STRING, true),
-                entry("approver.name", "Approver Name", VariableType.STRING, false)
+        EventDefinitionSeedSupport.ensureVariables(eventDefinitionRepository, log, def.id(), List.of(
+                VariableSpec.sensitive("requester.email", "Requester Email", VariableType.EMAIL, true),
+                VariableSpec.of("requester.name", "Requester Name", VariableType.STRING, false),
+                VariableSpec.of("workspace.id", "Workspace ID", VariableType.UUID, true),
+                VariableSpec.of("workspace.name", "Workspace Name", VariableType.STRING, true),
+                VariableSpec.of("approver.name", "Approver Name", VariableType.STRING, false)
         ));
     }
 
-    private EventDefinition findOrCreate(String code, String name, String sourceSystem,
-                                          String eventKey, String description) {
-        EventDefinitionCode defCode = EventDefinitionCode.of(code);
-        return eventDefinitionRepository.findByCode(defCode).orElseGet(() -> {
-            EventDefinition def = EventDefinition.create(
-                    defCode, name,
-                    SourceSystemCode.of(sourceSystem),
-                    EventKey.of(eventKey),
-                    description, null, null);
-            return eventDefinitionRepository.save(def);
-        });
+    private EventDefinition findOrCreate(String code, String name, String sourceSystem, String description) {
+        return EventDefinitionSeedSupport.findOrCreate(
+                eventDefinitionRepository, sourceSystem, code, name, description, null, "EVENT_REGISTRY");
     }
-
-    private void upsertVariables(java.util.UUID eventDefinitionId, List<VariableEntry> entries) {
-        eventDefinitionRepository.deleteVariablesByEventDefinitionId(eventDefinitionId);
-        for (VariableEntry e : entries) {
-            eventDefinitionRepository.saveVariable(
-                    EventVariable.create(eventDefinitionId, e.path, e.label, e.type, e.required, null, null));
-        }
-    }
-
-    private VariableEntry entry(String path, String label, VariableType type, boolean required) {
-        return new VariableEntry(path, label, type, required);
-    }
-
-    private record VariableEntry(String path, String label, VariableType type, boolean required) {}
 }

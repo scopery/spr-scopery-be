@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -37,4 +38,10 @@ public class EmailTemplateVersionJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
+
+    @Column(name = "published_at")
+    private Instant publishedAt;
+
+    @Column(name = "published_by")
+    private UUID publishedBy;
 }

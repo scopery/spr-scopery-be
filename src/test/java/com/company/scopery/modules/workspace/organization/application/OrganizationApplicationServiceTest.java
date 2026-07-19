@@ -49,6 +49,7 @@ class OrganizationActionTest {
     @Mock private OrgMemberRepository orgMemberRepository;
     @Mock private ImmutableAuditEventService auditEventService;
     @Mock private TransactionalOutboxService outboxService;
+    @Mock private com.company.scopery.modules.iam.resource.application.service.IamAuthResourceLifecycleService authResourceLifecycleService;
 
     private IamUser currentUser;
 
@@ -60,13 +61,15 @@ class OrganizationActionTest {
 
     @BeforeEach
     void setUp() {
-        activateOrganizationAction = new ActivateOrganizationAction(organizationRepository, activityLogger);
-        archiveOrganizationAction = new ArchiveOrganizationAction(organizationRepository, activityLogger);
+        activateOrganizationAction = new ActivateOrganizationAction(
+                organizationRepository, authResourceLifecycleService, activityLogger);
+        archiveOrganizationAction = new ArchiveOrganizationAction(
+                organizationRepository, authResourceLifecycleService, activityLogger, auditEventService, currentUserService);
         createOrganizationAction = new CreateOrganizationAction(organizationRepository, activityLogger, currentUserService, iamIntegrationService, orgMemberRepository, auditEventService, outboxService);
         organizationQueryService = new OrganizationQueryService(organizationRepository);
         updateOrganizationAction = new UpdateOrganizationAction(organizationRepository, activityLogger);
         Instant now = Instant.now();
-        currentUser = new IamUser(UUID.randomUUID(), Username.of("admin"),
+        currentUser = IamUser.of(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
     }

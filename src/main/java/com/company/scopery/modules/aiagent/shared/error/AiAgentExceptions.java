@@ -31,6 +31,12 @@ public final class AiAgentExceptions {
                 "Provider cannot be activated without an API base URL: " + code, Map.of("code", code));
     }
 
+    public static AppException providerHasActiveDeployments(UUID providerId) {
+        return new AppException(AiAgentErrorCatalog.AI_PROVIDER_HAS_ACTIVE_DEPLOYMENTS,
+                "Provider cannot be deactivated while active model deployments exist: " + providerId,
+                Map.of("providerId", providerId));
+    }
+
     // ── AI Model ─────────────────────────────────────────────────────────────
 
     public static AppException aiModelNotFound(UUID id) {
@@ -57,6 +63,12 @@ public final class AiAgentExceptions {
     public static AppException deprecatedAiModelCannotBeActivated(String code) {
         return new AppException(AiAgentErrorCatalog.DEPRECATED_AI_MODEL_CANNOT_BE_ACTIVATED,
                 "Deprecated AI model cannot be activated again: " + code, Map.of("code", code));
+    }
+
+    public static AppException aiModelHasActiveDeployments(UUID modelId) {
+        return new AppException(AiAgentErrorCatalog.AI_MODEL_HAS_ACTIVE_DEPLOYMENTS,
+                "AI model cannot be deactivated while active deployments exist: " + modelId,
+                Map.of("modelId", modelId));
     }
 
     // ── Model Deployment ─────────────────────────────────────────────────────
@@ -142,6 +154,18 @@ public final class AiAgentExceptions {
     public static AppException deprecatedAgentCannotBeActivated(String code) {
         return new AppException(AiAgentErrorCatalog.DEPRECATED_AGENT_CANNOT_BE_ACTIVATED,
                 "Deprecated agent cannot be activated again: " + code, Map.of("code", code));
+    }
+
+    public static AppException agentAutonomyNotAllowed(String autonomyLevel) {
+        return new AppException(AiAgentErrorCatalog.AI_AGENT_AUTONOMY_NOT_ALLOWED,
+                "Agent autonomy level not allowed in Phase 07 (no business mutation): " + autonomyLevel,
+                Map.of("autonomyLevel", autonomyLevel));
+    }
+
+    public static AppException executionPolicyBlocked(String reasonCode) {
+        return new AppException(AiAgentErrorCatalog.AI_EXECUTION_POLICY_BLOCKED,
+                "AI execution blocked by usage policy: " + reasonCode,
+                Map.of("reasonCode", reasonCode == null ? "" : reasonCode));
     }
 
     // ── Prompt Template ───────────────────────────────────────────────────────
@@ -717,5 +741,61 @@ public final class AiAgentExceptions {
     public static AppException invalidExecutionOutput(String reason) {
         return new AppException(AiAgentErrorCatalog.AI_INVALID_OUTPUT,
                 "AI execution output is invalid: " + reason, Map.of("reason", reason));
+    }
+
+    // ── AI Tool registry (AIG-012) ────────────────────────────────────────────
+
+    public static AppException aiToolNotFound(UUID id) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_NOT_FOUND,
+                "AI tool not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException aiToolCodeAlreadyExists(String code) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_CODE_ALREADY_EXISTS,
+                "AI tool code already exists: " + code, Map.of("code", code));
+    }
+
+    public static AppException aiToolNotActive(String code) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_NOT_ACTIVE,
+                "AI tool is not active: " + code, Map.of("code", code));
+    }
+
+    public static AppException deprecatedAiToolCannotBeActivated(String code) {
+        return new AppException(AiAgentErrorCatalog.DEPRECATED_AI_TOOL_CANNOT_BE_ACTIVATED,
+                "Deprecated AI tool cannot be activated again: " + code, Map.of("code", code));
+    }
+
+    public static AppException aiToolPermissionNotFound(UUID id) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_PERMISSION_NOT_FOUND,
+                "AI tool permission not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException aiToolPermissionAlreadyExists(String toolCode, String permissionCode) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_PERMISSION_ALREADY_EXISTS,
+                "Permission already exists on tool " + toolCode + ": " + permissionCode,
+                Map.of("toolCode", toolCode, "permissionCode", permissionCode));
+    }
+
+    public static AppException aiToolBindingNotFound(UUID agentId, UUID toolId) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_BINDING_NOT_FOUND,
+                "AI agent tool binding not found for agent " + agentId + " and tool " + toolId,
+                Map.of("agentId", agentId, "toolId", toolId));
+    }
+
+    public static AppException aiToolBindingAlreadyExists(String agentCode, String toolCode) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_BINDING_ALREADY_EXISTS,
+                "Binding already exists for agent " + agentCode + " and tool " + toolCode,
+                Map.of("agentCode", agentCode, "toolCode", toolCode));
+    }
+
+    public static AppException aiToolBindingNotActive(UUID agentId, UUID toolId) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_BINDING_NOT_ACTIVE,
+                "AI agent tool binding is not active for agent " + agentId + " and tool " + toolId,
+                Map.of("agentId", agentId, "toolId", toolId));
+    }
+
+    public static AppException aiToolAgentNotActive(String agentCode) {
+        return new AppException(AiAgentErrorCatalog.AI_TOOL_AGENT_NOT_ACTIVE,
+                "Agent must be active to bind tools: " + agentCode, Map.of("agentCode", agentCode));
     }
 }

@@ -67,10 +67,10 @@ public class CreateOrgInvitationAction {
                 ? command.expiresAt()
                 : Instant.now().plus(7, ChronoUnit.DAYS);
 
-        String token = InvitationCodeHasher.generateRawCode();
+        String rawToken = InvitationCodeHasher.generateRawCode();
         OrgInvitation invitation = OrgInvitation.create(
                 command.organizationId(), command.inviteeEmail(), membershipType,
-                actorId, token, expiresAt);
+                actorId, rawToken, expiresAt);
 
         OrgInvitation saved = invitationRepository.save(invitation);
 
@@ -78,6 +78,6 @@ public class CreateOrgInvitationAction {
                 WorkspaceActivityActions.CREATE_ORG_INVITATION,
                 "Org invitation created for: " + saved.inviteeEmail());
 
-        return OrgInvitationResponse.from(saved);
+        return OrgInvitationResponse.from(saved, rawToken);
     }
 }

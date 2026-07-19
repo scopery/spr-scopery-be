@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -20,6 +20,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    out-of-order: true
 
   data:
     redis:
@@ -55,6 +56,35 @@ scopery:
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
     cookie-secure: ${JWT_COOKIE_SECURE:true}
 
+  cors:
+    # Comma-separated explicit origins. Never use "*" with allow-credentials=true.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+    max-age-seconds: ${CORS_MAX_AGE_SECONDS:3600}
+
+  platform:
+    outbox:
+      enabled: ${PLATFORM_OUTBOX_ENABLED:true}
+      batch-size: ${PLATFORM_OUTBOX_BATCH_SIZE:50}
+      max-attempts: ${PLATFORM_OUTBOX_MAX_ATTEMPTS:10}
+      lock-seconds: ${PLATFORM_OUTBOX_LOCK_SECONDS:60}
+      fixed-delay-ms: ${PLATFORM_OUTBOX_FIXED_DELAY_MS:5000}
+      base-retry-delay-seconds: ${PLATFORM_OUTBOX_BASE_RETRY_DELAY_SECONDS:30}
+    idempotency:
+      ttl-hours: ${PLATFORM_IDEMPOTENCY_TTL_HOURS:24}
+      in-progress-lock-seconds: ${PLATFORM_IDEMPOTENCY_IN_PROGRESS_LOCK_SECONDS:120}
+      cleanup-enabled: ${PLATFORM_IDEMPOTENCY_CLEANUP_ENABLED:true}
+      cleanup-cron: ${PLATFORM_IDEMPOTENCY_CLEANUP_CRON:0 15 * * * *}
+      require-enabled: ${PLATFORM_IDEMPOTENCY_REQUIRE_ENABLED:false}
+      require-on-paths: ${PLATFORM_IDEMPOTENCY_REQUIRE_PATHS:/api/projects/*/tasks,/api/projects/*/scope-packages,/api/projects/*/quotes}
+    swagger:
+      public: ${PLATFORM_SWAGGER_PUBLIC:true}
+
+  reporting:
+    snapshot-retention-days: ${REPORTING_SNAPSHOT_RETENTION_DAYS:90}
+    snapshot-retention-enabled: ${REPORTING_SNAPSHOT_RETENTION_ENABLED:true}
+    snapshot-retention-cron: ${REPORTING_SNAPSHOT_RETENTION_CRON:0 45 2 * * *}
+
   security:
     secret:
       master-key: ${SCOPERY_SECRET_MASTER_KEY:}
@@ -70,6 +100,58 @@ scopery:
         base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
         timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:60}
 
+  storage:
+    provider: s3-compatible
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    region: ${MINIO_REGION:us-east-1}
+    bucket: ${MINIO_BUCKET:scopery-local}
+    access-key: ${MINIO_ACCESS_KEY:scopery}
+    secret-key: ${MINIO_SECRET_KEY:scopery-local-secret}
+    path-style-access: true
+    presigned-upload-expiry-minutes: ${STORAGE_PRESIGNED_UPLOAD_EXPIRY_MINUTES:10}
+    presigned-download-expiry-minutes: ${STORAGE_PRESIGNED_DOWNLOAD_EXPIRY_MINUTES:5}
+    max-upload-size-bytes: ${STORAGE_MAX_UPLOAD_SIZE_BYTES:104857600}
+
+  embedding:
+    provider: OPENAI
+    model: text-embedding-3-small
+    dimensions: 1536
+    api-key: ${OPENAI_API_KEY:}
+
+  ai-assistant:
+    prompt-profile-code: ${AI_ASSISTANT_PROMPT_PROFILE:SCOPERY_CONTEXTUAL_ASSISTANT_V1}
+    emitter-timeout: ${AI_ASSISTANT_EMITTER_TIMEOUT:180s}
+    heartbeat-interval: ${AI_ASSISTANT_HEARTBEAT_INTERVAL:15s}
+    stream-event-retention: ${AI_ASSISTANT_STREAM_EVENT_RETENTION:24h}
+    conversation-retention: ${AI_ASSISTANT_CONVERSATION_RETENTION:180d}
+    deleted-purge-delay: ${AI_ASSISTANT_DELETED_PURGE_DELAY:30d}
+    tool-trace-retention: ${AI_ASSISTANT_TOOL_TRACE_RETENTION:30d}
+    max-user-message-chars: ${AI_ASSISTANT_MAX_USER_MESSAGE_CHARS:8000}
+    max-messages-per-conversation: ${AI_ASSISTANT_MAX_MESSAGES_PER_CONVERSATION:500}
+    max-input-tokens: ${AI_ASSISTANT_MAX_INPUT_TOKENS:24000}
+    max-output-tokens: ${AI_ASSISTANT_MAX_OUTPUT_TOKENS:2000}
+    max-evidence-chunks: ${AI_ASSISTANT_MAX_EVIDENCE_CHUNKS:8}
+    max-active-streams-per-user: ${AI_ASSISTANT_MAX_ACTIVE_STREAMS:2}
+    max-turns-per-user-per-day: ${AI_ASSISTANT_MAX_TURNS_PER_DAY:200}
+    max-tokens-per-user-per-day: ${AI_ASSISTANT_MAX_TOKENS_PER_DAY:500000}
+    memory:
+      trigger-turns: ${AI_ASSISTANT_MEMORY_TRIGGER_TURNS:20}
+      trigger-unsummarized-tokens: ${AI_ASSISTANT_MEMORY_TRIGGER_TOKENS:12000}
+      keep-latest-messages: ${AI_ASSISTANT_MEMORY_KEEP_MESSAGES:8}
+      max-summary-tokens: ${AI_ASSISTANT_MEMORY_MAX_SUMMARY_TOKENS:2000}
+    jobs:
+      stream-event-purge-cron: ${AI_ASSISTANT_STREAM_PURGE_CRON:0 0 * * * *}
+      retention-cron: ${AI_ASSISTANT_RETENTION_CRON:0 0 3 * * *}
+      stale-recovery-fixed-delay-ms: ${AI_ASSISTANT_STALE_RECOVERY_DELAY_MS:300000}
+      heartbeat-fixed-delay-ms: ${AI_ASSISTANT_HEARTBEAT_DELAY_MS:15000}
+
+  knowledge:
+    chunking:
+      strategy-version: chunk-v1
+      task-target-tokens: ${KNOWLEDGE_CHUNK_TASK_TARGET_TOKENS:600}
+      document-target-tokens: ${KNOWLEDGE_CHUNK_DOCUMENT_TARGET_TOKENS:800}
+      meeting-target-tokens: ${KNOWLEDGE_CHUNK_MEETING_TARGET_TOKENS:600}
+
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}
@@ -81,6 +163,13 @@ scopery:
           auth: ${SMTP_AUTH:false}
           starttls:
             enable: ${SMTP_STARTTLS_ENABLE:false}
+
+  ai:
+    recommendation:
+      llm-enrichment-enabled: false
+      phase21-read-compat-enabled: true
+      phase21-write-bridge-enabled: false
+      phase21-legacy-apply-visible: true
 
 notification:
   email:
@@ -99,9 +188,9 @@ notification:
 logging:
   level:
     root: INFO
-    com.company.scopery: DEBUG
+    com.company.scopery: INFO
     org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId}] %-5level %logger{36} - %msg%n"

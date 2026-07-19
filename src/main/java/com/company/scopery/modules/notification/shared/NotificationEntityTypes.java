@@ -6,6 +6,7 @@ public final class NotificationEntityTypes {
     public static final String EMAIL_RULE             = "EMAIL_RULE";
     public static final String EMAIL_DELIVERY         = "EMAIL_DELIVERY";
     public static final String EMAIL_OUTBOX           = "EMAIL_OUTBOX";
+    public static final String NOTIFICATION_ITEM      = "NOTIFICATION_ITEM";
 
     private NotificationEntityTypes() {}
 }

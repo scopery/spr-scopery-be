@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
@@ -54,6 +55,7 @@ class WorkspaceActionTest {
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
     @Mock private ImmutableAuditEventService auditEventService;
     @Mock private TransactionalOutboxService outboxService;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     private IamUser currentUser;
 
@@ -62,10 +64,10 @@ class WorkspaceActionTest {
 
     @BeforeEach
     void setUp() {
-        createWorkspaceAction = new CreateWorkspaceAction(workspaceRepository, organizationRepository, workspaceMemberRepository, activityLogger, currentUserService, iamIntegrationService, auditEventService, outboxService);
+        createWorkspaceAction = new CreateWorkspaceAction(workspaceRepository, organizationRepository, workspaceMemberRepository, activityLogger, currentUserService, iamIntegrationService, auditEventService, outboxService, eventPublisher);
         updateWorkspaceAction = new UpdateWorkspaceAction(workspaceRepository, activityLogger);
         Instant now = Instant.now();
-        currentUser = new IamUser(UUID.randomUUID(), Username.of("admin"),
+        currentUser = IamUser.of(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
     }

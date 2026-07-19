@@ -53,6 +53,16 @@ public class JpaModelDeploymentRepository implements ModelDeploymentRepository {
     }
 
     @Override
+    public boolean existsActiveByModelId(UUID modelId) {
+        return springDataRepository.existsByModelIdAndStatus(modelId, ModelDeploymentStatus.ACTIVE.name());
+    }
+
+    @Override
+    public boolean existsActiveByProviderId(UUID providerId) {
+        return springDataRepository.existsActiveByProviderId(providerId);
+    }
+
+    @Override
     public boolean existsByModelIdAndCode(UUID modelId, ModelDeploymentCode code) {
         return springDataRepository.existsByModelIdAndCode(modelId, code.value());
     }

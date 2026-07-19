@@ -15,6 +15,7 @@ import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
 import com.company.scopery.modules.workspace.shared.util.WorkspaceEnumParser;
 import com.company.scopery.modules.workspace.workspace.application.command.CreateWorkspaceCommand;
+import com.company.scopery.modules.workspace.workspace.application.event.WorkspaceCreatedEvent;
 import com.company.scopery.modules.workspace.workspace.application.response.WorkspaceDetailResponse;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
@@ -24,6 +25,7 @@ import com.company.scopery.modules.workspace.workspace.domain.valueobject.Worksp
 import com.company.scopery.common.audit.AuditEventType;
 import com.company.scopery.common.audit.ImmutableAuditEventService;
 import com.company.scopery.common.outbox.TransactionalOutboxService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ public class CreateWorkspaceAction {
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final ImmutableAuditEventService auditEventService;
     private final TransactionalOutboxService outboxService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CreateWorkspaceAction(WorkspaceRepository workspaceRepository,
                                   OrganizationRepository organizationRepository,
@@ -49,7 +52,8 @@ public class CreateWorkspaceAction {
                                   CurrentUserAuthorizationService currentUserService,
                                   WorkspaceIamIntegrationService iamIntegrationService,
                                   ImmutableAuditEventService auditEventService,
-                                  TransactionalOutboxService outboxService) {
+                                  TransactionalOutboxService outboxService,
+                                  ApplicationEventPublisher eventPublisher) {
         this.workspaceRepository = workspaceRepository;
         this.organizationRepository = organizationRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
@@ -58,6 +62,7 @@ public class CreateWorkspaceAction {
         this.iamIntegrationService = iamIntegrationService;
         this.auditEventService = auditEventService;
         this.outboxService = outboxService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -121,6 +126,8 @@ public class CreateWorkspaceAction {
         outboxService.enqueue("WORKSPACE", saved.id(), "WORKSPACE_CREATED", event);
         auditEventService.record(AuditEventType.WORKSPACE_CREATED, ownerUserId, "USER",
                 "WORKSPACE", saved.id(), saved.organizationId(), saved.id(), null, event, "Workspace created");
+
+        eventPublisher.publishEvent(new WorkspaceCreatedEvent(saved.id(), saved.organizationId(), ownerUserId));
 
         return WorkspaceDetailResponse.from(saved, true);
     }

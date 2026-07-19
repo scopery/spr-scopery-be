@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record SearchPhaseDefinitionQuery(
         String scope,
+        UUID organizationId,
         UUID workspaceId,
         String keyword,
         String status,

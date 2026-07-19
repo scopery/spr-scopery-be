@@ -7,6 +7,8 @@ import java.util.UUID;
 public record UpdateTaskCommand(
         UUID id,
         UUID projectId,
+        UUID projectPhaseId,
+        UUID wbsNodeId,
         String title,
         String description,
         UUID inChargeUserId,

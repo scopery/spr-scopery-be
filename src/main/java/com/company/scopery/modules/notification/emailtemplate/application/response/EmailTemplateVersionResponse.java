@@ -13,6 +13,8 @@ public record EmailTemplateVersionResponse(
         String htmlBodyTemplate,
         String textBodyTemplate,
         String status,
+        Instant publishedAt,
+        UUID publishedBy,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -20,6 +22,7 @@ public record EmailTemplateVersionResponse(
         return new EmailTemplateVersionResponse(
                 v.id(), v.templateId(), v.versionNumber(),
                 v.subjectTemplate(), v.htmlBodyTemplate(), v.textBodyTemplate(),
-                v.status().name(), v.createdAt(), v.updatedAt());
+                v.status().name(), v.publishedAt(), v.publishedBy(),
+                v.createdAt(), v.updatedAt());
     }
 }

@@ -40,6 +40,16 @@ public interface SpringDataEmailRuleJpaRepository extends JpaRepository<EmailRul
             @Param("workspaceId") UUID workspaceId);
 
     @Query("""
+            SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END
+            FROM EmailRuleJpaEntity r
+            WHERE r.eventDefinitionId = :eventDefinitionId
+              AND r.status = 'ACTIVE'
+              AND r.enabled = true
+              AND r.deletedAt IS NULL
+            """)
+    boolean existsActiveEnabledByEventDefinitionId(@Param("eventDefinitionId") UUID eventDefinitionId);
+
+    @Query("""
             SELECT r FROM EmailRuleJpaEntity r
             WHERE (:keyword IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(r.code) LIKE LOWER(CONCAT('%', :keyword, '%')))

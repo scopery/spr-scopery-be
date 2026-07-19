@@ -1,0 +1,13 @@
+package com.company.scopery.modules.aiplanning.planningrun.domain.enums;
+
+public enum PlanningRunType {
+    PROJECT_PLAN_DRAFT,
+    TEMPLATE_RECOMMENDATION,
+    TASK_ESTIMATE_SUGGESTION,
+    COST_ROLE_SUGGESTION,
+    SCHEDULE_RISK_EXPLANATION,
+    FINANCE_INSIGHT,
+    QUOTE_PROPOSAL_DRAFT,
+    CHANGE_REQUEST_DRAFT,
+    GENERAL_PROJECT_ASSISTANT
+}

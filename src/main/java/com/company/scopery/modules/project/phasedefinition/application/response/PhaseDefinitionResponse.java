@@ -8,6 +8,7 @@ import java.util.UUID;
 public record PhaseDefinitionResponse(
         UUID id,
         String scope,
+        UUID organizationId,
         UUID workspaceId,
         String code,
         String name,
@@ -24,6 +25,7 @@ public record PhaseDefinitionResponse(
         return new PhaseDefinitionResponse(
                 pd.id(),
                 pd.scope() != null ? pd.scope().name() : null,
+                pd.organizationId(),
                 pd.workspaceId(),
                 pd.code(),
                 pd.name(),

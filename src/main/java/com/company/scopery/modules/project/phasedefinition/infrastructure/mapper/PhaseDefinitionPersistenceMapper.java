@@ -13,6 +13,7 @@ public class PhaseDefinitionPersistenceMapper {
         return new PhaseDefinition(
                 entity.getId(),
                 entity.getScope() != null ? PhaseDefinitionScope.valueOf(entity.getScope()) : null,
+                entity.getOrganizationId(),
                 entity.getWorkspaceId(),
                 entity.getCode(),
                 entity.getName(),
@@ -30,6 +31,7 @@ public class PhaseDefinitionPersistenceMapper {
         PhaseDefinitionJpaEntity entity = new PhaseDefinitionJpaEntity();
         entity.setId(domain.id());
         entity.setScope(domain.scope() != null ? domain.scope().name() : null);
+        entity.setOrganizationId(domain.organizationId());
         entity.setWorkspaceId(domain.workspaceId());
         entity.setCode(domain.code());
         entity.setName(domain.name());
@@ -37,8 +39,7 @@ public class PhaseDefinitionPersistenceMapper {
         entity.setDisplayOrder(domain.displayOrder());
         entity.setSystemDefault(domain.isSystemDefault());
         entity.setStatus(domain.status() != null ? domain.status().name() : null);
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt());
+        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); entity.setVersion(domain.version()); }
         return entity;
     }
 }

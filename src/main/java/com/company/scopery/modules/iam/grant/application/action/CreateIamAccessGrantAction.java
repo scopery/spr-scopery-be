@@ -6,6 +6,7 @@ import com.company.scopery.modules.iam.grant.application.response.IamAccessGrant
 import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrant;
 import com.company.scopery.modules.iam.grant.domain.model.IamAccessGrantRepository;
 import com.company.scopery.modules.iam.grant.domain.enums.IamGrantEffect;
+import com.company.scopery.modules.iam.grant.domain.enums.IamGrantKind;
 import com.company.scopery.modules.iam.grant.domain.enums.IamGrantScopeType;
 import com.company.scopery.modules.iam.grant.domain.enums.IamSubjectType;
 import com.company.scopery.modules.iam.resource.domain.model.IamAuthResource;
@@ -24,6 +25,8 @@ import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.iam.shared.constant.IamPermissionAction;
 import com.company.scopery.common.audit.AuditEventType;
 import com.company.scopery.common.audit.ImmutableAuditEventService;
+import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
+import com.company.scopery.modules.workspace.orgteam.domain.model.OrgTeamRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,19 +41,25 @@ public class CreateIamAccessGrantAction {
     private final IamActivityLogger activityLogger;
     private final AuthorizationDecisionService authorizationDecisionService;
     private final ImmutableAuditEventService auditEventService;
+    private final OrgMemberRepository orgMemberRepository;
+    private final OrgTeamRepository orgTeamRepository;
 
     public CreateIamAccessGrantAction(IamAccessGrantRepository grantRepository,
                                       IamAuthResourceRepository resourceRepository,
                                       CurrentUserAuthorizationService currentUserAuthorizationService,
                                       IamActivityLogger activityLogger,
                                       AuthorizationDecisionService authorizationDecisionService,
-                                      ImmutableAuditEventService auditEventService) {
+                                      ImmutableAuditEventService auditEventService,
+                                      OrgMemberRepository orgMemberRepository,
+                                      OrgTeamRepository orgTeamRepository) {
         this.grantRepository = grantRepository;
         this.resourceRepository = resourceRepository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.activityLogger = activityLogger;
         this.authorizationDecisionService = authorizationDecisionService;
         this.auditEventService = auditEventService;
+        this.orgMemberRepository = orgMemberRepository;
+        this.orgTeamRepository = orgTeamRepository;
     }
 
     @Transactional
@@ -65,6 +74,8 @@ public class CreateIamAccessGrantAction {
         if (resource.status() != IamResourceStatus.ACTIVE) {
             throw IamExceptions.iamAuthResourceInactiveCannotBeUsed(resource.code().value());
         }
+
+        validateTenantSubject(subjectType, command.subjectId(), resource);
 
         if (grantRepository.existsBySubjectIdAndResourceId(command.subjectId(), command.resourceId())) {
             throw IamExceptions.iamAccessGrantAlreadyExists(command.subjectId(), command.resourceId());
@@ -87,10 +98,16 @@ public class CreateIamAccessGrantAction {
         };
         authorizationDecisionService.requireAccess(new AuthorizationRequest(actorId, resource.id(), manageAuthority));
 
-        IamAccessGrant grant = IamAccessGrant.create(subjectType, command.subjectId(),
-                command.resourceId(), command.roleId(),
+        IamGrantKind kind = switch (subjectType) {
+            case USER -> IamGrantKind.DIRECT;
+            case TEAM -> IamGrantKind.TEAM;
+            case ROLE -> IamGrantKind.ROLE;
+        };
+        IamAccessGrant grant = IamAccessGrant.createWithMetadata(
+                subjectType, command.subjectId(), command.resourceId(), command.roleId(),
                 effect == null ? IamGrantEffect.ALLOW : effect,
-                scopeType, command.scopeRefId(), effectiveWorkspaceId, actorId);
+                scopeType, command.scopeRefId(), effectiveWorkspaceId,
+                kind, null, false, 0, command.expiresAt(), null, null, actorId);
         IamAccessGrant saved = grantRepository.save(grant);
 
         activityLogger.logSuccess(IamEntityTypes.IAM_ACCESS_GRANT, saved.id(),
@@ -101,6 +118,23 @@ public class CreateIamAccessGrantAction {
                 null, IamAccessGrantResponse.from(saved), "Access grant created");
 
         return IamAccessGrantResponse.from(saved);
+    }
+
+    private void validateTenantSubject(IamSubjectType type, UUID subjectId, IamAuthResource resource) {
+        if (resource.organizationId() == null) {
+            return;
+        }
+        if (type == IamSubjectType.USER
+                && !orgMemberRepository.isActiveMember(resource.organizationId(), subjectId)) {
+            throw IamExceptions.iamDelegationNotPermitted(subjectId, resource.id());
+        }
+        if (type == IamSubjectType.TEAM) {
+            var team = orgTeamRepository.findById(subjectId)
+                    .orElseThrow(() -> IamExceptions.iamDelegationNotPermitted(subjectId, resource.id()));
+            if (!team.organizationId().equals(resource.organizationId())) {
+                throw IamExceptions.iamDelegationNotPermitted(subjectId, resource.id());
+            }
+        }
     }
 
     private UUID resolveGrantWorkspaceId(IamAuthResource resource, UUID requestedWorkspaceId) {

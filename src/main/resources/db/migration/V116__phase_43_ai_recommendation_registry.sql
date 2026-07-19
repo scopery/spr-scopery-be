@@ -1,0 +1,113 @@
+-- Phase 43 versioned schema/pack/detector/next-best-action registries.
+
+CREATE TABLE ai_recommendation_schema_definition (
+    id UUID PRIMARY KEY,
+    code VARCHAR(120) NOT NULL,
+    schema_version INTEGER NOT NULL,
+    suggestion_type VARCHAR(120) NOT NULL,
+    operation VARCHAR(24) NOT NULL,
+    target_entity_type VARCHAR(80) NOT NULL,
+    required_target_capability_code VARCHAR(120) NOT NULL,
+    confirmation_required BOOLEAN NOT NULL DEFAULT TRUE,
+    baseline_impact VARCHAR(24) NOT NULL DEFAULT 'NONE',
+    sensitive_field_paths JSONB NOT NULL DEFAULT '[]'::jsonb,
+    json_schema JSONB NOT NULL,
+    status VARCHAR(24) NOT NULL DEFAULT 'ACTIVE',
+    immutable_after_activation BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT ck_ai_rec_schema_ver CHECK (schema_version > 0),
+    CONSTRAINT ck_ai_rec_schema_operation CHECK (operation IN ('CREATE','UPDATE','LINK','UNLINK','NO_CHANGE_INSIGHT')),
+    CONSTRAINT ck_ai_rec_schema_baseline CHECK (baseline_impact IN ('NONE','POSSIBLE','REQUIRED','UNKNOWN')),
+    CONSTRAINT ck_ai_rec_schema_sensitive CHECK (jsonb_typeof(sensitive_field_paths) = 'array'),
+    CONSTRAINT ck_ai_rec_schema_json CHECK (jsonb_typeof(json_schema) = 'object'),
+    CONSTRAINT ck_ai_rec_schema_status CHECK (status IN ('DRAFT','ACTIVE','DEPRECATED','RETIRED')),
+    CONSTRAINT uq_ai_rec_schema_code_ver UNIQUE (code, schema_version)
+);
+
+CREATE TABLE ai_recommendation_pack_definition (
+    id UUID PRIMARY KEY,
+    code VARCHAR(120) NOT NULL,
+    version INTEGER NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    description VARCHAR(1000) NULL,
+    detector_codes JSONB NOT NULL DEFAULT '[]'::jsonb,
+    allowed_trigger_modes JSONB NOT NULL DEFAULT '["MANUAL"]'::jsonb,
+    llm_enrichment_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    default_cooldown_minutes INTEGER NOT NULL,
+    default_expiry_minutes INTEGER NOT NULL,
+    max_suggestions_per_run INTEGER NOT NULL DEFAULT 100,
+    status VARCHAR(24) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    version_lock BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT ck_ai_rec_pack_ver CHECK (version > 0),
+    CONSTRAINT ck_ai_rec_pack_detectors CHECK (jsonb_typeof(detector_codes) = 'array'),
+    CONSTRAINT ck_ai_rec_pack_triggers CHECK (jsonb_typeof(allowed_trigger_modes) = 'array'),
+    CONSTRAINT ck_ai_rec_pack_cooldown CHECK (default_cooldown_minutes >= 0),
+    CONSTRAINT ck_ai_rec_pack_expiry CHECK (default_expiry_minutes > 0),
+    CONSTRAINT ck_ai_rec_pack_limit CHECK (max_suggestions_per_run BETWEEN 1 AND 1000),
+    CONSTRAINT ck_ai_rec_pack_status CHECK (status IN ('DRAFT','ACTIVE','INACTIVE','RETIRED')),
+    CONSTRAINT uq_ai_rec_pack_code_ver UNIQUE (code, version)
+);
+
+CREATE TABLE ai_recommendation_detector_definition (
+    id UUID PRIMARY KEY,
+    code VARCHAR(120) NOT NULL,
+    version INTEGER NOT NULL,
+    pack_code VARCHAR(120) NOT NULL,
+    suggestion_type VARCHAR(120) NOT NULL,
+    schema_code VARCHAR(120) NOT NULL,
+    schema_version INTEGER NOT NULL,
+    execution_method VARCHAR(24) NOT NULL,
+    default_confidence NUMERIC(5,4) NOT NULL,
+    default_severity VARCHAR(16) NOT NULL,
+    default_expiry_minutes INTEGER NOT NULL,
+    default_cooldown_minutes INTEGER NOT NULL,
+    non_suppressible BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(24) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    version_lock BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT ck_ai_rec_detector_ver CHECK (version > 0),
+    CONSTRAINT ck_ai_rec_detector_schema_ver CHECK (schema_version > 0),
+    CONSTRAINT ck_ai_rec_detector_method CHECK (execution_method IN ('DETERMINISTIC','HEURISTIC','LLM','COMPATIBILITY_ADAPTER')),
+    CONSTRAINT ck_ai_rec_detector_conf CHECK (default_confidence >= 0.0000 AND default_confidence <= 1.0000),
+    CONSTRAINT ck_ai_rec_detector_severity CHECK (default_severity IN ('INFO','WARNING','HIGH','CRITICAL')),
+    CONSTRAINT ck_ai_rec_detector_expiry CHECK (default_expiry_minutes > 0),
+    CONSTRAINT ck_ai_rec_detector_cooldown CHECK (default_cooldown_minutes >= 0),
+    CONSTRAINT ck_ai_rec_detector_status CHECK (status IN ('DRAFT','ACTIVE','INACTIVE','RETIRED')),
+    CONSTRAINT uq_ai_rec_detector_code_ver UNIQUE (code, version)
+);
+
+CREATE TABLE ai_recommendation_next_best_action_definition (
+    id UUID PRIMARY KEY,
+    code VARCHAR(120) NOT NULL,
+    version INTEGER NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    description VARCHAR(1000) NULL,
+    action_kind VARCHAR(32) NOT NULL,
+    applicable_suggestion_types JSONB NOT NULL DEFAULT '[]'::jsonb,
+    required_authority_code VARCHAR(120) NOT NULL,
+    required_target_capability_code VARCHAR(120) NULL,
+    phase44_tool_code VARCHAR(160) NULL,
+    phase44_tool_version VARCHAR(40) NULL,
+    risk_level VARCHAR(16) NOT NULL DEFAULT 'LOW',
+    status VARCHAR(24) NOT NULL DEFAULT 'ACTIVE',
+    display_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    version_lock BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT ck_ai_rec_nba_ver CHECK (version > 0),
+    CONSTRAINT ck_ai_rec_nba_kind CHECK (action_kind IN ('NAVIGATE','REVIEW','EDIT','ACCEPT','REJECT','SUPPRESS','PREPARE_APPLY')),
+    CONSTRAINT ck_ai_rec_nba_types CHECK (jsonb_typeof(applicable_suggestion_types) = 'array'),
+    CONSTRAINT ck_ai_rec_nba_risk CHECK (risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')),
+    CONSTRAINT ck_ai_rec_nba_status CHECK (status IN ('ACTIVE','INACTIVE','RESERVED_PHASE44','RETIRED')),
+    CONSTRAINT ck_ai_rec_nba_metadata CHECK (jsonb_typeof(display_metadata) = 'object'),
+    CONSTRAINT uq_ai_rec_nba_code_ver UNIQUE (code, version)
+);
+
+-- Seed rows should be inserted by an idempotent AiRecommendationRegistryInitializer
+-- or by repository-approved catalog seeding mechanism after the real enum/right constants
+-- are inspected. Do not add vendor secrets or prompt bodies to these tables.

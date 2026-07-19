@@ -1,5 +1,7 @@
 package com.company.scopery.modules.workspace.organization.application.action;
 
+import com.company.scopery.modules.iam.resource.application.service.IamAuthResourceLifecycleService;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceType;
 import com.company.scopery.modules.workspace.organization.application.response.OrganizationResponse;
 import com.company.scopery.modules.workspace.organization.domain.model.Organization;
 import com.company.scopery.modules.workspace.organization.domain.model.OrganizationRepository;
@@ -16,11 +18,14 @@ import java.util.UUID;
 public class ActivateOrganizationAction {
 
     private final OrganizationRepository organizationRepository;
+    private final IamAuthResourceLifecycleService authResourceLifecycleService;
     private final WorkspaceActivityLogger activityLogger;
 
     public ActivateOrganizationAction(OrganizationRepository organizationRepository,
+                                       IamAuthResourceLifecycleService authResourceLifecycleService,
                                        WorkspaceActivityLogger activityLogger) {
         this.organizationRepository = organizationRepository;
+        this.authResourceLifecycleService = authResourceLifecycleService;
         this.activityLogger = activityLogger;
     }
 
@@ -29,6 +34,7 @@ public class ActivateOrganizationAction {
         Organization org = findOrThrow(id);
         Organization activated = org.activate();
         Organization saved = organizationRepository.save(activated);
+        authResourceLifecycleService.activateByRef(saved.id(), IamResourceType.ORGANIZATION);
 
         activityLogger.logSuccess(WorkspaceEntityTypes.ORGANIZATION, saved.id(),
                 WorkspaceActivityActions.ACTIVATE_ORGANIZATION,

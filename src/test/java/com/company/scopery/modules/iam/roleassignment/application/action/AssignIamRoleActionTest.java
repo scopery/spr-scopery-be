@@ -72,7 +72,7 @@ class AssignIamRoleActionTest {
                 workspaceIamIntegrationService, systemAuthorizationService, activityLogger);
         queryService = new IamRoleAssignmentQueryService(assignmentRepository);
 
-        IamUser actor = new IamUser(UUID.randomUUID(), Username.of("admin"),
+        IamUser actor = IamUser.of(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin", null, IamUserStatus.ACTIVE, Instant.now(), Instant.now());
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(actor);
     }

@@ -9,5 +9,5 @@ public interface OrgInvitationRepository {
 
     Optional<OrgInvitation> findById(UUID id);
 
-    Optional<OrgInvitation> findByToken(String token);
+    Optional<OrgInvitation> findByTokenHash(String tokenHash);
 }

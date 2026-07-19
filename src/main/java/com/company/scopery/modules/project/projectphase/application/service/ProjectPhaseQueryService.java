@@ -2,7 +2,6 @@ package com.company.scopery.modules.project.projectphase.application.service;
 
 import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.projectphase.application.query.SearchProjectPhaseQuery;
 import com.company.scopery.modules.project.projectphase.application.response.ProjectPhaseResponse;
 import com.company.scopery.modules.project.projectphase.domain.enums.ProjectPhaseStatus;
@@ -37,13 +36,13 @@ public class ProjectPhaseQueryService {
             throw ProjectExceptions.projectPhaseProjectMismatch(id, projectId);
         }
 
-        authorizationService.requireProjectPermission(phase.projectId(), IamAuthorities.PROJECT_PHASE_VIEW);
+        authorizationService.requireProjectPhaseView(phase.projectId());
         return ProjectPhaseResponse.from(phase);
     }
 
     @Transactional(readOnly = true)
     public PageResult<ProjectPhaseResponse> searchProjectPhases(SearchProjectPhaseQuery query) {
-        authorizationService.requireProjectPermission(query.projectId(), IamAuthorities.PROJECT_PHASE_VIEW);
+        authorizationService.requireProjectPhaseView(query.projectId());
 
         ProjectPhaseStatus status = ProjectEnumParser.parseOptional(
                 ProjectPhaseStatus.class, query.status(),

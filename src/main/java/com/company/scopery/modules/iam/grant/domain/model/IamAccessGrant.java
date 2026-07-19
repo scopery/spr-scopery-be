@@ -43,7 +43,7 @@ public record IamAccessGrant(
                 effect == null ? IamGrantEffect.ALLOW : effect,
                 scopeType, scopeRefId, workspaceId,
                 defaultKind(subjectType), null, false, 0, null, null, null,
-                IamAccessGrantStatus.ACTIVE, grantedBy, now, 0, now, now);
+                IamAccessGrantStatus.ACTIVE, grantedBy, now, 0, null, null);
     }
 
     public static IamAccessGrant createWithMetadata(
@@ -56,7 +56,14 @@ public record IamAccessGrant(
         return new IamAccessGrant(UUID.randomUUID(), subjectType, subjectId, resourceId, roleId,
                 effect == null ? IamGrantEffect.ALLOW : effect, scopeType, scopeRefId, workspaceId,
                 kind, sourcePolicyId, canDelegate, delegationDepth, expiresAt, conditionJson, reason,
-                IamAccessGrantStatus.ACTIVE, grantedBy, now, 0, now, now);
+                IamAccessGrantStatus.ACTIVE, grantedBy, now, 0, null, null);
+    }
+
+    public IamAccessGrant withScopeType(IamGrantScopeType newScopeType) {
+        return new IamAccessGrant(id, subjectType, subjectId, resourceId, roleId,
+                effect, newScopeType, scopeRefId, workspaceId,
+                kind, sourcePolicyId, canDelegate, delegationDepth, expiresAt, conditionJson, reason,
+                status, grantedBy, grantedAt, version, createdAt, Instant.now());
     }
 
     public IamAccessGrant revoke() {

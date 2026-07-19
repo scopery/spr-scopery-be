@@ -1,18 +1,21 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.application.action;
 
-import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.CreateEventDefinitionCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.response.EventDefinitionResponse;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDataClassification;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinitionRepository;
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
 import com.company.scopery.modules.eventregistry.shared.activity.EventRegistryActivityLogger;
 import com.company.scopery.modules.eventregistry.shared.constant.EventRegistryActivityActions;
 import com.company.scopery.modules.eventregistry.shared.constant.EventRegistryEntityTypes;
+import com.company.scopery.modules.eventregistry.shared.error.EventRegistryErrorCatalog;
 import com.company.scopery.modules.eventregistry.shared.error.EventRegistryExceptions;
+import com.company.scopery.modules.eventregistry.shared.util.EventRegistryEnumParser;
+import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
+import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -60,9 +63,16 @@ public class CreateEventDefinitionAction {
             validateJson(command.outputSchema(), false);
         }
 
+        EventDataClassification classification = EventRegistryEnumParser.parseOptional(
+                EventDataClassification.class,
+                command.dataClassification(),
+                EventRegistryErrorCatalog.INVALID_EVENT_DEFINITION_DATA_CLASSIFICATION.code(),
+                "dataClassification");
+
         EventDefinition eventDefinition = EventDefinition.create(
                 code, command.name(), sourceSystem, eventKey,
-                command.description(), command.inputSchema(), command.outputSchema());
+                command.description(), command.inputSchema(), command.outputSchema(),
+                classification, command.ownerModule(), true);
 
         EventDefinition saved = repository.save(eventDefinition);
 

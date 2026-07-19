@@ -8,5 +8,5 @@ import java.util.UUID;
 public interface SpringDataOrgInvitationJpaRepository
         extends JpaRepository<OrgInvitationJpaEntity, UUID> {
 
-    Optional<OrgInvitationJpaEntity> findByToken(String token);
+    Optional<OrgInvitationJpaEntity> findByTokenHash(String tokenHash);
 }

@@ -1,0 +1,14 @@
+package com.company.scopery.modules.aiassistant.domain.enums;
+
+public enum ResponseMode {
+    GENERAL_GUIDE,
+    GROUNDED_ANSWER,
+    CURRENT_PAGE_EXPLANATION,
+    FIELD_EXPLANATION,
+    DISABLED_ACTION_EXPLANATION,
+    TRACEABILITY_ANSWER,
+    COMPARISON_SUMMARY,
+    INSUFFICIENT_EVIDENCE,
+    ACCESS_RESTRICTED,
+    OUT_OF_SCOPE
+}

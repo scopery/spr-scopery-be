@@ -1,0 +1,6 @@
+package com.company.scopery.modules.notification.advanced.suppression.domain.enums;
+public enum SuppressionReason {
+    USER_MUTED_CATEGORY, USER_MUTED_TARGET, QUIET_HOURS_DELAYED, DUPLICATE,
+    NO_ACCESS_TO_TARGET, CHANNEL_DISABLED, PROVIDER_UNAVAILABLE,
+    LOW_PRIORITY_DIGESTED, OBJECT_ARCHIVED, POLICY_SUPPRESSED, CONDITION_NOT_MATCHED
+}

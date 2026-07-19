@@ -94,4 +94,37 @@ public class ExecutionLogJpaEntity extends AuditableJpaEntity {
     @Column(name = "metadata", columnDefinition = "TEXT")
     private String metadata;
 
+    @Column(name = "prompt_template_id", updatable = false)
+    private UUID promptTemplateId;
+
+    @Column(name = "provider_id", updatable = false)
+    private UUID providerId;
+
+    @Column(name = "model_id", updatable = false)
+    private UUID modelId;
+
+    @Column(name = "environment", length = 50, updatable = false)
+    private String environment;
+
+    @Column(name = "triggered_by_user_id", updatable = false)
+    private UUID triggeredByUserId;
+
+    @Column(name = "input_hash", length = 255, updatable = false)
+    private String inputHash;
+
+    @Column(name = "input_preview_json", columnDefinition = "TEXT", updatable = false)
+    private String inputPreviewJson;
+
+    @Column(name = "output_preview_json", columnDefinition = "TEXT")
+    private String outputPreviewJson;
+
+    @Column(name = "currency", length = 10)
+    private String currency;
+
+    @Column(name = "trace_id", length = 100, updatable = false)
+    private String traceId;
+
+    @Column(name = "block_reason_code", length = 150)
+    private String blockReasonCode;
+
 }

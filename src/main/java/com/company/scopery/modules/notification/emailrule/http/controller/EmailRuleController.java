@@ -63,7 +63,8 @@ public class EmailRuleController {
     public ResponseEntity<ApiResponse<EmailRuleResponse>> create(@Valid @RequestBody CreateEmailRuleRequest req) {
         var cmd = new CreateEmailRuleCommand(req.code(), req.name(), req.description(),
                 req.scope(), req.workspaceId(), req.eventDefinitionId(), req.templateId(),
-                req.recipientStrategy(), req.recipientConfigJson(), req.priority());
+                req.recipientStrategy(), req.recipientConfigJson(), req.priority(),
+                Boolean.TRUE.equals(req.mandatory()), Boolean.TRUE.equals(req.allowSensitiveVariables()));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(createAction.execute(cmd)));
     }
 
@@ -72,7 +73,8 @@ public class EmailRuleController {
     public ResponseEntity<ApiResponse<EmailRuleResponse>> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateEmailRuleRequest req) {
         var cmd = new UpdateEmailRuleCommand(id, req.name(), req.description(),
-                req.recipientStrategy(), req.recipientConfigJson(), req.priority());
+                req.recipientStrategy(), req.recipientConfigJson(), req.priority(),
+                req.mandatory(), req.allowSensitiveVariables());
         return ResponseEntity.ok(ApiResponse.success(updateAction.execute(cmd)));
     }
 

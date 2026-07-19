@@ -12,5 +12,21 @@ public record UsagePolicyEvaluationContext(
         UUID providerId,
         String requestId,
         String triggerSource,
-        Instant currentTime
-) {}
+        Instant currentTime,
+        String environment,
+        Integer estimatedTokensPerRequest
+) {
+    public UsagePolicyEvaluationContext(
+            UUID eventConfigId,
+            UUID eventDefinitionId,
+            UUID agentId,
+            UUID modelDeploymentId,
+            UUID promptVersionId,
+            UUID providerId,
+            String requestId,
+            String triggerSource,
+            Instant currentTime) {
+        this(eventConfigId, eventDefinitionId, agentId, modelDeploymentId, promptVersionId,
+                providerId, requestId, triggerSource, currentTime, null, null);
+    }
+}

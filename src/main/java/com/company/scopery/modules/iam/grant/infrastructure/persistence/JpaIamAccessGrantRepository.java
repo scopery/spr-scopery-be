@@ -89,6 +89,12 @@ public class JpaIamAccessGrantRepository implements IamAccessGrantRepository {
                 .stream().map(mapper::toDomain).filter(grant -> grant.isEffectiveAt(Instant.now())).toList();
     }
 
+    @Override
+    public boolean hasActiveGlobalResourceGrantForSubjects(List<UUID> subjectIds) {
+        if (subjectIds == null || subjectIds.isEmpty()) return false;
+        return springDataRepository.existsActiveGlobalGrantForSubjects(subjectIds);
+    }
+
     private Specification<IamAccessGrantJpaEntity> buildSpec(UUID subjectId, UUID resourceId,
                                                                UUID workspaceId,
                                                                IamAccessGrantStatus status) {

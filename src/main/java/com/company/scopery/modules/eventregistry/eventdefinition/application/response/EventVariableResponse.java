@@ -11,6 +11,7 @@ public record EventVariableResponse(
         String variableLabel,
         String variableType,
         boolean required,
+        boolean sensitive,
         String description,
         String exampleValue
 ) {
@@ -22,6 +23,7 @@ public record EventVariableResponse(
                 v.variableLabel(),
                 v.variableType().name(),
                 v.required(),
+                v.sensitive(),
                 v.description(),
                 v.exampleValue()
         );

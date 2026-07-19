@@ -7,6 +7,7 @@ import com.company.scopery.modules.notification.emailrule.domain.enums.EmailRule
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ class EmailRecipientResolverTest {
 
     @BeforeEach
     void setUp() {
-        resolver = new EmailRecipientResolver();
+        resolver = new EmailRecipientResolver(List.of());
     }
 
     @Test
@@ -28,6 +29,17 @@ class EmailRecipientResolverTest {
         var result = resolver.resolve(rule, payload);
         assertThat(result.skipped()).isFalse();
         assertThat(result.email()).isEqualTo("actor@example.com");
+    }
+
+    @Test
+    void resolve_eventActor_resolvesUserId() {
+        UUID userId = UUID.randomUUID();
+        var rule = makeRule(EmailRecipientStrategy.EVENT_ACTOR, null);
+        var payload = Map.<String, Object>of("actor", Map.of(
+                "email", "actor@example.com",
+                "userId", userId.toString()));
+        var result = resolver.resolve(rule, payload);
+        assertThat(result.userId()).isEqualTo(userId);
     }
 
     @Test
@@ -58,7 +70,7 @@ class EmailRecipientResolverTest {
         var rule = makeRule(EmailRecipientStrategy.WORKSPACE_USERS_WITH_RIGHT, "{\"rightCode\":\"MANAGE_MEMBER\"}");
         var result = resolver.resolve(rule, Map.of());
         assertThat(result.skipped()).isTrue();
-        assertThat(result.skipReason()).contains("Phase 1");
+        assertThat(result.skipReason()).contains("deferred");
     }
 
     private EmailRule makeRule(EmailRecipientStrategy strategy, String configJson) {
@@ -67,7 +79,7 @@ class EmailRecipientResolverTest {
                 EmailRuleScope.SYSTEM, null,
                 UUID.randomUUID(), UUID.randomUUID(),
                 strategy, configJson,
-                10, true,
+                10, true, false, false,
                 com.company.scopery.modules.notification.emailrule.domain.enums.EmailRuleStatus.ACTIVE,
                 java.time.Instant.now(), java.time.Instant.now(), null);
     }

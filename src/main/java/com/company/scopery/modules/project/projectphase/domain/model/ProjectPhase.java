@@ -17,6 +17,9 @@ public record ProjectPhase(
         LocalDate plannedStartDate,
         LocalDate plannedEndDate,
         ProjectPhaseStatus status,
+        Instant startedAt,
+        Instant completedAt,
+        Instant archivedAt,
         int version,
         Instant createdAt,
         Instant updatedAt
@@ -41,6 +44,9 @@ public record ProjectPhase(
                 plannedStartDate,
                 plannedEndDate,
                 ProjectPhaseStatus.PLANNED,
+                null,
+                null,
+                null,
                 0,
                 null,
                 null
@@ -67,6 +73,9 @@ public record ProjectPhase(
                 plannedStartDate,
                 plannedEndDate,
                 ProjectPhaseStatus.PLANNED,
+                null,
+                null,
+                null,
                 0,
                 null,
                 null
@@ -90,6 +99,9 @@ public record ProjectPhase(
                 plannedStartDate,
                 plannedEndDate,
                 this.status,
+                this.startedAt,
+                this.completedAt,
+                this.archivedAt,
                 this.version,
                 this.createdAt,
                 this.updatedAt
@@ -100,7 +112,8 @@ public record ProjectPhase(
         return new ProjectPhase(
                 this.id, this.projectId, this.phaseDefinitionId, this.code, this.name,
                 this.description, this.displayOrder, this.plannedStartDate, this.plannedEndDate,
-                ProjectPhaseStatus.ACTIVE, this.version, this.createdAt, this.updatedAt
+                ProjectPhaseStatus.ACTIVE, Instant.now(), this.completedAt, this.archivedAt,
+                this.version, this.createdAt, this.updatedAt
         );
     }
 
@@ -108,7 +121,8 @@ public record ProjectPhase(
         return new ProjectPhase(
                 this.id, this.projectId, this.phaseDefinitionId, this.code, this.name,
                 this.description, this.displayOrder, this.plannedStartDate, this.plannedEndDate,
-                ProjectPhaseStatus.COMPLETED, this.version, this.createdAt, this.updatedAt
+                ProjectPhaseStatus.COMPLETED, this.startedAt, Instant.now(), this.archivedAt,
+                this.version, this.createdAt, this.updatedAt
         );
     }
 
@@ -116,7 +130,8 @@ public record ProjectPhase(
         return new ProjectPhase(
                 this.id, this.projectId, this.phaseDefinitionId, this.code, this.name,
                 this.description, this.displayOrder, this.plannedStartDate, this.plannedEndDate,
-                ProjectPhaseStatus.ARCHIVED, this.version, this.createdAt, this.updatedAt
+                ProjectPhaseStatus.ARCHIVED, this.startedAt, this.completedAt, Instant.now(),
+                this.version, this.createdAt, this.updatedAt
         );
     }
 }

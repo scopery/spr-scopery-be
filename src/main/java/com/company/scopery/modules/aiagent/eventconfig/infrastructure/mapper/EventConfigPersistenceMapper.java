@@ -24,6 +24,12 @@ public class EventConfigPersistenceMapper {
         entity.setModelDeploymentId(config.modelDeploymentId());
         entity.setConditionExpression(config.conditionExpression());
         entity.setDescription(config.description());
+        entity.setInputMappingJson(config.inputMappingJson());
+        entity.setOutputMappingJson(config.outputMappingJson());
+        entity.setActivatedAt(config.activatedAt());
+        entity.setActivatedBy(config.activatedBy());
+        entity.setDeactivatedAt(config.deactivatedAt());
+        entity.setDeactivatedBy(config.deactivatedBy());
         entity.setStatus(config.status().name());
         if (config.createdAt() != null) {
             entity.setCreatedAt(config.createdAt());
@@ -44,6 +50,12 @@ public class EventConfigPersistenceMapper {
                 entity.getModelDeploymentId(),
                 entity.getConditionExpression(),
                 entity.getDescription(),
+                entity.getInputMappingJson(),
+                entity.getOutputMappingJson(),
+                entity.getActivatedAt(),
+                entity.getActivatedBy(),
+                entity.getDeactivatedAt(),
+                entity.getDeactivatedBy(),
                 EventConfigStatus.valueOf(entity.getStatus()),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()

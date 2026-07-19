@@ -25,6 +25,7 @@ public record UpsertEventVariablesRequest(
             String variableType,
 
             boolean required,
+            boolean sensitive,
             String description,
             String exampleValue
     ) {}

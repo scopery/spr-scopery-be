@@ -1,11 +1,9 @@
 package com.company.scopery.modules.project.projectphase.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.phasedefinition.domain.enums.PhaseDefinitionScope;
 import com.company.scopery.modules.project.phasedefinition.domain.enums.PhaseDefinitionStatus;
 import com.company.scopery.modules.project.phasedefinition.domain.model.PhaseDefinitionRepository;
-import com.company.scopery.modules.project.project.domain.enums.ProjectStatus;
-import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
+import com.company.scopery.modules.project.project.domain.model.Project;
 import com.company.scopery.modules.project.projectphase.application.command.CreateProjectPhaseFromDefinitionCommand;
 import com.company.scopery.modules.project.projectphase.application.response.ProjectPhaseResponse;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhase;
@@ -15,40 +13,39 @@ import com.company.scopery.modules.project.shared.authorization.ProjectWorkspace
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class CreateProjectPhaseFromDefinitionAction {
 
-    private final ProjectRepository projectRepository;
     private final PhaseDefinitionRepository phaseDefinitionRepository;
     private final ProjectPhaseRepository projectPhaseRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
 
-    public CreateProjectPhaseFromDefinitionAction(ProjectRepository projectRepository,
-                                                  PhaseDefinitionRepository phaseDefinitionRepository,
+    public CreateProjectPhaseFromDefinitionAction(PhaseDefinitionRepository phaseDefinitionRepository,
                                                   ProjectPhaseRepository projectPhaseRepository,
                                                   ProjectActivityLogger activityLogger,
-                                                  ProjectWorkspaceAuthorizationService authorizationService) {
-        this.projectRepository = projectRepository;
+                                                  ProjectWorkspaceAuthorizationService authorizationService,
+                                                  ProjectMutationGuard mutationGuard,
+                                                  ProjectPlatformPublisher platformPublisher) {
         this.phaseDefinitionRepository = phaseDefinitionRepository;
         this.projectPhaseRepository = projectPhaseRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public ProjectPhaseResponse execute(CreateProjectPhaseFromDefinitionCommand cmd) {
-        authorizationService.requireProjectPermission(cmd.projectId(), IamAuthorities.PROJECT_PHASE_CREATE);
-
-        var project = projectRepository.findById(cmd.projectId())
-                .orElseThrow(() -> ProjectExceptions.projectNotFound(cmd.projectId()));
-
-        if (project.status() != ProjectStatus.DRAFT && project.status() != ProjectStatus.ACTIVE) {
-            throw ProjectExceptions.projectNotActiveOrDraft(cmd.projectId());
-        }
+        authorizationService.requireProjectPhaseCreate(cmd.projectId());
+        Project project = mutationGuard.requireMutableProject(cmd.projectId());
 
         var definition = phaseDefinitionRepository.findById(cmd.phaseDefinitionId())
                 .orElseThrow(() -> ProjectExceptions.phaseDefinitionNotFound(cmd.phaseDefinitionId()));
@@ -60,6 +57,13 @@ public class CreateProjectPhaseFromDefinitionAction {
         if (definition.scope() == PhaseDefinitionScope.WORKSPACE
                 && !definition.workspaceId().equals(project.workspaceId())) {
             throw ProjectExceptions.phaseDefinitionWorkspaceMismatch(definition.id(), project.workspaceId());
+        }
+
+        if (definition.scope() == PhaseDefinitionScope.ORGANIZATION
+                && (definition.organizationId() == null
+                || !definition.organizationId().equals(project.organizationId()))) {
+            throw ProjectExceptions.phaseDefinitionInvalidScope(
+                    "Organization phase definition does not match project organization");
         }
 
         if (cmd.plannedStartDate() != null && cmd.plannedEndDate() != null
@@ -83,6 +87,8 @@ public class CreateProjectPhaseFromDefinitionAction {
         );
 
         ProjectPhase saved = projectPhaseRepository.save(phase);
+
+        platformPublisher.enqueuePhase(saved, "PROJECT_PHASE_CREATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PROJECT_PHASE,

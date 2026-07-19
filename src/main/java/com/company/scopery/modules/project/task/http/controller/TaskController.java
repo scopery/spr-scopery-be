@@ -107,6 +107,8 @@ public class TaskController {
         UpdateTaskCommand cmd = new UpdateTaskCommand(
                 id,
                 projectId,
+                request.projectPhaseId(),
+                request.wbsNodeId(),
                 request.title(),
                 request.description(),
                 request.inChargeUserId(),

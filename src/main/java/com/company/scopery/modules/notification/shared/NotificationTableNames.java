@@ -6,6 +6,7 @@ public final class NotificationTableNames {
     public static final String EMAIL_RULE             = "notification_email_rule";
     public static final String EMAIL_DELIVERY         = "notification_email_delivery";
     public static final String EMAIL_OUTBOX           = "notification_email_outbox";
+    public static final String NOTIFICATION_ITEM      = "notification_item";
 
     private NotificationTableNames() {}
 }

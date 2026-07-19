@@ -16,7 +16,18 @@ public class ExecutionLog {
     private final UUID eventDefinitionId;
     private final UUID agentId;
     private final UUID promptVersionId;
+    private final UUID promptTemplateId;
     private final UUID modelDeploymentId;
+    private final UUID providerId;
+    private final UUID modelId;
+    private final String environment;
+    private final UUID triggeredByUserId;
+    private final String inputHash;
+    private final String inputPreviewJson;
+    private String outputPreviewJson;
+    private String currency;
+    private final String traceId;
+    private String blockReasonCode;
     private final ExecutionTriggerSource triggerSource;
     private ExecutionStatus status;
     private Instant startedAt;
@@ -35,7 +46,11 @@ public class ExecutionLog {
 
     private ExecutionLog(UUID id, ExecutionRequestId requestId,
                          UUID eventConfigId, UUID eventDefinitionId,
-                         UUID agentId, UUID promptVersionId, UUID modelDeploymentId,
+                         UUID agentId, UUID promptVersionId, UUID promptTemplateId,
+                         UUID modelDeploymentId, UUID providerId, UUID modelId,
+                         String environment, UUID triggeredByUserId,
+                         String inputHash, String inputPreviewJson, String outputPreviewJson,
+                         String currency, String traceId, String blockReasonCode,
                          ExecutionTriggerSource triggerSource, ExecutionStatus status,
                          Instant startedAt, Instant completedAt, Long latencyMs,
                          Integer inputTokenCount, Integer outputTokenCount, Integer totalTokenCount,
@@ -48,7 +63,18 @@ public class ExecutionLog {
         this.eventDefinitionId = eventDefinitionId;
         this.agentId = agentId;
         this.promptVersionId = promptVersionId;
+        this.promptTemplateId = promptTemplateId;
         this.modelDeploymentId = modelDeploymentId;
+        this.providerId = providerId;
+        this.modelId = modelId;
+        this.environment = environment;
+        this.triggeredByUserId = triggeredByUserId;
+        this.inputHash = inputHash;
+        this.inputPreviewJson = inputPreviewJson;
+        this.outputPreviewJson = outputPreviewJson;
+        this.currency = currency;
+        this.traceId = traceId;
+        this.blockReasonCode = blockReasonCode;
         this.triggerSource = triggerSource;
         this.status = status;
         this.startedAt = startedAt;
@@ -70,10 +96,22 @@ public class ExecutionLog {
                                       UUID eventConfigId, UUID eventDefinitionId,
                                       UUID agentId, UUID promptVersionId, UUID modelDeploymentId,
                                       ExecutionTriggerSource triggerSource, String metadata) {
+        return create(requestId, eventConfigId, eventDefinitionId, agentId, promptVersionId,
+                null, modelDeploymentId, null, null, null, null, null, null, null, triggerSource, metadata);
+    }
+
+    public static ExecutionLog create(ExecutionRequestId requestId,
+                                      UUID eventConfigId, UUID eventDefinitionId,
+                                      UUID agentId, UUID promptVersionId, UUID promptTemplateId,
+                                      UUID modelDeploymentId, UUID providerId, UUID modelId,
+                                      String environment, UUID triggeredByUserId,
+                                      String inputHash, String inputPreviewJson, String traceId,
+                                      ExecutionTriggerSource triggerSource, String metadata) {
         Instant now = Instant.now();
         return new ExecutionLog(UUID.randomUUID(), requestId, eventConfigId, eventDefinitionId,
-                agentId, promptVersionId, modelDeploymentId, triggerSource,
-                ExecutionStatus.PENDING, null, null, null,
+                agentId, promptVersionId, promptTemplateId, modelDeploymentId, providerId, modelId,
+                environment, triggeredByUserId, inputHash, inputPreviewJson, null, null, traceId, null,
+                triggerSource, ExecutionStatus.PENDING, null, null, null,
                 null, null, null, null, null, null, null, metadata, now, now);
     }
 
@@ -86,8 +124,30 @@ public class ExecutionLog {
                                             Integer totalTokenCount, BigDecimal estimatedCost,
                                             String providerRequestId, String errorCode, String errorMessage,
                                             String metadata, Instant createdAt, Instant updatedAt) {
+        return reconstitute(id, requestId, eventConfigId, eventDefinitionId, agentId, promptVersionId,
+                null, modelDeploymentId, null, null, null, null, null, null, null, null, null, null,
+                triggerSource, status, startedAt, completedAt, latencyMs, inputTokenCount,
+                outputTokenCount, totalTokenCount, estimatedCost, providerRequestId, errorCode,
+                errorMessage, metadata, createdAt, updatedAt);
+    }
+
+    public static ExecutionLog reconstitute(UUID id, ExecutionRequestId requestId,
+                                            UUID eventConfigId, UUID eventDefinitionId,
+                                            UUID agentId, UUID promptVersionId, UUID promptTemplateId,
+                                            UUID modelDeploymentId, UUID providerId, UUID modelId,
+                                            String environment, UUID triggeredByUserId,
+                                            String inputHash, String inputPreviewJson, String outputPreviewJson,
+                                            String currency, String traceId, String blockReasonCode,
+                                            ExecutionTriggerSource triggerSource, ExecutionStatus status,
+                                            Instant startedAt, Instant completedAt, Long latencyMs,
+                                            Integer inputTokenCount, Integer outputTokenCount,
+                                            Integer totalTokenCount, BigDecimal estimatedCost,
+                                            String providerRequestId, String errorCode, String errorMessage,
+                                            String metadata, Instant createdAt, Instant updatedAt) {
         return new ExecutionLog(id, requestId, eventConfigId, eventDefinitionId, agentId,
-                promptVersionId, modelDeploymentId, triggerSource, status, startedAt, completedAt,
+                promptVersionId, promptTemplateId, modelDeploymentId, providerId, modelId,
+                environment, triggeredByUserId, inputHash, inputPreviewJson, outputPreviewJson,
+                currency, traceId, blockReasonCode, triggerSource, status, startedAt, completedAt,
                 latencyMs, inputTokenCount, outputTokenCount, totalTokenCount, estimatedCost,
                 providerRequestId, errorCode, errorMessage, metadata, createdAt, updatedAt);
     }
@@ -151,6 +211,23 @@ public class ExecutionLog {
         this.updatedAt = Instant.now();
     }
 
+    public void markBlocked(String blockReasonCode) {
+        if (status.isTerminal()) {
+            throw new IllegalStateException("Cannot transition from terminal status: " + status);
+        }
+        if (status != ExecutionStatus.PENDING) {
+            throw new IllegalStateException("Can only mark BLOCKED from PENDING, current: " + status);
+        }
+        this.status = ExecutionStatus.BLOCKED;
+        this.blockReasonCode = blockReasonCode;
+        this.completedAt = Instant.now();
+        if (this.startedAt == null) {
+            this.startedAt = this.completedAt;
+        }
+        calculateLatency();
+        this.updatedAt = Instant.now();
+    }
+
     public void cancel() {
         if (status.isTerminal()) {
             throw new IllegalStateException("Cannot transition from terminal status: " + status);
@@ -176,7 +253,18 @@ public class ExecutionLog {
     public UUID eventDefinitionId() { return eventDefinitionId; }
     public UUID agentId() { return agentId; }
     public UUID promptVersionId() { return promptVersionId; }
+    public UUID promptTemplateId() { return promptTemplateId; }
     public UUID modelDeploymentId() { return modelDeploymentId; }
+    public UUID providerId() { return providerId; }
+    public UUID modelId() { return modelId; }
+    public String environment() { return environment; }
+    public UUID triggeredByUserId() { return triggeredByUserId; }
+    public String inputHash() { return inputHash; }
+    public String inputPreviewJson() { return inputPreviewJson; }
+    public String outputPreviewJson() { return outputPreviewJson; }
+    public String currency() { return currency; }
+    public String traceId() { return traceId; }
+    public String blockReasonCode() { return blockReasonCode; }
     public ExecutionTriggerSource triggerSource() { return triggerSource; }
     public ExecutionStatus status() { return status; }
     public Instant startedAt() { return startedAt; }

@@ -7,6 +7,7 @@ public enum AuthorizationDecisionReason {
     TEAM_GRANT_ALLOW,
     ROLE_GRANT_ALLOW,
     VISIBILITY_ALLOW,
+    GLOBAL_RESOURCE_GRANT_ALLOW,
 
     // Deny reasons
     EXPLICIT_DENY,

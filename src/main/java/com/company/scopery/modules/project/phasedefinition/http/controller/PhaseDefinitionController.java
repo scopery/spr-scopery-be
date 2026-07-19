@@ -3,17 +3,24 @@ package com.company.scopery.modules.project.phasedefinition.http.controller;
 import com.company.scopery.common.pagination.PageResponse;
 import com.company.scopery.common.pagination.PageResult;
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.modules.project.phasedefinition.application.action.ActivatePhaseDefinitionAction;
 import com.company.scopery.modules.project.phasedefinition.application.action.ArchivePhaseDefinitionAction;
+import com.company.scopery.modules.project.phasedefinition.application.action.CreateOrganizationPhaseDefinitionAction;
 import com.company.scopery.modules.project.phasedefinition.application.action.CreateSystemPhaseDefinitionAction;
 import com.company.scopery.modules.project.phasedefinition.application.action.CreateWorkspacePhaseDefinitionAction;
+import com.company.scopery.modules.project.phasedefinition.application.action.DeactivatePhaseDefinitionAction;
 import com.company.scopery.modules.project.phasedefinition.application.action.UpdatePhaseDefinitionAction;
+import com.company.scopery.modules.project.phasedefinition.application.command.ActivatePhaseDefinitionCommand;
 import com.company.scopery.modules.project.phasedefinition.application.command.ArchivePhaseDefinitionCommand;
+import com.company.scopery.modules.project.phasedefinition.application.command.CreateOrganizationPhaseDefinitionCommand;
 import com.company.scopery.modules.project.phasedefinition.application.command.CreateSystemPhaseDefinitionCommand;
 import com.company.scopery.modules.project.phasedefinition.application.command.CreateWorkspacePhaseDefinitionCommand;
+import com.company.scopery.modules.project.phasedefinition.application.command.DeactivatePhaseDefinitionCommand;
 import com.company.scopery.modules.project.phasedefinition.application.command.UpdatePhaseDefinitionCommand;
 import com.company.scopery.modules.project.phasedefinition.application.query.SearchPhaseDefinitionQuery;
 import com.company.scopery.modules.project.phasedefinition.application.response.PhaseDefinitionResponse;
 import com.company.scopery.modules.project.phasedefinition.application.service.PhaseDefinitionQueryService;
+import com.company.scopery.modules.project.phasedefinition.http.request.CreateOrganizationPhaseDefinitionRequest;
 import com.company.scopery.modules.project.phasedefinition.http.request.CreateSystemPhaseDefinitionRequest;
 import com.company.scopery.modules.project.phasedefinition.http.request.CreateWorkspacePhaseDefinitionRequest;
 import com.company.scopery.modules.project.phasedefinition.http.request.UpdatePhaseDefinitionRequest;
@@ -31,20 +38,29 @@ import java.util.UUID;
 public class PhaseDefinitionController {
 
     private final CreateSystemPhaseDefinitionAction createSystemPhaseDefinitionAction;
+    private final CreateOrganizationPhaseDefinitionAction createOrganizationPhaseDefinitionAction;
     private final CreateWorkspacePhaseDefinitionAction createWorkspacePhaseDefinitionAction;
     private final UpdatePhaseDefinitionAction updatePhaseDefinitionAction;
+    private final ActivatePhaseDefinitionAction activatePhaseDefinitionAction;
+    private final DeactivatePhaseDefinitionAction deactivatePhaseDefinitionAction;
     private final ArchivePhaseDefinitionAction archivePhaseDefinitionAction;
     private final PhaseDefinitionQueryService queryService;
 
     public PhaseDefinitionController(
             CreateSystemPhaseDefinitionAction createSystemPhaseDefinitionAction,
+            CreateOrganizationPhaseDefinitionAction createOrganizationPhaseDefinitionAction,
             CreateWorkspacePhaseDefinitionAction createWorkspacePhaseDefinitionAction,
             UpdatePhaseDefinitionAction updatePhaseDefinitionAction,
+            ActivatePhaseDefinitionAction activatePhaseDefinitionAction,
+            DeactivatePhaseDefinitionAction deactivatePhaseDefinitionAction,
             ArchivePhaseDefinitionAction archivePhaseDefinitionAction,
             PhaseDefinitionQueryService queryService) {
         this.createSystemPhaseDefinitionAction = createSystemPhaseDefinitionAction;
+        this.createOrganizationPhaseDefinitionAction = createOrganizationPhaseDefinitionAction;
         this.createWorkspacePhaseDefinitionAction = createWorkspacePhaseDefinitionAction;
         this.updatePhaseDefinitionAction = updatePhaseDefinitionAction;
+        this.activatePhaseDefinitionAction = activatePhaseDefinitionAction;
+        this.deactivatePhaseDefinitionAction = deactivatePhaseDefinitionAction;
         this.archivePhaseDefinitionAction = archivePhaseDefinitionAction;
         this.queryService = queryService;
     }
@@ -60,6 +76,23 @@ public class PhaseDefinitionController {
                         request.description(),
                         request.displayOrder(),
                         request.isSystemDefault()
+                )
+        );
+        return ApiResponse.success(response);
+    }
+
+    @PostMapping("/organization")
+    @Operation(summary = "Create an organization-scoped phase definition")
+    public ApiResponse<PhaseDefinitionResponse> createOrganizationPhaseDefinition(
+            @RequestParam UUID organizationId,
+            @Valid @RequestBody CreateOrganizationPhaseDefinitionRequest request) {
+        PhaseDefinitionResponse response = createOrganizationPhaseDefinitionAction.execute(
+                new CreateOrganizationPhaseDefinitionCommand(
+                        organizationId,
+                        request.code(),
+                        request.name(),
+                        request.description(),
+                        request.displayOrder()
                 )
         );
         return ApiResponse.success(response);
@@ -92,13 +125,14 @@ public class PhaseDefinitionController {
     @Operation(summary = "Search phase definitions")
     public ApiResponse<PageResponse<PhaseDefinitionResponse>> searchPhaseDefinitions(
             @RequestParam(required = false) String scope,
+            @RequestParam(required = false) UUID organizationId,
             @RequestParam(required = false) UUID workspaceId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         PageResult<PhaseDefinitionResponse> result = queryService.searchPhaseDefinitions(
-                new SearchPhaseDefinitionQuery(scope, workspaceId, keyword, status, page, size)
+                new SearchPhaseDefinitionQuery(scope, organizationId, workspaceId, keyword, status, page, size)
         );
         return ApiResponse.success(PageResponse.fromDomain(result));
     }
@@ -112,6 +146,18 @@ public class PhaseDefinitionController {
                 new UpdatePhaseDefinitionCommand(id, request.name(), request.description(), request.displayOrder())
         );
         return ApiResponse.success(response);
+    }
+
+    @PatchMapping("/{id}/activate")
+    @Operation(summary = "Activate a phase definition")
+    public ApiResponse<PhaseDefinitionResponse> activatePhaseDefinition(@PathVariable UUID id) {
+        return ApiResponse.success(activatePhaseDefinitionAction.execute(new ActivatePhaseDefinitionCommand(id)));
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    @Operation(summary = "Deactivate a phase definition")
+    public ApiResponse<PhaseDefinitionResponse> deactivatePhaseDefinition(@PathVariable UUID id) {
+        return ApiResponse.success(deactivatePhaseDefinitionAction.execute(new DeactivatePhaseDefinitionCommand(id)));
     }
 
     @PatchMapping("/{id}/archive")

@@ -57,6 +57,30 @@ public class UsagePolicyJpaEntity extends AuditableJpaEntity {
     @Column(name = "daily_budget", precision = 19, scale = 6)
     private BigDecimal dailyBudget;
 
+    @Column(name = "environment", length = 50)
+    private String environment;
+
+    @Column(name = "max_requests_per_minute")
+    private Integer maxRequestsPerMinute;
+
+    @Column(name = "max_requests_per_day")
+    private Integer maxRequestsPerDay;
+
+    @Column(name = "max_tokens_per_request")
+    private Integer maxTokensPerRequest;
+
+    @Column(name = "max_tokens_per_day")
+    private Integer maxTokensPerDay;
+
+    @Column(name = "max_estimated_cost_per_day", precision = 18, scale = 6)
+    private BigDecimal maxEstimatedCostPerDay;
+
+    @Column(name = "allowed_event_definition_ids", columnDefinition = "TEXT")
+    private String allowedEventDefinitionIds;
+
+    @Column(name = "blocked_event_definition_ids", columnDefinition = "TEXT")
+    private String blockedEventDefinitionIds;
+
     @Column(name = "period", length = 50)
     private String period;
 

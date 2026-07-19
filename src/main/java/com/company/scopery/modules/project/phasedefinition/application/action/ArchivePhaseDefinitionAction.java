@@ -14,6 +14,7 @@ import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,17 +28,20 @@ public class ArchivePhaseDefinitionAction {
     private final WorkspaceIamIntegrationService workspaceIamIntegrationService;
     private final IamSystemAuthorizationService systemAuthorizationService;
     private final ProjectActivityLogger activityLogger;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public ArchivePhaseDefinitionAction(PhaseDefinitionRepository repository,
                                          CurrentUserAuthorizationService currentUserAuthorizationService,
                                          WorkspaceIamIntegrationService workspaceIamIntegrationService,
                                          IamSystemAuthorizationService systemAuthorizationService,
-                                         ProjectActivityLogger activityLogger) {
+                                         ProjectActivityLogger activityLogger,
+                                         ProjectPlatformPublisher platformPublisher) {
         this.repository = repository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.workspaceIamIntegrationService = workspaceIamIntegrationService;
         this.systemAuthorizationService = systemAuthorizationService;
         this.activityLogger = activityLogger;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
@@ -49,21 +53,20 @@ public class ArchivePhaseDefinitionAction {
             throw ProjectExceptions.phaseDefinitionAlreadyArchived(command.id());
         }
 
-        if (pd.scope() == PhaseDefinitionScope.SYSTEM) {
-            systemAuthorizationService.requireSystemRight(
-                    IamAuthorities.SYSTEM_GOVERNANCE_MANAGE_PHASE_DEFINITION.legacyRightCode());
-        } else {
-            UUID actorId = currentUserAuthorizationService.resolveCurrentUser().id();
-            workspaceIamIntegrationService.requireWorkspaceAccess(
-                    pd.workspaceId(), actorId, IamAuthorities.PHASE_DEFINITION_ARCHIVE);
-        }
+        // Built-in / system-default definitions may be archived (soft). Hard-delete is not
+        // exposed by this API; PHASE_DEFINITION_BUILT_IN_CANNOT_DELETE covers that case.
+        requireArchiveAccess(pd);
 
-        if (repository.isUsedByAnyProject(command.id())) {
+        if (repository.isUsedByAnyProject(command.id()) || repository.isUsedByAnyTemplatePhase(command.id())) {
             throw ProjectExceptions.phaseDefinitionInUse(command.id());
         }
 
         PhaseDefinition archived = pd.archive();
         PhaseDefinition saved = repository.save(archived);
+
+        UUID actorId = currentUserAuthorizationService.resolveCurrentUser().id();
+        platformPublisher.enqueuePhaseDefinition(saved, "PHASE_DEFINITION_ARCHIVED");
+        platformPublisher.auditPhaseDefinitionArchived(actorId, saved);
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PHASE_DEFINITION,
@@ -73,5 +76,16 @@ public class ArchivePhaseDefinitionAction {
         );
 
         return PhaseDefinitionResponse.from(saved);
+    }
+
+    private void requireArchiveAccess(PhaseDefinition pd) {
+        if (pd.scope() == PhaseDefinitionScope.SYSTEM || pd.scope() == PhaseDefinitionScope.ORGANIZATION) {
+            systemAuthorizationService.requireSystemRight(
+                    IamAuthorities.SYSTEM_GOVERNANCE_MANAGE_PHASE_DEFINITION.legacyRightCode());
+        } else {
+            UUID actorId = currentUserAuthorizationService.resolveCurrentUser().id();
+            workspaceIamIntegrationService.requireWorkspaceAccess(
+                    pd.workspaceId(), actorId, IamAuthorities.PHASE_DEFINITION_ARCHIVE);
+        }
     }
 }

@@ -67,6 +67,8 @@ class IamAccessGrantActionTest {
     @Mock private IamAccessGrantPermissionActionRepository grantActionRepository;
     @Mock private IamPermissionRepository permissionRepository;
     @Mock private IamPermissionActionDefinitionRepository actionRepository;
+    @Mock private com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository orgMemberRepository;
+    @Mock private com.company.scopery.modules.workspace.orgteam.domain.model.OrgTeamRepository orgTeamRepository;
 
     private CreateIamAccessGrantAction createAction;
     private RevokeIamAccessGrantAction revokeAction;
@@ -87,7 +89,8 @@ class IamAccessGrantActionTest {
     @BeforeEach
     void setUp() {
         createAction = new CreateIamAccessGrantAction(grantRepository, resourceRepository,
-                currentUserService, activityLogger, authorizationDecisionService, auditEventService);
+                currentUserService, activityLogger, authorizationDecisionService, auditEventService,
+                orgMemberRepository, orgTeamRepository);
         revokeAction = new RevokeIamAccessGrantAction(grantRepository, activityLogger,
                 currentUserService, authorizationDecisionService, resourceRepository, auditEventService);
         addRightAction = new AddIamGrantRightAction(grantRepository, grantRightRepository,
@@ -100,7 +103,7 @@ class IamAccessGrantActionTest {
         Instant now = Instant.now();
         subjectId = UUID.randomUUID();
         grantedBy = UUID.randomUUID();
-        actor = new IamUser(grantedBy, Username.of("actor"), EmailAddress.of("actor@example.com"),
+        actor = IamUser.of(grantedBy, Username.of("actor"), EmailAddress.of("actor@example.com"),
                 "Actor", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(actor);
 
@@ -128,7 +131,7 @@ class IamAccessGrantActionTest {
 
         IamAccessGrantResponse response = createAction.execute(
                 new CreateIamAccessGrantCommand("USER", subjectId, activeResource.id(),
-                        null, null, null, null, null));
+                        null, null, null, null, null, null));
 
         assertThat(response.subjectType()).isEqualTo("USER");
         assertThat(response.status()).isEqualTo("ACTIVE");
@@ -140,7 +143,7 @@ class IamAccessGrantActionTest {
 
         assertThatThrownBy(() -> createAction.execute(
                 new CreateIamAccessGrantCommand("USER", subjectId, inactiveResource.id(),
-                        null, null, null, null, null)))
+                        null, null, null, null, null, null)))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getErrorCode())
                         .isEqualTo(IamErrorCatalog.IAM_AUTH_RESOURCE_INACTIVE_CANNOT_BE_USED.code()));
@@ -150,8 +153,25 @@ class IamAccessGrantActionTest {
     void createGrant_invalidSubjectType_throws400() {
         assertThatThrownBy(() -> createAction.execute(
                 new CreateIamAccessGrantCommand("INVALID", subjectId, activeResource.id(),
-                        null, null, null, null, null)))
+                        null, null, null, null, null, null)))
                 .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    void createGrant_crossOrgRejected() {
+        UUID orgId = UUID.randomUUID();
+        IamAuthResource orgScoped = IamAuthResource.createWithOwnership(
+                IamResourceCode.of("WORKSPACE_ORG"), IamResourceType.WORKSPACE, "Org WS", null,
+                UUID.randomUUID(), null, orgId, UUID.randomUUID(), IamResourceVisibility.PRIVATE, null);
+        when(resourceRepository.findById(orgScoped.id())).thenReturn(Optional.of(orgScoped));
+        when(orgMemberRepository.isActiveMember(orgId, subjectId)).thenReturn(false);
+
+        assertThatThrownBy(() -> createAction.execute(
+                new CreateIamAccessGrantCommand("USER", subjectId, orgScoped.id(),
+                        null, null, null, null, null, null)))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getErrorCode())
+                        .isEqualTo(IamErrorCatalog.IAM_DELEGATION_NOT_PERMITTED.code()));
     }
 
     @Test

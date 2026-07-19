@@ -13,6 +13,10 @@ public record EventDefinitionResponse(
         String eventKey,
         String description,
         String status,
+        int eventVersion,
+        String dataClassification,
+        String ownerModule,
+        boolean systemEvent,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -26,6 +30,10 @@ public record EventDefinitionResponse(
                 e.eventKey().value(),
                 e.description(),
                 e.status().name(),
+                e.eventVersion(),
+                e.dataClassification() != null ? e.dataClassification().name() : null,
+                e.ownerModule(),
+                e.systemEvent(),
                 e.createdAt(),
                 e.updatedAt()
         );

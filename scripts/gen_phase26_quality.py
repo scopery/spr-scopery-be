@@ -1,0 +1,519 @@
+#!/usr/bin/env python3
+"""Generate Phase 26 quality/test/defect/release/deployment module."""
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+JAVA = ROOT / "src/main/java/com/company/scopery/modules/quality"
+TEST = ROOT / "src/test/java/com/company/scopery/modules/quality"
+MIG = ROOT / "src/main/resources/db/migration"
+
+def w(path: Path, content: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content.rstrip() + "\n")
+    print(f"  wrote {path.relative_to(ROOT)}")
+
+PKG = "com.company.scopery.modules.quality"
+
+# ── Migration ──────────────────────────────────────────────────────────────
+SQL = r'''-- Phase 26: Quality / Test / Defect / Release / Deployment
+
+CREATE TABLE IF NOT EXISTS project_quality_plan (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    source_baseline_id UUID,
+    code VARCHAR(100),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL,
+    current_flag BOOLEAN NOT NULL DEFAULT FALSE,
+    quality_objectives TEXT,
+    test_strategy TEXT,
+    entry_criteria TEXT,
+    exit_criteria TEXT,
+    defect_policy_json TEXT,
+    release_readiness_policy_json TEXT,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    trace_id VARCHAR(100),
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_quality_plan PRIMARY KEY (id),
+    CONSTRAINT fk_project_quality_plan_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT ck_project_quality_plan_status CHECK (status IN ('DRAFT','READY','APPROVED','CURRENT','ARCHIVED'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_quality_plan_project ON project_quality_plan(project_id);
+
+CREATE TABLE IF NOT EXISTS project_test_plan (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    quality_plan_id UUID,
+    release_package_id UUID,
+    code VARCHAR(100),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    test_level VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_plan PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_plan_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT ck_project_test_plan_status CHECK (status IN ('DRAFT','READY','APPROVED','ARCHIVED')),
+    CONSTRAINT ck_project_test_plan_level CHECK (test_level IN ('UNIT','INTEGRATION','SYSTEM','UAT','REGRESSION','PERFORMANCE','SECURITY','SMOKE','ACCEPTANCE','OTHER'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_test_plan_project ON project_test_plan(project_id);
+
+CREATE TABLE IF NOT EXISTS project_test_suite (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    test_plan_id UUID NOT NULL,
+    deliverable_id UUID,
+    scope_item_id UUID,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL,
+    sort_order INT,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_suite PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_suite_plan FOREIGN KEY (test_plan_id) REFERENCES project_test_plan(id),
+    CONSTRAINT ck_project_test_suite_status CHECK (status IN ('ACTIVE','ARCHIVED'))
+);
+
+CREATE TABLE IF NOT EXISTS project_test_case (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    test_suite_id UUID,
+    code VARCHAR(100),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(50) NOT NULL,
+    priority VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    preconditions TEXT,
+    expected_result TEXT,
+    version_number INT NOT NULL DEFAULT 1,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_case PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_case_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT ck_project_test_case_status CHECK (status IN ('DRAFT','READY','APPROVED','DEPRECATED','ARCHIVED')),
+    CONSTRAINT ck_project_test_case_type CHECK (type IN ('FUNCTIONAL','NEGATIVE','REGRESSION','UAT','SMOKE','PERFORMANCE','SECURITY','OTHER')),
+    CONSTRAINT ck_project_test_case_priority CHECK (priority IN ('CRITICAL','HIGH','MEDIUM','LOW'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_project_test_case_code ON project_test_case(project_id, code) WHERE code IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_project_test_case_project ON project_test_case(project_id);
+
+CREATE TABLE IF NOT EXISTS project_test_step (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    test_case_id UUID NOT NULL,
+    step_order INT NOT NULL,
+    action_text TEXT NOT NULL,
+    expected_result TEXT NOT NULL,
+    data_notes TEXT,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_step PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_step_case FOREIGN KEY (test_case_id) REFERENCES project_test_case(id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_project_test_step_order ON project_test_step(test_case_id, step_order) WHERE archived_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS project_test_case_coverage (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    test_case_id UUID NOT NULL,
+    target_type VARCHAR(100) NOT NULL,
+    target_id UUID NOT NULL,
+    coverage_type VARCHAR(50) NOT NULL,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    CONSTRAINT pk_project_test_case_coverage PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_case_coverage_case FOREIGN KEY (test_case_id) REFERENCES project_test_case(id),
+    CONSTRAINT ck_project_test_case_coverage_type CHECK (coverage_type IN ('PRIMARY','SECONDARY','REGRESSION','VALIDATION'))
+);
+
+CREATE TABLE IF NOT EXISTS project_release_package (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    code VARCHAR(100) NOT NULL,
+    version_label VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    release_type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    planned_release_date DATE,
+    actual_release_date DATE,
+    readiness_status VARCHAR(50),
+    readiness_summary_json TEXT,
+    release_notes TEXT,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    released_at TIMESTAMPTZ,
+    released_by UUID,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    trace_id VARCHAR(100),
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_release_package PRIMARY KEY (id),
+    CONSTRAINT fk_project_release_package_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT uq_project_release_package_code UNIQUE (project_id, code),
+    CONSTRAINT uq_project_release_package_version UNIQUE (project_id, version_label),
+    CONSTRAINT ck_project_release_package_status CHECK (status IN ('DRAFT','PLANNED','IN_TESTING','READY_FOR_RELEASE','RELEASED','ROLLED_BACK','CANCELLED','ARCHIVED')),
+    CONSTRAINT ck_project_release_package_type CHECK (release_type IN ('MAJOR','MINOR','PATCH','HOTFIX','UAT','INTERNAL','OTHER'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_release_package_project ON project_release_package(project_id);
+
+CREATE TABLE IF NOT EXISTS project_test_run (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    test_plan_id UUID,
+    test_suite_id UUID,
+    release_package_id UUID,
+    deployment_environment_id UUID,
+    name VARCHAR(255) NOT NULL,
+    run_type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    executed_by UUID,
+    summary_json TEXT,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    trace_id VARCHAR(100),
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_run PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_run_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT ck_project_test_run_status CHECK (status IN ('PLANNED','IN_PROGRESS','COMPLETED','CANCELLED','ARCHIVED')),
+    CONSTRAINT ck_project_test_run_type CHECK (run_type IN ('MANUAL','AUTOMATED','MIXED','REGRESSION','SMOKE','UAT','OTHER'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_test_run_project ON project_test_run(project_id);
+
+CREATE TABLE IF NOT EXISTS project_defect (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    code VARCHAR(100),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(50) NOT NULL,
+    severity VARCHAR(50) NOT NULL,
+    priority VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    assigned_to_user_id UUID,
+    reported_by UUID,
+    reported_at TIMESTAMPTZ,
+    reproduction_steps TEXT,
+    expected_result TEXT,
+    actual_result TEXT,
+    environment_notes TEXT,
+    resolution_type VARCHAR(50),
+    resolution_note TEXT,
+    resolved_at TIMESTAMPTZ,
+    resolved_by UUID,
+    closed_at TIMESTAMPTZ,
+    closed_by UUID,
+    reopened_at TIMESTAMPTZ,
+    reopened_by UUID,
+    reopen_reason TEXT,
+    source_test_case_result_id UUID,
+    source_ai_suggestion_id UUID,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    trace_id VARCHAR(100),
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_defect PRIMARY KEY (id),
+    CONSTRAINT fk_project_defect_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT ck_project_defect_status CHECK (status IN ('OPEN','TRIAGED','ASSIGNED','IN_PROGRESS','FIXED','READY_FOR_RETEST','RETESTING','VERIFIED','CLOSED','REJECTED','REOPENED','ARCHIVED')),
+    CONSTRAINT ck_project_defect_severity CHECK (severity IN ('BLOCKER','CRITICAL','MAJOR','MINOR','TRIVIAL')),
+    CONSTRAINT ck_project_defect_priority CHECK (priority IN ('P0','P1','P2','P3','P4')),
+    CONSTRAINT ck_project_defect_category CHECK (category IN ('FUNCTIONAL','UI','PERFORMANCE','SECURITY','DATA','INTEGRATION','REGRESSION','OTHER'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_defect_project ON project_defect(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_defect_status ON project_defect(project_id, status);
+
+CREATE TABLE IF NOT EXISTS project_test_case_result (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    test_run_id UUID NOT NULL,
+    test_case_id UUID NOT NULL,
+    result_status VARCHAR(50) NOT NULL,
+    actual_result TEXT,
+    evidence_reference TEXT,
+    executed_at TIMESTAMPTZ,
+    executed_by UUID,
+    defect_id UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_case_result PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_case_result_run FOREIGN KEY (test_run_id) REFERENCES project_test_run(id),
+    CONSTRAINT ck_project_test_case_result_status CHECK (result_status IN ('PASSED','FAILED','BLOCKED','SKIPPED','NOT_RUN'))
+);
+
+CREATE TABLE IF NOT EXISTS project_test_step_result (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    test_case_result_id UUID NOT NULL,
+    test_step_id UUID NOT NULL,
+    result_status VARCHAR(50) NOT NULL,
+    actual_result TEXT,
+    evidence_reference TEXT,
+    executed_at TIMESTAMPTZ,
+    executed_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_test_step_result PRIMARY KEY (id),
+    CONSTRAINT fk_project_test_step_result_case FOREIGN KEY (test_case_result_id) REFERENCES project_test_case_result(id),
+    CONSTRAINT ck_project_test_step_result_status CHECK (result_status IN ('PASSED','FAILED','BLOCKED','SKIPPED','NOT_RUN'))
+);
+
+CREATE TABLE IF NOT EXISTS project_defect_link (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    defect_id UUID NOT NULL,
+    target_type VARCHAR(100) NOT NULL,
+    target_id UUID NOT NULL,
+    link_type VARCHAR(50) NOT NULL,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    CONSTRAINT pk_project_defect_link PRIMARY KEY (id),
+    CONSTRAINT fk_project_defect_link_defect FOREIGN KEY (defect_id) REFERENCES project_defect(id),
+    CONSTRAINT ck_project_defect_link_type CHECK (link_type IN ('FOUND_IN','BLOCKS','AFFECTS','FIXED_BY','RELATED_TO','CAUSED_BY','VALIDATED_BY'))
+);
+
+CREATE TABLE IF NOT EXISTS project_release_item (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    release_package_id UUID NOT NULL,
+    target_type VARCHAR(100) NOT NULL,
+    target_id UUID NOT NULL,
+    required BOOLEAN NOT NULL DEFAULT TRUE,
+    status VARCHAR(50) NOT NULL,
+    notes TEXT,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    CONSTRAINT pk_project_release_item PRIMARY KEY (id),
+    CONSTRAINT fk_project_release_item_package FOREIGN KEY (release_package_id) REFERENCES project_release_package(id),
+    CONSTRAINT ck_project_release_item_status CHECK (status IN ('INCLUDED','EXCLUDED','PENDING','BLOCKED'))
+);
+
+CREATE TABLE IF NOT EXISTS project_release_readiness_check (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    release_package_id UUID NOT NULL,
+    check_code VARCHAR(150) NOT NULL,
+    check_name VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    details TEXT,
+    blocking BOOLEAN NOT NULL DEFAULT TRUE,
+    override_reason TEXT,
+    overridden_at TIMESTAMPTZ,
+    overridden_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_release_readiness_check PRIMARY KEY (id),
+    CONSTRAINT fk_project_release_readiness_check_package FOREIGN KEY (release_package_id) REFERENCES project_release_package(id),
+    CONSTRAINT ck_project_release_readiness_check_status CHECK (status IN ('PASSED','FAILED','WARNING','WAIVED','NOT_APPLICABLE'))
+);
+
+CREATE TABLE IF NOT EXISTS project_deployment_environment (
+    id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    project_id UUID,
+    code VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    environment_type VARCHAR(50) NOT NULL,
+    description TEXT,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_deployment_environment PRIMARY KEY (id),
+    CONSTRAINT ck_project_deployment_environment_type CHECK (environment_type IN ('DEV','QA','STAGING','UAT','PRODUCTION','DEMO','OTHER'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_project_deployment_environment_code ON project_deployment_environment(workspace_id, code) WHERE archived_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS project_rollback_plan (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    release_package_id UUID,
+    deployment_record_id UUID,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    owner_user_id UUID,
+    status VARCHAR(50) NOT NULL,
+    steps_json TEXT,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID,
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_rollback_plan PRIMARY KEY (id),
+    CONSTRAINT fk_project_rollback_plan_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT ck_project_rollback_plan_status CHECK (status IN ('DRAFT','READY','APPROVED','ARCHIVED'))
+);
+
+CREATE TABLE IF NOT EXISTS project_deployment_record (
+    id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    release_package_id UUID NOT NULL,
+    deployment_environment_id UUID NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    build_reference VARCHAR(500),
+    deployment_reference VARCHAR(500),
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    deployed_by UUID,
+    failure_reason TEXT,
+    rollback_plan_id UUID,
+    rolled_back_at TIMESTAMPTZ,
+    rolled_back_by UUID,
+    rollback_reason TEXT,
+    trace_id VARCHAR(100),
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    CONSTRAINT pk_project_deployment_record PRIMARY KEY (id),
+    CONSTRAINT fk_project_deployment_record_project FOREIGN KEY (project_id) REFERENCES project_project(id),
+    CONSTRAINT fk_project_deployment_record_release FOREIGN KEY (release_package_id) REFERENCES project_release_package(id),
+    CONSTRAINT fk_project_deployment_record_env FOREIGN KEY (deployment_environment_id) REFERENCES project_deployment_environment(id),
+    CONSTRAINT ck_project_deployment_record_status CHECK (status IN ('PLANNED','IN_PROGRESS','SUCCEEDED','FAILED','ROLLED_BACK','CANCELLED'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_deployment_record_project ON project_deployment_record(project_id);
+'''
+
+w(MIG / "V63__create_quality_test_release_tables_phase26.sql", SQL)
+
+# Helper to emit a standard entity stack
+def emit_entity_stack(subpkg, entity, table_const, fields_domain, fields_jpa, create_sig, create_body,
+                      enums=None, response_fields=None, extra_domain_methods="",
+                      list_method="findByProjectId", spring_extra=""):
+    """Generate domain/infra/mapper/repo for a simple entity."""
+    enums = enums or {}
+    base = JAVA / subpkg
+    # enums
+    for ename, values in enums.items():
+        vals = ",\n    ".join(values)
+        w(base / f"domain/enums/{ename}.java", f"""package {PKG}.{subpkg}.domain.enums;
+public enum {ename} {{
+    {vals}
+}}
+""")
+    # domain model - simplified record
+    w(base / f"domain/model/{entity}.java", f"""package {PKG}.{subpkg}.domain.model;
+{chr(10).join(f'import {PKG}.{subpkg}.domain.enums.{e};' for e in enums)}
+import java.time.Instant;
+import java.util.UUID;
+
+public record {entity}(
+{fields_domain}
+) {{
+{create_body}
+{extra_domain_methods}
+}}
+""")
+    w(base / f"domain/model/{entity}Repository.java", f"""package {PKG}.{subpkg}.domain.model;
+import java.util.*;
+public interface {entity}Repository {{
+    {entity} save({entity} entity);
+    Optional<{entity}> findByIdAndProjectId(UUID id, UUID projectId);
+    List<{entity}> findByProjectId(UUID projectId);
+}}
+""")
+    w(base / f"infrastructure/persistence/{entity}JpaEntity.java", f"""package {PKG}.{subpkg}.infrastructure.persistence;
+import com.company.scopery.common.audit.AuditableJpaEntity;
+import {PKG}.shared.constant.QualityTableNames;
+import jakarta.persistence.*;
+import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import java.time.Instant; import java.util.UUID;
+@Entity @Table(name=QualityTableNames.{table_const}) @Getter @Setter @NoArgsConstructor
+public class {entity}JpaEntity extends AuditableJpaEntity {{
+{fields_jpa}
+    @Version private Integer version;
+}}
+""")
+    w(base / f"infrastructure/persistence/SpringData{entity}JpaRepository.java", f"""package {PKG}.{subpkg}.infrastructure.persistence;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.*;
+public interface SpringData{entity}JpaRepository extends JpaRepository<{entity}JpaEntity, UUID> {{
+    Optional<{entity}JpaEntity> findByIdAndProjectId(UUID id, UUID projectId);
+    List<{entity}JpaEntity> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
+{spring_extra}
+}}
+""")
+
+print("Migration written. Continuing shared kernel + entities via second pass...")
+print("DONE_PARTIAL")

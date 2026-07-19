@@ -26,6 +26,15 @@ public class TaskPersistenceMapper {
                 entity.getDueDate(),
                 TaskPriority.valueOf(entity.getPriority()),
                 TaskStatus.valueOf(entity.getStatus()),
+                entity.getStartedAt(),
+                entity.getStartedBy(),
+                entity.getBlockedAt(),
+                entity.getCompletedAt(),
+                entity.getCompletedBy(),
+                entity.getCancelledAt(),
+                entity.getCancelledBy(),
+                entity.getArchivedAt(),
+                entity.getArchivedBy(),
                 entity.getVersion() != null ? entity.getVersion() : 0,
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
@@ -49,9 +58,18 @@ public class TaskPersistenceMapper {
         entity.setDueDate(domain.dueDate());
         entity.setPriority(domain.priority().name());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
+        entity.setStartedAt(domain.startedAt());
+        entity.setStartedBy(domain.startedBy());
+        entity.setBlockedAt(domain.blockedAt());
+        entity.setCompletedAt(domain.completedAt());
+        entity.setCompletedBy(domain.completedBy());
+        entity.setCancelledAt(domain.cancelledAt());
+        entity.setCancelledBy(domain.cancelledBy());
+        entity.setArchivedAt(domain.archivedAt());
+        entity.setArchivedBy(domain.archivedBy());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
         }
         return entity;
     }

@@ -1,6 +1,5 @@
 package com.company.scopery.modules.project.project.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.project.application.command.CreateProjectCommand;
 import com.company.scopery.modules.project.project.application.response.ProjectResponse;
 import com.company.scopery.modules.project.project.domain.model.Project;
@@ -11,6 +10,11 @@ import com.company.scopery.modules.project.shared.authorization.ProjectWorkspace
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
+import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
+import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,20 +22,41 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateProjectAction {
 
     private final ProjectRepository projectRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public CreateProjectAction(ProjectRepository projectRepository,
-                                ProjectActivityLogger activityLogger,
-                                ProjectWorkspaceAuthorizationService authorizationService) {
+                               WorkspaceRepository workspaceRepository,
+                               WorkspaceMemberRepository workspaceMemberRepository,
+                               ProjectActivityLogger activityLogger,
+                               ProjectWorkspaceAuthorizationService authorizationService,
+                               ProjectPlatformPublisher platformPublisher) {
         this.projectRepository = projectRepository;
+        this.workspaceRepository = workspaceRepository;
+        this.workspaceMemberRepository = workspaceMemberRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public ProjectResponse execute(CreateProjectCommand command) {
-        authorizationService.requireWorkspacePermission(command.workspaceId(), IamAuthorities.PROJECT_CREATE);
+        authorizationService.requireProjectCreate(command.workspaceId());
+
+        Workspace workspace = workspaceRepository.findById(command.workspaceId())
+                .orElseThrow(() -> ProjectExceptions.projectWorkspaceNotFound(command.workspaceId()));
+
+        if (workspace.status() != WorkspaceStatus.ACTIVE) {
+            throw ProjectExceptions.projectWorkspaceNotActive(command.workspaceId());
+        }
+
+        if (command.ownerUserId() != null
+                && !workspaceMemberRepository.isActiveMember(command.workspaceId(), command.ownerUserId())) {
+            throw ProjectExceptions.projectOwnerNotWorkspaceMember(command.ownerUserId());
+        }
 
         ProjectCode code = ProjectCode.of(command.code());
 
@@ -46,6 +71,7 @@ public class CreateProjectAction {
 
         Project project = Project.create(
                 command.workspaceId(),
+                workspace.organizationId(),
                 code.value(),
                 command.name(),
                 command.description(),
@@ -56,6 +82,8 @@ public class CreateProjectAction {
         );
 
         Project saved = projectRepository.save(project);
+
+        platformPublisher.enqueueProject(saved, "PROJECT_CREATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PROJECT,

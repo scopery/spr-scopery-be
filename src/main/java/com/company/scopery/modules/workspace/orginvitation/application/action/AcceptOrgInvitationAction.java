@@ -1,14 +1,15 @@
 package com.company.scopery.modules.workspace.orginvitation.application.action;
 
 import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
-import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMember;
-import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
-import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipSource;
+import com.company.scopery.modules.workspace.invitation.domain.valueobject.InvitationCodeHasher;
 import com.company.scopery.modules.workspace.orginvitation.application.command.AcceptOrgInvitationCommand;
 import com.company.scopery.modules.workspace.orginvitation.application.response.OrgInvitationResponse;
 import com.company.scopery.modules.workspace.orginvitation.domain.enums.OrgInvitationStatus;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitation;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitationRepository;
+import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipSource;
+import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMember;
+import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
@@ -38,7 +39,8 @@ public class AcceptOrgInvitationAction {
 
     @Transactional
     public OrgInvitationResponse execute(AcceptOrgInvitationCommand command) {
-        OrgInvitation invitation = invitationRepository.findByToken(command.token())
+        String tokenHash = InvitationCodeHasher.hash(command.token());
+        OrgInvitation invitation = invitationRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> WorkspaceExceptions.orgInvitationNotFound(command.token()));
 
         if (invitation.status() != OrgInvitationStatus.PENDING) {

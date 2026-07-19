@@ -13,6 +13,10 @@ public record AgentResponse(
         String description,
         UUID defaultModelDeploymentId,
         String outputFormat,
+        String autonomyLevel,
+        String scope,
+        UUID organizationId,
+        UUID workspaceId,
         String status,
         Instant createdAt,
         Instant updatedAt
@@ -27,6 +31,10 @@ public record AgentResponse(
                 agent.description(),
                 agent.defaultModelDeploymentId(),
                 agent.outputFormat() != null ? agent.outputFormat().name() : null,
+                agent.autonomyLevel() != null ? agent.autonomyLevel().name() : null,
+                agent.scope() != null ? agent.scope().name() : null,
+                agent.organizationId(),
+                agent.workspaceId(),
                 agent.status().name(),
                 agent.createdAt(),
                 agent.updatedAt()

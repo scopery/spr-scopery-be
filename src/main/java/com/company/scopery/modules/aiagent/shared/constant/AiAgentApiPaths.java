@@ -19,6 +19,8 @@ public final class AiAgentApiPaths {
     public static final String EXECUTIONS                   = BASE + "/executions";
     public static final String PROVIDER_SECRETS             = BASE + "/provider-secrets";
     public static final String PLAYGROUND                   = BASE + "/playground";
+    public static final String TOOLS                        = BASE + "/tools";
+    public static final String TOOL_EXECUTIONS              = BASE + "/tool-executions";
 
     private AiAgentApiPaths() {}
 }

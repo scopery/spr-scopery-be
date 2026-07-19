@@ -27,6 +27,8 @@ public interface AuthorizationReadRepository {
 
     Optional<IamAuthResource> findResourceByRefIdAndType(UUID refId, IamResourceType resourceType);
 
+    Optional<IamAuthResource> findGlobalSystemResource();
+
     List<IamAccessGrant> findActiveGrantsBySubjectsAndResource(
             List<IamSubjectType> subjectTypes, List<UUID> subjectIds, UUID resourceId);
 
@@ -48,4 +50,6 @@ public interface AuthorizationReadRepository {
     List<UUID> findWorkspaceTeamIdsByUserId(UUID userId);
 
     List<UUID> findOrgTeamIdsByUserId(UUID userId);
+
+    boolean hasActiveGlobalResourceGrantForUser(UUID userId);
 }

@@ -45,6 +45,7 @@ public class EmailTemplatePersistenceMapper {
                 e.getId(), e.getTemplateId(), e.getVersionNumber(),
                 e.getSubjectTemplate(), e.getHtmlBodyTemplate(), e.getTextBodyTemplate(),
                 EmailTemplateVersionStatus.valueOf(e.getStatus()),
+                e.getPublishedAt(), e.getPublishedBy(),
                 e.getCreatedAt(), e.getUpdatedAt());
     }
 
@@ -57,6 +58,8 @@ public class EmailTemplatePersistenceMapper {
         e.setHtmlBodyTemplate(d.htmlBodyTemplate());
         e.setTextBodyTemplate(d.textBodyTemplate());
         e.setStatus(d.status().name());
+        e.setPublishedAt(d.publishedAt());
+        e.setPublishedBy(d.publishedBy());
         e.setCreatedAt(d.createdAt());
         return e;
     }

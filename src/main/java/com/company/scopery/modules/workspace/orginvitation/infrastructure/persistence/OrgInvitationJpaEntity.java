@@ -16,11 +16,12 @@ import java.util.UUID;
 @Entity
 @Table(
         name = WorkspaceTableNames.ORG_INVITATION,
-        uniqueConstraints = @UniqueConstraint(name = "uq_org_invitation_token", columnNames = {"token"}),
+        uniqueConstraints = @UniqueConstraint(name = "uq_org_invitation_token_hash", columnNames = {"token_hash"}),
         indexes = {
                 @Index(name = "idx_org_invitation_organization_id", columnList = "organization_id"),
                 @Index(name = "idx_org_invitation_invitee_email", columnList = "invitee_email"),
-                @Index(name = "idx_org_invitation_status", columnList = "status")
+                @Index(name = "idx_org_invitation_status", columnList = "status"),
+                @Index(name = "idx_org_invitation_token_hash", columnList = "token_hash")
         }
 )
 public class OrgInvitationJpaEntity extends AuditableJpaEntity {
@@ -47,8 +48,11 @@ public class OrgInvitationJpaEntity extends AuditableJpaEntity {
     @Column(name = "invited_by", nullable = false)
     private UUID invitedBy;
 
-    @Column(name = "token", nullable = false, length = 255)
-    private String token;
+    @Column(name = "token_hash", nullable = false, length = 255)
+    private String tokenHash;
+
+    @Column(name = "token_hint", length = 16)
+    private String tokenHint;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;

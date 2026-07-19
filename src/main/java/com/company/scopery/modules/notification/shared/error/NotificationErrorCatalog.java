@@ -69,6 +69,11 @@ public enum NotificationErrorCatalog implements ErrorCatalog {
             "Template uses variables not defined in the event registry",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
+    EMAIL_TEMPLATE_SENSITIVE_VARIABLE_NOT_ALLOWED(
+            "EMAIL_TEMPLATE_SENSITIVE_VARIABLE_NOT_ALLOWED",
+            "Sensitive template variables are not allowed in this context",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
     EMAIL_TEMPLATE_RENDER_FAILED(
             "EMAIL_TEMPLATE_RENDER_FAILED",
             "Email template rendering failed",
@@ -131,6 +136,11 @@ public enum NotificationErrorCatalog implements ErrorCatalog {
             "Invalid email recipient strategy",
             HttpStatus.BAD_REQUEST),
 
+    EMAIL_RULE_SENSITIVE_NOT_PERMITTED(
+            "EMAIL_RULE_SENSITIVE_NOT_PERMITTED",
+            "Email rule is not permitted to use sensitive variables",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
     // ── Email Delivery ────────────────────────────────────────────────────────
 
     EMAIL_DELIVERY_NOT_FOUND(
@@ -169,6 +179,23 @@ public enum NotificationErrorCatalog implements ErrorCatalog {
             "EMAIL_OUTBOX_NOT_RETRYABLE",
             "Email outbox record is not in a retryable state",
             HttpStatus.UNPROCESSABLE_ENTITY),
+
+    EMAIL_OUTBOX_NOT_CANCELLABLE(
+            "EMAIL_OUTBOX_NOT_CANCELLABLE",
+            "Email outbox record cannot be cancelled in its current state",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    // ── Notification Item ─────────────────────────────────────────────────────
+
+    NOTIFICATION_ITEM_NOT_FOUND(
+            "NOTIFICATION_ITEM_NOT_FOUND",
+            "Notification not found",
+            HttpStatus.NOT_FOUND),
+
+    NOTIFICATION_ITEM_ACCESS_DENIED(
+            "NOTIFICATION_ITEM_ACCESS_DENIED",
+            "Access to this notification is denied",
+            HttpStatus.FORBIDDEN),
 
     // ── Dispatch ──────────────────────────────────────────────────────────────
 

@@ -59,11 +59,24 @@ public class PublishEmailTemplateVersionAction {
         EmailTemplateVersion version = templateRepository.findVersionById(cmd.versionId())
                 .orElseThrow(() -> NotificationExceptions.emailTemplateVersionNotFound(cmd.versionId()));
 
-        Set<String> allowedPaths = loadAllowedVariablePaths(template.eventDefinitionId());
-        variableValidator.validate(version.subjectTemplate(), version.htmlBodyTemplate(),
-                version.textBodyTemplate(), allowedPaths);
+        List<EventVariable> variables = eventDefinitionRepository.findVariablesByEventDefinitionId(template.eventDefinitionId());
+        Set<String> allowedPaths = variables.stream().map(EventVariable::variablePath).collect(Collectors.toSet());
+        Set<String> sensitivePaths = variables.stream()
+                .filter(EventVariable::sensitive)
+                .map(EventVariable::variablePath)
+                .collect(Collectors.toSet());
 
-        version.publish();
+        boolean allowSensitiveInBody = cmd.allowSensitiveVariables();
+        variableValidator.validate(version.subjectTemplate(), version.htmlBodyTemplate(),
+                version.textBodyTemplate(), allowedPaths, sensitivePaths, allowSensitiveInBody);
+
+        UUID publisherId = null;
+        try {
+            publisherId = currentUserAuthorizationService.resolveCurrentUser().id();
+        } catch (Exception ignored) {
+            // Seeders / system paths may publish without a request principal.
+        }
+        version.publish(publisherId);
         version = templateRepository.saveVersion(version);
 
         template.publishVersion(version.id());
@@ -89,10 +102,5 @@ public class PublishEmailTemplateVersionAction {
             workspaceIamIntegrationService.requireWorkspaceAccess(
                     template.workspaceId(), actorId, IamAuthorities.NOTIFICATION_MANAGE_TEMPLATE);
         }
-    }
-
-    private Set<String> loadAllowedVariablePaths(UUID eventDefinitionId) {
-        List<EventVariable> variables = eventDefinitionRepository.findVariablesByEventDefinitionId(eventDefinitionId);
-        return variables.stream().map(EventVariable::variablePath).collect(Collectors.toSet());
     }
 }

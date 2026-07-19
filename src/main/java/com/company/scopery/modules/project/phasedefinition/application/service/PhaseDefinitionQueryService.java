@@ -1,6 +1,7 @@
 package com.company.scopery.modules.project.phasedefinition.application.service;
 
 import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
 import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
 import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.phasedefinition.application.query.SearchPhaseDefinitionQuery;
@@ -25,13 +26,16 @@ public class PhaseDefinitionQueryService {
     private final PhaseDefinitionRepository repository;
     private final CurrentUserAuthorizationService currentUserAuthorizationService;
     private final WorkspaceIamIntegrationService workspaceIamIntegrationService;
+    private final IamSystemAuthorizationService systemAuthorizationService;
 
     public PhaseDefinitionQueryService(PhaseDefinitionRepository repository,
                                         CurrentUserAuthorizationService currentUserAuthorizationService,
-                                        WorkspaceIamIntegrationService workspaceIamIntegrationService) {
+                                        WorkspaceIamIntegrationService workspaceIamIntegrationService,
+                                        IamSystemAuthorizationService systemAuthorizationService) {
         this.repository = repository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.workspaceIamIntegrationService = workspaceIamIntegrationService;
+        this.systemAuthorizationService = systemAuthorizationService;
     }
 
     @Transactional(readOnly = true)
@@ -40,6 +44,8 @@ public class PhaseDefinitionQueryService {
                 .orElseThrow(() -> ProjectExceptions.phaseDefinitionNotFound(id));
         if (definition.scope() == PhaseDefinitionScope.WORKSPACE) {
             requireWorkspaceView(definition.workspaceId());
+        } else if (definition.scope() == PhaseDefinitionScope.ORGANIZATION) {
+            requireSystemPhaseDefinitionManage();
         }
         return PhaseDefinitionResponse.from(definition);
     }
@@ -59,15 +65,21 @@ public class PhaseDefinitionQueryService {
         );
 
         UUID workspaceId = query.workspaceId();
+        UUID organizationId = query.organizationId();
+
         if (workspaceId != null) {
             requireWorkspaceView(workspaceId);
+        } else if (organizationId != null) {
+            requireSystemPhaseDefinitionManage();
+            if (scope == null) {
+                scope = PhaseDefinitionScope.ORGANIZATION;
+            }
         } else {
-            // Without a workspace context, only the shared system catalog is browsable —
-            // otherwise this would enumerate every workspace's phase definitions at once.
+            // Without workspace/org context, only the shared system catalog is browsable.
             scope = PhaseDefinitionScope.SYSTEM;
         }
 
-        return repository.search(scope, workspaceId, query.keyword(), status, pageQuery)
+        return repository.search(scope, organizationId, workspaceId, query.keyword(), status, pageQuery)
                 .map(PhaseDefinitionResponse::from);
     }
 
@@ -75,5 +87,10 @@ public class PhaseDefinitionQueryService {
         UUID actorId = currentUserAuthorizationService.resolveCurrentUser().id();
         workspaceIamIntegrationService.requireWorkspaceAccess(
                 workspaceId, actorId, IamAuthorities.PHASE_DEFINITION_VIEW);
+    }
+
+    private void requireSystemPhaseDefinitionManage() {
+        systemAuthorizationService.requireSystemRight(
+                IamAuthorities.SYSTEM_GOVERNANCE_MANAGE_PHASE_DEFINITION.legacyRightCode());
     }
 }

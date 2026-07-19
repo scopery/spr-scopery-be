@@ -44,8 +44,7 @@ public class IamAuthResourcePersistenceMapper {
         entity.setVisibility(domain.visibility() != null ? domain.visibility().name() : null);
         entity.setParentResourceId(domain.parentResourceId());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt());
+        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); entity.setVersion(domain.version()); }
         return entity;
     }
 }

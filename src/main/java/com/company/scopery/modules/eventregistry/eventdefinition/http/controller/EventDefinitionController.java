@@ -6,11 +6,13 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.action.ActivateEventDefinitionAction;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.action.CreateEventDefinitionAction;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.action.DeactivateEventDefinitionAction;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.action.DeprecateEventDefinitionAction;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.action.UpdateEventDefinitionAction;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.action.UpsertEventVariablesAction;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.ActivateEventDefinitionCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.CreateEventDefinitionCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.DeactivateEventDefinitionCommand;
+import com.company.scopery.modules.eventregistry.eventdefinition.application.command.DeprecateEventDefinitionCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.UpdateEventDefinitionCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.command.UpsertEventVariablesCommand;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.query.GetEventDefinitionDetailQuery;
@@ -20,6 +22,7 @@ import com.company.scopery.modules.eventregistry.eventdefinition.application.res
 import com.company.scopery.modules.eventregistry.eventdefinition.application.response.EventVariableResponse;
 import com.company.scopery.modules.eventregistry.eventdefinition.application.service.EventDefinitionQueryService;
 import com.company.scopery.modules.eventregistry.eventdefinition.http.request.CreateEventDefinitionRequest;
+import com.company.scopery.modules.eventregistry.eventdefinition.http.request.DeprecateEventDefinitionRequest;
 import com.company.scopery.modules.eventregistry.eventdefinition.http.request.UpdateEventDefinitionRequest;
 import com.company.scopery.modules.eventregistry.eventdefinition.http.request.UpsertEventVariablesRequest;
 import com.company.scopery.modules.eventregistry.shared.constant.EventRegistryApiPaths;
@@ -43,6 +46,7 @@ public class EventDefinitionController {
     private final UpdateEventDefinitionAction updateAction;
     private final ActivateEventDefinitionAction activateAction;
     private final DeactivateEventDefinitionAction deactivateAction;
+    private final DeprecateEventDefinitionAction deprecateAction;
     private final UpsertEventVariablesAction upsertVariablesAction;
     private final EventDefinitionQueryService queryService;
 
@@ -50,12 +54,14 @@ public class EventDefinitionController {
                                      UpdateEventDefinitionAction updateAction,
                                      ActivateEventDefinitionAction activateAction,
                                      DeactivateEventDefinitionAction deactivateAction,
+                                     DeprecateEventDefinitionAction deprecateAction,
                                      UpsertEventVariablesAction upsertVariablesAction,
                                      EventDefinitionQueryService queryService) {
         this.createAction = createAction;
         this.updateAction = updateAction;
         this.activateAction = activateAction;
         this.deactivateAction = deactivateAction;
+        this.deprecateAction = deprecateAction;
         this.upsertVariablesAction = upsertVariablesAction;
         this.queryService = queryService;
     }
@@ -67,7 +73,8 @@ public class EventDefinitionController {
 
         CreateEventDefinitionCommand command = new CreateEventDefinitionCommand(
                 request.code(), request.name(), request.sourceSystem(), request.eventKey(),
-                request.description(), request.inputSchema(), request.outputSchema());
+                request.description(), request.inputSchema(), request.outputSchema(),
+                request.dataClassification(), request.ownerModule());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(createAction.execute(command)));
@@ -80,7 +87,8 @@ public class EventDefinitionController {
             @Valid @RequestBody UpdateEventDefinitionRequest request) {
 
         UpdateEventDefinitionCommand command = new UpdateEventDefinitionCommand(
-                id, request.name(), request.description(), request.inputSchema(), request.outputSchema());
+                id, request.name(), request.description(), request.inputSchema(), request.outputSchema(),
+                request.dataClassification(), request.ownerModule());
 
         return ResponseEntity.ok(ApiResponse.success(updateAction.execute(command)));
     }
@@ -101,7 +109,7 @@ public class EventDefinitionController {
                 @RequestParam(required = false) String keyword,
             @Parameter(description = "Filter by source system (exact match, case-insensitive)")
                 @RequestParam(required = false) String sourceSystem,
-            @Parameter(description = "Filter by event key (exact match, case-insensitive)")
+            @Parameter(description = "Filter by event key (exact match)")
                 @RequestParam(required = false) String eventKey,
             @Parameter(description = "Filter by status (ACTIVE, INACTIVE, DEPRECATED)")
                 @RequestParam(required = false) String status,
@@ -131,6 +139,21 @@ public class EventDefinitionController {
                 deactivateAction.execute(new DeactivateEventDefinitionCommand(id))));
     }
 
+    @Operation(summary = "Deprecate an event definition")
+    @PatchMapping("/{id}/deprecate")
+    public ResponseEntity<ApiResponse<EventDefinitionDetailResponse>> deprecateEventDefinition(
+            @PathVariable UUID id,
+            @RequestBody(required = false) DeprecateEventDefinitionRequest request) {
+
+        DeprecateEventDefinitionRequest body = request == null
+                ? new DeprecateEventDefinitionRequest(null, null)
+                : request;
+
+        return ResponseEntity.ok(ApiResponse.success(
+                deprecateAction.execute(new DeprecateEventDefinitionCommand(
+                        id, body.replacementEventDefinitionId(), body.reason()))));
+    }
+
     @Operation(summary = "Upsert variables for an event definition (replaces all existing)")
     @PutMapping("/{id}/variables")
     public ResponseEntity<ApiResponse<List<EventVariableResponse>>> upsertEventVariables(
@@ -140,7 +163,7 @@ public class EventDefinitionController {
         List<UpsertEventVariablesCommand.VariableEntry> entries = request.variables().stream()
                 .map(v -> new UpsertEventVariablesCommand.VariableEntry(
                         v.variablePath(), v.variableLabel(), v.variableType(),
-                        v.required(), v.description(), v.exampleValue()))
+                        v.required(), v.sensitive(), v.description(), v.exampleValue()))
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(

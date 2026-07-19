@@ -51,6 +51,30 @@ public class AiModelJpaEntity extends AuditableJpaEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "supports_chat", nullable = false)
+    private boolean supportsChat;
+
+    @Column(name = "supports_embedding", nullable = false)
+    private boolean supportsEmbedding;
+
+    @Column(name = "supports_tool_calling", nullable = false)
+    private boolean supportsToolCalling;
+
+    @Column(name = "supports_json_mode", nullable = false)
+    private boolean supportsJsonMode;
+
+    @Column(name = "context_window_tokens")
+    private Integer contextWindowTokens;
+
+    @Column(name = "max_output_tokens")
+    private Integer maxOutputTokens;
+
+    @Column(name = "model_family", length = 100)
+    private String modelFamily;
+
+    @Column(name = "capabilities_json", columnDefinition = "TEXT")
+    private String capabilitiesJson;
+
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 }

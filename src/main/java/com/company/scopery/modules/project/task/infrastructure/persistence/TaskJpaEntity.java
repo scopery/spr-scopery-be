@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -38,10 +39,10 @@ public class TaskJpaEntity extends AuditableJpaEntity {
     @Column(name = "project_id", nullable = false, updatable = false)
     private UUID projectId;
 
-    @Column(name = "project_phase_id", nullable = false, updatable = false)
+    @Column(name = "project_phase_id", nullable = false)
     private UUID projectPhaseId;
 
-    @Column(name = "wbs_node_id", nullable = false, updatable = false)
+    @Column(name = "wbs_node_id")
     private UUID wbsNodeId;
 
     @Column(name = "code", nullable = false, length = 100)
@@ -62,7 +63,7 @@ public class TaskJpaEntity extends AuditableJpaEntity {
     @Column(name = "planned_role_name", length = 255)
     private String plannedRoleName;
 
-    @Column(name = "estimate_hours", precision = 10, scale = 2)
+    @Column(name = "estimate_hours", nullable = false, precision = 10, scale = 2)
     private BigDecimal estimateHours;
 
     @Column(name = "planned_start_date")
@@ -76,6 +77,33 @@ public class TaskJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;
+
+    @Column(name = "started_at")
+    private Instant startedAt;
+
+    @Column(name = "started_by")
+    private UUID startedBy;
+
+    @Column(name = "blocked_at")
+    private Instant blockedAt;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
+    @Column(name = "completed_by")
+    private UUID completedBy;
+
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    @Column(name = "cancelled_by")
+    private UUID cancelledBy;
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
+    @Column(name = "archived_by")
+    private UUID archivedBy;
 
     @Version
     @Column(name = "version", nullable = false)

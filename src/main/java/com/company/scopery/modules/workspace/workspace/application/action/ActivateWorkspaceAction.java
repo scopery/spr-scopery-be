@@ -1,13 +1,15 @@
 package com.company.scopery.modules.workspace.workspace.application.action;
 
+import com.company.scopery.modules.iam.resource.application.service.IamAuthResourceLifecycleService;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceType;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
 import com.company.scopery.modules.workspace.workspace.application.response.WorkspaceResponse;
+import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
-import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,11 +19,14 @@ import java.util.UUID;
 public class ActivateWorkspaceAction {
 
     private final WorkspaceRepository workspaceRepository;
+    private final IamAuthResourceLifecycleService authResourceLifecycleService;
     private final WorkspaceActivityLogger activityLogger;
 
     public ActivateWorkspaceAction(WorkspaceRepository workspaceRepository,
+                                    IamAuthResourceLifecycleService authResourceLifecycleService,
                                     WorkspaceActivityLogger activityLogger) {
         this.workspaceRepository = workspaceRepository;
+        this.authResourceLifecycleService = authResourceLifecycleService;
         this.activityLogger = activityLogger;
     }
 
@@ -35,6 +40,7 @@ public class ActivateWorkspaceAction {
 
         Workspace activated = ws.activate();
         Workspace saved = workspaceRepository.save(activated);
+        authResourceLifecycleService.activateByRef(saved.id(), IamResourceType.WORKSPACE);
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE, saved.id(),
                 WorkspaceActivityActions.ACTIVATE_WORKSPACE,

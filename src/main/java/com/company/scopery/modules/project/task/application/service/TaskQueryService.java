@@ -2,7 +2,6 @@ package com.company.scopery.modules.project.task.application.service;
 
 import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.constant.ProjectSortFields;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
@@ -37,7 +36,7 @@ public class TaskQueryService {
 
     @Transactional(readOnly = true)
     public TaskResponse getTask(UUID projectId, UUID id) {
-        authorizationService.requireProjectPermission(projectId, IamAuthorities.PROJECT_TASK_VIEW);
+        authorizationService.requireTaskView(projectId);
 
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> ProjectExceptions.taskNotFound(id));
@@ -51,7 +50,7 @@ public class TaskQueryService {
 
     @Transactional(readOnly = true)
     public PageResult<TaskResponse> searchTasks(SearchTaskQuery query) {
-        authorizationService.requireProjectPermission(query.projectId(), IamAuthorities.PROJECT_TASK_VIEW);
+        authorizationService.requireTaskView(query.projectId());
 
         TaskStatus status = ProjectEnumParser.parseOptional(
                 TaskStatus.class, query.status(), "TASK_INVALID_STATUS", "status");
@@ -68,7 +67,7 @@ public class TaskQueryService {
     public List<TaskResponse> listTasksByWbsNode(UUID wbsNodeId) {
         var wbsNode = wbsNodeRepository.findById(wbsNodeId)
                 .orElseThrow(() -> ProjectExceptions.wbsNodeNotFound(wbsNodeId));
-        authorizationService.requireProjectPermission(wbsNode.projectId(), IamAuthorities.PROJECT_TASK_VIEW);
+        authorizationService.requireTaskView(wbsNode.projectId());
 
         return taskRepository.findAllByWbsNodeId(wbsNodeId)
                 .stream().map(TaskResponse::from).toList();

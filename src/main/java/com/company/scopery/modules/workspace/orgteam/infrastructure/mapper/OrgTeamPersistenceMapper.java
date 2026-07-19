@@ -30,8 +30,10 @@ public class OrgTeamPersistenceMapper {
         entity.setName(domain.name());
         entity.setDescription(domain.description());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt());
+        if (domain.createdAt() != null) {
+            entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
+        }
         return entity;
     }
 }

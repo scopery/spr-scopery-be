@@ -8,5 +8,7 @@ public record UpdateEmailRuleCommand(
         String description,
         String recipientStrategy,
         String recipientConfigJson,
-        int priority
+        int priority,
+        Boolean mandatory,
+        Boolean allowSensitiveVariables
 ) {}

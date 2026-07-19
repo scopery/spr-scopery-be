@@ -45,4 +45,25 @@ public class IamUserJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;
+
+    @Column(name = "registration_source", nullable = false, length = 50)
+    private String registrationSource = "SELF_SIGNUP";
+
+    @Column(name = "password_changed_at")
+    private java.time.Instant passwordChangedAt;
+
+    @Column(name = "password_reset_required", nullable = false)
+    private boolean passwordResetRequired;
+
+    @Column(name = "failed_login_count", nullable = false)
+    private int failedLoginCount;
+
+    @Column(name = "last_login_at")
+    private java.time.Instant lastLoginAt;
+
+    @Column(name = "last_login_failed_at")
+    private java.time.Instant lastLoginFailedAt;
+
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
 }

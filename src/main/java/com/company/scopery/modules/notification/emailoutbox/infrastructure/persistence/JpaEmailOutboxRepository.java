@@ -69,4 +69,16 @@ public class JpaEmailOutboxRepository implements EmailOutboxRepository {
     public int claimForProcessing(UUID id) {
         return springRepo.claimForProcessing(id);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByDedupKey(String dedupKey) {
+        return springRepo.existsByDedupKey(dedupKey);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<EmailOutbox> findByDedupKey(String dedupKey) {
+        return springRepo.findByDedupKey(dedupKey).map(mapper::toDomain);
+    }
 }

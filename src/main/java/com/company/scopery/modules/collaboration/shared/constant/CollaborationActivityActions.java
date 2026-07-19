@@ -1,0 +1,48 @@
+package com.company.scopery.modules.collaboration.shared.constant;
+public final class CollaborationActivityActions {
+    public static final String MEETING_SERIES_CREATED = "MEETING_SERIES_CREATED";
+    public static final String MEETING_SERIES_UPDATED = "MEETING_SERIES_UPDATED";
+    public static final String MEETING_SERIES_PAUSED = "MEETING_SERIES_PAUSED";
+    public static final String MEETING_SERIES_ARCHIVED = "MEETING_SERIES_ARCHIVED";
+    public static final String MEETING_CREATED = "MEETING_CREATED";
+    public static final String MEETING_UPDATED = "MEETING_UPDATED";
+    public static final String MEETING_STARTED = "MEETING_STARTED";
+    public static final String MEETING_COMPLETED = "MEETING_COMPLETED";
+    public static final String MEETING_CANCELLED = "MEETING_CANCELLED";
+    public static final String MEETING_ARCHIVED = "MEETING_ARCHIVED";
+    public static final String PARTICIPANT_ADDED = "MEETING_PARTICIPANT_ADDED";
+    public static final String PARTICIPANT_UPDATED = "MEETING_PARTICIPANT_UPDATED";
+    public static final String PARTICIPANT_REMOVED = "MEETING_PARTICIPANT_REMOVED";
+    public static final String PARTICIPANT_MARKED_ATTENDED = "MEETING_PARTICIPANT_MARKED_ATTENDED";
+    public static final String AGENDA_CREATED = "MEETING_AGENDA_ITEM_CREATED";
+    public static final String AGENDA_UPDATED = "MEETING_AGENDA_ITEM_UPDATED";
+    public static final String AGENDA_ARCHIVED = "MEETING_AGENDA_ITEM_ARCHIVED";
+    public static final String MINUTES_CREATED = "MEETING_MINUTES_CREATED";
+    public static final String MINUTES_UPDATED = "MEETING_MINUTES_UPDATED";
+    public static final String MINUTES_SUBMITTED = "MEETING_MINUTES_SUBMITTED";
+    public static final String MINUTES_APPROVED = "MEETING_MINUTES_APPROVED";
+    public static final String MINUTES_REJECTED = "MEETING_MINUTES_REJECTED";
+    public static final String NOTE_CREATED = "MEETING_NOTE_CREATED";
+    public static final String NOTE_UPDATED = "MEETING_NOTE_UPDATED";
+    public static final String NOTE_ARCHIVED = "MEETING_NOTE_ARCHIVED";
+    public static final String ACTION_CREATED = "MEETING_ACTION_ITEM_CREATED";
+    public static final String ACTION_UPDATED = "MEETING_ACTION_ITEM_UPDATED";
+    public static final String ACTION_COMPLETED = "MEETING_ACTION_ITEM_COMPLETED";
+    public static final String ACTION_LINKED_TASK = "MEETING_ACTION_ITEM_LINKED_TASK_CREATED";
+    public static final String ACTION_ARCHIVED = "MEETING_ACTION_ITEM_ARCHIVED";
+    public static final String LINK_CREATED = "MEETING_ARTIFACT_LINK_CREATED";
+    public static final String LINK_REMOVED = "MEETING_ARTIFACT_LINK_REMOVED";
+    public static final String THREAD_CREATED = "COMMENT_THREAD_CREATED";
+    public static final String THREAD_RESOLVED = "COMMENT_THREAD_RESOLVED";
+    public static final String THREAD_ARCHIVED = "COMMENT_THREAD_ARCHIVED";
+    public static final String COMMENT_CREATED = "COMMENT_CREATED";
+    public static final String COMMENT_UPDATED = "COMMENT_UPDATED";
+    public static final String COMMENT_DELETED = "COMMENT_DELETED";
+    public static final String MENTION_CREATED = "MENTION_CREATED";
+    public static final String MINUTES_DOCUMENT_GENERATED = "MEETING_MINUTES_DOCUMENT_GENERATED";
+    public static final String NOTE_CONVERTED_DECISION = "MEETING_NOTE_CONVERTED_DECISION";
+    public static final String NOTE_CONVERTED_RAID = "MEETING_NOTE_CONVERTED_RAID";
+    public static final String NOTE_CONVERTED_REQUIREMENT = "MEETING_NOTE_CONVERTED_REQUIREMENT";
+    public static final String NOTE_CONVERTED_CHANGE_REQUEST = "MEETING_NOTE_CONVERTED_CHANGE_REQUEST";
+    private CollaborationActivityActions() {}
+}

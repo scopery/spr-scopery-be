@@ -1,0 +1,2 @@
+package com.company.scopery.modules.configuration.customfield.domain.enums;
+public enum CustomFieldType { TEXT, LONG_TEXT, NUMBER, DECIMAL, CURRENCY, DATE, DATETIME, BOOLEAN, SELECT, MULTI_SELECT, USER, TEAM, EXTERNAL_CONTACT, EXTERNAL_ORGANIZATION, PROJECT, TASK, DOCUMENT, URL, EMAIL, PHONE, PERCENTAGE }

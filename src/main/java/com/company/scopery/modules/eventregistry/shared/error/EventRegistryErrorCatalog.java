@@ -25,9 +25,49 @@ public enum EventRegistryErrorCatalog implements ErrorCatalog {
             "Deprecated event definition cannot be activated again",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
+    EVENT_DEFINITION_ALREADY_DEPRECATED(
+            "EVENT_DEFINITION_ALREADY_DEPRECATED",
+            "Event definition is already deprecated",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    EVENT_DEFINITION_DEPRECATED_CANNOT_BE_UPDATED(
+            "EVENT_DEFINITION_DEPRECATED_CANNOT_BE_UPDATED",
+            "Deprecated event definition cannot be updated",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    EVENT_DEFINITION_HAS_ACTIVE_CONSUMERS(
+            "EVENT_DEFINITION_HAS_ACTIVE_CONSUMERS",
+            "Event definition has active consumers and cannot be changed unsafely",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    EVENT_VARIABLE_INVALID_PATH(
+            "EVENT_VARIABLE_INVALID_PATH",
+            "Event variable path is invalid",
+            HttpStatus.BAD_REQUEST),
+
+    EVENT_VARIABLE_DUPLICATE_PATH(
+            "EVENT_VARIABLE_DUPLICATE_PATH",
+            "Duplicate event variable path in request",
+            HttpStatus.BAD_REQUEST),
+
+    EVENT_VARIABLE_REQUIRED_REMOVAL_BLOCKED(
+            "EVENT_VARIABLE_REQUIRED_REMOVAL_BLOCKED",
+            "Removing a required variable used by active consumers is blocked",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    EVENT_VARIABLE_TYPE_CHANGE_BLOCKED(
+            "EVENT_VARIABLE_TYPE_CHANGE_BLOCKED",
+            "Changing type of a variable used by active consumers is blocked",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
     INVALID_EVENT_DEFINITION_STATUS(
             "INVALID_EVENT_DEFINITION_STATUS",
             "Invalid event definition status",
+            HttpStatus.BAD_REQUEST),
+
+    INVALID_EVENT_DEFINITION_DATA_CLASSIFICATION(
+            "INVALID_EVENT_DEFINITION_DATA_CLASSIFICATION",
+            "Invalid event data classification",
             HttpStatus.BAD_REQUEST),
 
     INVALID_EVENT_DEFINITION_INPUT_SCHEMA_JSON(
@@ -43,7 +83,12 @@ public enum EventRegistryErrorCatalog implements ErrorCatalog {
     INVALID_EVENT_VARIABLE_TYPE(
             "INVALID_EVENT_VARIABLE_TYPE",
             "Invalid event variable type",
-            HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST),
+
+    EVENT_REGISTRY_ACCESS_DENIED(
+            "EVENT_REGISTRY_ACCESS_DENIED",
+            "Access to event registry is denied",
+            HttpStatus.FORBIDDEN);
 
     private final String code;
     private final String defaultMessage;

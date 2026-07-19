@@ -42,6 +42,12 @@ public class EmailOutboxJpaEntity extends AuditableJpaEntity {
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 
+    @Column(name = "dedup_key", nullable = false, length = 255)
+    private String dedupKey;
+
+    @Column(name = "provider_message_id", length = 255)
+    private String providerMessageId;
+
     @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;
 

@@ -24,7 +24,8 @@ import java.util.UUID;
         indexes = {
                 @Index(name = "idx_project_phase_definition_scope", columnList = "scope"),
                 @Index(name = "idx_project_phase_definition_status", columnList = "status"),
-                @Index(name = "idx_project_phase_definition_workspace_id", columnList = "workspace_id")
+                @Index(name = "idx_project_phase_definition_workspace_id", columnList = "workspace_id"),
+                @Index(name = "idx_project_phase_definition_organization_id", columnList = "organization_id")
         }
 )
 public class PhaseDefinitionJpaEntity extends AuditableJpaEntity {
@@ -35,6 +36,9 @@ public class PhaseDefinitionJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "scope", nullable = false, length = 50)
     private String scope;
+
+    @Column(name = "organization_id")
+    private UUID organizationId;
 
     @Column(name = "workspace_id")
     private UUID workspaceId;

@@ -2,7 +2,6 @@ package com.company.scopery.modules.project.wbs.application.service;
 
 import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.project.shared.util.ProjectEnumParser;
@@ -34,7 +33,7 @@ public class WbsNodeQueryService {
 
     @Transactional(readOnly = true)
     public WbsNodeResponse getWbsNode(UUID projectId, UUID id) {
-        authorizationService.requireProjectPermission(projectId, IamAuthorities.PROJECT_WBS_VIEW);
+        authorizationService.requireWbsView(projectId);
 
         WbsNode node = wbsNodeRepository.findById(id)
                 .orElseThrow(() -> ProjectExceptions.wbsNodeNotFound(id));
@@ -48,7 +47,7 @@ public class WbsNodeQueryService {
 
     @Transactional(readOnly = true)
     public PageResult<WbsNodeResponse> searchWbsNodes(SearchWbsNodeQuery query) {
-        authorizationService.requireProjectPermission(query.projectId(), IamAuthorities.PROJECT_WBS_VIEW);
+        authorizationService.requireWbsView(query.projectId());
 
         WbsNodeStatus status = ProjectEnumParser.parseOptional(
                 WbsNodeStatus.class, query.status(), "WBS_NODE_INVALID_STATUS", "status");
@@ -66,7 +65,7 @@ public class WbsNodeQueryService {
 
     @Transactional(readOnly = true)
     public List<WbsNodeResponse> getWbsTree(UUID projectId, UUID phaseId) {
-        authorizationService.requireProjectPermission(projectId, IamAuthorities.PROJECT_WBS_VIEW);
+        authorizationService.requireWbsView(projectId);
 
         List<WbsNode> nodes = wbsNodeRepository.findAllByProjectId(projectId);
 

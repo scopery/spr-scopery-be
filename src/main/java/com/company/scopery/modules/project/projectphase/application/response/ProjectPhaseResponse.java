@@ -17,6 +17,9 @@ public record ProjectPhaseResponse(
         LocalDate plannedStartDate,
         LocalDate plannedEndDate,
         String status,
+        Instant startedAt,
+        Instant completedAt,
+        Instant archivedAt,
         int version,
         Instant createdAt,
         Instant updatedAt
@@ -34,6 +37,9 @@ public record ProjectPhaseResponse(
                 phase.plannedStartDate(),
                 phase.plannedEndDate(),
                 phase.status().name(),
+                phase.startedAt(),
+                phase.completedAt(),
+                phase.archivedAt(),
                 phase.version(),
                 phase.createdAt(),
                 phase.updatedAt()

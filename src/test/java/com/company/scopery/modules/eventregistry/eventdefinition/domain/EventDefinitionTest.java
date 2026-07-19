@@ -1,11 +1,14 @@
 package com.company.scopery.modules.eventregistry.eventdefinition.domain;
 
+import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.model.EventDefinition;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventDefinitionCode;
-import com.company.scopery.modules.eventregistry.eventdefinition.domain.enums.EventDefinitionStatus;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.EventKey;
 import com.company.scopery.modules.eventregistry.eventdefinition.domain.valueobject.SourceSystemCode;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -22,9 +25,11 @@ class EventDefinitionTest {
     }
 
     @Test
-    void create_setsActiveStatusByDefault() {
+    void create_setsActiveStatusAndVersionOne() {
         EventDefinition e = sampleActive();
         assertThat(e.status()).isEqualTo(EventDefinitionStatus.ACTIVE);
+        assertThat(e.eventVersion()).isEqualTo(EventDefinition.INITIAL_VERSION);
+        assertThat(e.systemEvent()).isTrue();
     }
 
     @Test
@@ -45,7 +50,7 @@ class EventDefinitionTest {
     @Test
     void activate_whenDeprecated_throwsIllegalState() {
         EventDefinition deprecated = EventDefinition.reconstitute(
-                java.util.UUID.randomUUID(),
+                UUID.randomUUID(),
                 EventDefinitionCode.of("OLD_EVENT"),
                 "Old Event",
                 SourceSystemCode.of("HRM"),
@@ -53,11 +58,33 @@ class EventDefinitionTest {
                 null, null, null,
                 EventDefinitionStatus.DEPRECATED,
                 EventDefinition.INITIAL_VERSION, null,
-                java.time.Instant.now(), java.time.Instant.now());
+                null, null, true,
+                Instant.now(), null, null,
+                Instant.now(), Instant.now());
 
         assertThatThrownBy(deprecated::activate)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Deprecated");
+    }
+
+    @Test
+    void deprecateActiveEvent_success() {
+        EventDefinition e = sampleActive();
+        UUID replacement = UUID.randomUUID();
+        UUID actor = UUID.randomUUID();
+        e.deprecate(replacement, actor);
+        assertThat(e.status()).isEqualTo(EventDefinitionStatus.DEPRECATED);
+        assertThat(e.replacementEventDefinitionId()).isEqualTo(replacement);
+        assertThat(e.deprecatedBy()).isEqualTo(actor);
+        assertThat(e.deprecatedAt()).isNotNull();
+    }
+
+    @Test
+    void update_whenDeprecated_throwsIllegalState() {
+        EventDefinition e = sampleActive();
+        e.deprecate(null, null);
+        assertThatThrownBy(() -> e.update("x", null, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

@@ -18,6 +18,7 @@ public final class IamApiPaths {
     public static final String IAM_ME               = BASE + "/me";
     public static final String IAM_OWNER_POLICIES   = BASE + "/owner-policies";
     public static final String IAM_ACCESS           = BASE + "/access";
+    public static final String IAM_AUDIT_EVENTS     = BASE + "/audit-events";
 
     private IamApiPaths() {}
 }

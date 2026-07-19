@@ -7,13 +7,14 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SpringDataEmailOutboxJpaRepository extends JpaRepository<EmailOutboxJpaEntity, UUID> {
 
     @Query("""
             SELECT o FROM EmailOutboxJpaEntity o
-            WHERE o.status = 'PENDING'
+            WHERE o.status IN ('PENDING', 'RETRY_SCHEDULED')
               AND o.scheduledAt <= :now
             ORDER BY o.scheduledAt ASC
             """)
@@ -23,9 +24,13 @@ public interface SpringDataEmailOutboxJpaRepository extends JpaRepository<EmailO
     @Query("""
             UPDATE EmailOutboxJpaEntity o
             SET o.status = 'PROCESSING', o.updatedAt = CURRENT_TIMESTAMP
-            WHERE o.id = :id AND o.status = 'PENDING'
+            WHERE o.id = :id AND o.status IN ('PENDING', 'RETRY_SCHEDULED')
             """)
     int claimForProcessing(@Param("id") UUID id);
+
+    boolean existsByDedupKey(String dedupKey);
+
+    Optional<EmailOutboxJpaEntity> findByDedupKey(String dedupKey);
 
     @Query("""
             SELECT o FROM EmailOutboxJpaEntity o

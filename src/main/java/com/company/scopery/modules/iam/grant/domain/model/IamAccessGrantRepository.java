@@ -23,4 +23,6 @@ public interface IamAccessGrantRepository {
     List<IamAccessGrant> findActiveBySubjectsAndResource(List<IamSubjectType> subjectTypes, List<UUID> subjectIds, UUID resourceId);
 
     List<IamAccessGrant> findActiveByResource(UUID resourceId);
+
+    boolean hasActiveGlobalResourceGrantForSubjects(List<UUID> subjectIds);
 }

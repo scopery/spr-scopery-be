@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -64,6 +65,15 @@ public class ProjectPhaseJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;
+
+    @Column(name = "started_at")
+    private Instant startedAt;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
 
     @Version
     @Column(name = "version", nullable = false)

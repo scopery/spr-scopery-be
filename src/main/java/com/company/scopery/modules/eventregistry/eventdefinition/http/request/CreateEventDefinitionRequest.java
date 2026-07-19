@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record CreateEventDefinitionRequest(
         @NotBlank(message = "code is required")
-        @Size(max = 100)
+        @Size(max = 150)
         String code,
 
         @NotBlank(message = "name is required")
@@ -22,5 +22,9 @@ public record CreateEventDefinitionRequest(
 
         String description,
         String inputSchema,
-        String outputSchema
+        String outputSchema,
+        @Size(max = 50)
+        String dataClassification,
+        @Size(max = 100)
+        String ownerModule
 ) {}

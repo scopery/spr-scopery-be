@@ -12,6 +12,7 @@ import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +25,18 @@ public class CreateWorkspacePhaseDefinitionAction {
     private final CurrentUserAuthorizationService currentUserAuthorizationService;
     private final WorkspaceIamIntegrationService workspaceIamIntegrationService;
     private final ProjectActivityLogger activityLogger;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public CreateWorkspacePhaseDefinitionAction(PhaseDefinitionRepository repository,
                                                  CurrentUserAuthorizationService currentUserAuthorizationService,
                                                  WorkspaceIamIntegrationService workspaceIamIntegrationService,
-                                                 ProjectActivityLogger activityLogger) {
+                                                 ProjectActivityLogger activityLogger,
+                                                 ProjectPlatformPublisher platformPublisher) {
         this.repository = repository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.workspaceIamIntegrationService = workspaceIamIntegrationService;
         this.activityLogger = activityLogger;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
@@ -55,6 +59,8 @@ public class CreateWorkspacePhaseDefinitionAction {
         );
 
         PhaseDefinition saved = repository.save(pd);
+
+        platformPublisher.enqueuePhaseDefinition(saved, "PHASE_DEFINITION_CREATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PHASE_DEFINITION,

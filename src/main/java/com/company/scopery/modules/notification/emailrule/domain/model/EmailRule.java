@@ -21,6 +21,8 @@ public class EmailRule {
     private String recipientConfigJson;
     private int priority;
     private boolean enabled;
+    private boolean mandatory;
+    private boolean allowSensitiveVariables;
     private EmailRuleStatus status;
     private final Instant createdAt;
     private Instant updatedAt;
@@ -30,7 +32,8 @@ public class EmailRule {
                       EmailRuleScope scope, UUID workspaceId,
                       UUID eventDefinitionId, UUID templateId,
                       EmailRecipientStrategy recipientStrategy, String recipientConfigJson,
-                      int priority, boolean enabled, EmailRuleStatus status,
+                      int priority, boolean enabled, boolean mandatory, boolean allowSensitiveVariables,
+                      EmailRuleStatus status,
                       Instant createdAt, Instant updatedAt, Instant deletedAt) {
         this.id = id;
         this.code = code;
@@ -44,6 +47,8 @@ public class EmailRule {
         this.recipientConfigJson = recipientConfigJson;
         this.priority = priority;
         this.enabled = enabled;
+        this.mandatory = mandatory;
+        this.allowSensitiveVariables = allowSensitiveVariables;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -54,12 +59,22 @@ public class EmailRule {
                                          UUID eventDefinitionId, UUID templateId,
                                          EmailRecipientStrategy recipientStrategy,
                                          String recipientConfigJson, int priority) {
+        return createSystem(code, name, description, eventDefinitionId, templateId,
+                recipientStrategy, recipientConfigJson, priority, false, false);
+    }
+
+    public static EmailRule createSystem(String code, String name, String description,
+                                         UUID eventDefinitionId, UUID templateId,
+                                         EmailRecipientStrategy recipientStrategy,
+                                         String recipientConfigJson, int priority,
+                                         boolean mandatory, boolean allowSensitiveVariables) {
         validateCode(code);
         validateName(name);
         Instant now = Instant.now();
         return new EmailRule(UUID.randomUUID(), code.trim().toUpperCase(), name, description,
                 EmailRuleScope.SYSTEM, null, eventDefinitionId, templateId,
                 recipientStrategy, recipientConfigJson, priority, true,
+                mandatory, allowSensitiveVariables,
                 EmailRuleStatus.ACTIVE, now, now, null);
     }
 
@@ -67,6 +82,15 @@ public class EmailRule {
                                              UUID workspaceId, UUID eventDefinitionId, UUID templateId,
                                              EmailRecipientStrategy recipientStrategy,
                                              String recipientConfigJson, int priority) {
+        return createWorkspace(code, name, description, workspaceId, eventDefinitionId, templateId,
+                recipientStrategy, recipientConfigJson, priority, false, false);
+    }
+
+    public static EmailRule createWorkspace(String code, String name, String description,
+                                             UUID workspaceId, UUID eventDefinitionId, UUID templateId,
+                                             EmailRecipientStrategy recipientStrategy,
+                                             String recipientConfigJson, int priority,
+                                             boolean mandatory, boolean allowSensitiveVariables) {
         validateCode(code);
         validateName(name);
         if (workspaceId == null) throw new IllegalArgumentException("workspaceId required for WORKSPACE scope");
@@ -74,6 +98,7 @@ public class EmailRule {
         return new EmailRule(UUID.randomUUID(), code.trim().toUpperCase(), name, description,
                 EmailRuleScope.WORKSPACE, workspaceId, eventDefinitionId, templateId,
                 recipientStrategy, recipientConfigJson, priority, true,
+                mandatory, allowSensitiveVariables,
                 EmailRuleStatus.ACTIVE, now, now, null);
     }
 
@@ -82,15 +107,18 @@ public class EmailRule {
                                           UUID eventDefinitionId, UUID templateId,
                                           EmailRecipientStrategy recipientStrategy,
                                           String recipientConfigJson, int priority, boolean enabled,
+                                          boolean mandatory, boolean allowSensitiveVariables,
                                           EmailRuleStatus status,
                                           Instant createdAt, Instant updatedAt, Instant deletedAt) {
         return new EmailRule(id, code, name, description, scope, workspaceId,
                 eventDefinitionId, templateId, recipientStrategy, recipientConfigJson,
-                priority, enabled, status, createdAt, updatedAt, deletedAt);
+                priority, enabled, mandatory, allowSensitiveVariables, status,
+                createdAt, updatedAt, deletedAt);
     }
 
     public void update(String name, String description, EmailRecipientStrategy recipientStrategy,
-                       String recipientConfigJson, int priority) {
+                       String recipientConfigJson, int priority,
+                       boolean mandatory, boolean allowSensitiveVariables) {
         validateName(name);
         if (this.status == EmailRuleStatus.DELETED) {
             throw new IllegalStateException("Cannot update a deleted email rule");
@@ -100,6 +128,8 @@ public class EmailRule {
         this.recipientStrategy = recipientStrategy;
         this.recipientConfigJson = recipientConfigJson;
         this.priority = priority;
+        this.mandatory = mandatory;
+        this.allowSensitiveVariables = allowSensitiveVariables;
         this.updatedAt = Instant.now();
     }
 
@@ -156,6 +186,8 @@ public class EmailRule {
     public String recipientConfigJson() { return recipientConfigJson; }
     public int priority() { return priority; }
     public boolean enabled() { return enabled; }
+    public boolean mandatory() { return mandatory; }
+    public boolean allowSensitiveVariables() { return allowSensitiveVariables; }
     public EmailRuleStatus status() { return status; }
     public Instant createdAt() { return createdAt; }
     public Instant updatedAt() { return updatedAt; }

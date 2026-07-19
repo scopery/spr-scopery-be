@@ -18,6 +18,7 @@ public class EmailRulePersistenceMapper {
                 EmailRecipientStrategy.valueOf(e.getRecipientStrategy()),
                 e.getRecipientConfigJson(),
                 e.getPriority(), e.isEnabled(),
+                e.isMandatory(), e.isAllowSensitiveVariables(),
                 EmailRuleStatus.valueOf(e.getStatus()),
                 e.getCreatedAt(), e.getUpdatedAt(), e.getDeletedAt());
     }
@@ -36,6 +37,8 @@ public class EmailRulePersistenceMapper {
         e.setRecipientConfigJson(d.recipientConfigJson());
         e.setPriority(d.priority());
         e.setEnabled(d.enabled());
+        e.setMandatory(d.mandatory());
+        e.setAllowSensitiveVariables(d.allowSensitiveVariables());
         e.setStatus(d.status().name());
         e.setDeletedAt(d.deletedAt());
         e.setCreatedAt(d.createdAt());

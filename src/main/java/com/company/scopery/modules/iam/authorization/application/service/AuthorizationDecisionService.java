@@ -71,6 +71,10 @@ public class AuthorizationDecisionService {
             return AuthorizationDecision.deny(AuthorizationDecisionReason.RESOURCE_INACTIVE);
         }
 
+        if (readRepository.hasActiveGlobalResourceGrantForUser(request.userId())) {
+            return AuthorizationDecision.allow(AuthorizationDecisionReason.GLOBAL_RESOURCE_GRANT_ALLOW);
+        }
+
         List<IamAccessGrant> allGrants = collectAllGrants(request.userId(), request.resourceId());
 
         if (!allGrants.isEmpty()) {

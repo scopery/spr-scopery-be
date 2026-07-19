@@ -73,5 +73,16 @@ public final class AiAgentActivityActions {
     public static final String ROTATE_PROVIDER_SECRET     = "ROTATE_PROVIDER_SECRET";
     public static final String DEACTIVATE_PROVIDER_SECRET = "DEACTIVATE_PROVIDER_SECRET";
 
+    // AI Tool registry (AIG-012)
+    public static final String CREATE_AI_TOOL             = "CREATE_AI_TOOL";
+    public static final String UPDATE_AI_TOOL             = "UPDATE_AI_TOOL";
+    public static final String ACTIVATE_AI_TOOL           = "ACTIVATE_AI_TOOL";
+    public static final String DEACTIVATE_AI_TOOL         = "DEACTIVATE_AI_TOOL";
+    public static final String ADD_AI_TOOL_PERMISSION     = "ADD_AI_TOOL_PERMISSION";
+    public static final String REMOVE_AI_TOOL_PERMISSION  = "REMOVE_AI_TOOL_PERMISSION";
+    public static final String BIND_AI_TOOL               = "BIND_AI_TOOL";
+    public static final String UNBIND_AI_TOOL             = "UNBIND_AI_TOOL";
+    public static final String EXECUTE_AI_TOOL            = "EXECUTE_AI_TOOL";
+
     private AiAgentActivityActions() {}
 }

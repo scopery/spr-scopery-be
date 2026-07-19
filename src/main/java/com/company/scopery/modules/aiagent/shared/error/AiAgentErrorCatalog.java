@@ -37,6 +37,11 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
             "Invalid provider type",
             HttpStatus.BAD_REQUEST),
 
+    AI_PROVIDER_HAS_ACTIVE_DEPLOYMENTS(
+            "AI_PROVIDER_HAS_ACTIVE_DEPLOYMENTS",
+            "Provider cannot be deactivated while active model deployments exist",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
     // ── AI Model ─────────────────────────────────────────────────────────────
 
     AI_MODEL_NOT_FOUND(
@@ -62,6 +67,11 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
     DEPRECATED_AI_MODEL_CANNOT_BE_ACTIVATED(
             "DEPRECATED_AI_MODEL_CANNOT_BE_ACTIVATED",
             "Deprecated AI model cannot be activated again",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    AI_MODEL_HAS_ACTIVE_DEPLOYMENTS(
+            "AI_MODEL_HAS_ACTIVE_DEPLOYMENTS",
+            "AI model cannot be deactivated while active deployments exist",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
     INVALID_AI_MODEL_TYPE(
@@ -214,6 +224,26 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
             "INVALID_AGENT_OUTPUT_FORMAT",
             "Invalid agent output format",
             HttpStatus.BAD_REQUEST),
+
+    INVALID_AGENT_AUTONOMY_LEVEL(
+            "INVALID_AGENT_AUTONOMY_LEVEL",
+            "Invalid agent autonomy level",
+            HttpStatus.BAD_REQUEST),
+
+    INVALID_AGENT_SCOPE(
+            "INVALID_AGENT_SCOPE",
+            "Invalid agent scope",
+            HttpStatus.BAD_REQUEST),
+
+    AI_AGENT_AUTONOMY_NOT_ALLOWED(
+            "AI_AGENT_AUTONOMY_NOT_ALLOWED",
+            "Agent autonomy level is not allowed in Phase 07 (no business mutation)",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    AI_EXECUTION_POLICY_BLOCKED(
+            "AI_EXECUTION_POLICY_BLOCKED",
+            "AI execution blocked by usage policy",
+            HttpStatus.TOO_MANY_REQUESTS),
 
     // ── Prompt Template ───────────────────────────────────────────────────────
 
@@ -838,6 +868,73 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
     AI_INVALID_OUTPUT(
             "AI_INVALID_OUTPUT",
             "AI output does not match the approved schema",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    // ── AI Tool registry (AIG-012) ────────────────────────────────────────────
+
+    AI_TOOL_NOT_FOUND(
+            "AI_TOOL_NOT_FOUND",
+            "AI tool not found",
+            HttpStatus.NOT_FOUND),
+
+    AI_TOOL_CODE_ALREADY_EXISTS(
+            "AI_TOOL_CODE_ALREADY_EXISTS",
+            "AI tool code already exists",
+            HttpStatus.CONFLICT),
+
+    AI_TOOL_NOT_ACTIVE(
+            "AI_TOOL_NOT_ACTIVE",
+            "AI tool is not active",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    DEPRECATED_AI_TOOL_CANNOT_BE_ACTIVATED(
+            "DEPRECATED_AI_TOOL_CANNOT_BE_ACTIVATED",
+            "Deprecated AI tool cannot be activated again",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    INVALID_AI_TOOL_STATUS(
+            "INVALID_AI_TOOL_STATUS",
+            "Invalid AI tool status",
+            HttpStatus.BAD_REQUEST),
+
+    INVALID_AI_TOOL_MUTATION_TYPE(
+            "INVALID_AI_TOOL_MUTATION_TYPE",
+            "Invalid AI tool mutation type",
+            HttpStatus.BAD_REQUEST),
+
+    INVALID_AI_TOOL_EXECUTION_STATUS(
+            "INVALID_AI_TOOL_EXECUTION_STATUS",
+            "Invalid AI tool execution status",
+            HttpStatus.BAD_REQUEST),
+
+    AI_TOOL_PERMISSION_NOT_FOUND(
+            "AI_TOOL_PERMISSION_NOT_FOUND",
+            "AI tool permission not found",
+            HttpStatus.NOT_FOUND),
+
+    AI_TOOL_PERMISSION_ALREADY_EXISTS(
+            "AI_TOOL_PERMISSION_ALREADY_EXISTS",
+            "AI tool permission already exists for this tool",
+            HttpStatus.CONFLICT),
+
+    AI_TOOL_BINDING_NOT_FOUND(
+            "AI_TOOL_BINDING_NOT_FOUND",
+            "AI agent tool binding not found",
+            HttpStatus.NOT_FOUND),
+
+    AI_TOOL_BINDING_ALREADY_EXISTS(
+            "AI_TOOL_BINDING_ALREADY_EXISTS",
+            "AI agent tool binding already exists",
+            HttpStatus.CONFLICT),
+
+    AI_TOOL_BINDING_NOT_ACTIVE(
+            "AI_TOOL_BINDING_NOT_ACTIVE",
+            "AI agent tool binding is not active",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    AI_TOOL_AGENT_NOT_ACTIVE(
+            "AI_TOOL_AGENT_NOT_ACTIVE",
+            "Agent must be active to bind tools",
             HttpStatus.UNPROCESSABLE_ENTITY);
 
     private final String code;

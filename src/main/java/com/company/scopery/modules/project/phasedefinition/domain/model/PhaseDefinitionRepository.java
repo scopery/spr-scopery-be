@@ -18,10 +18,15 @@ public interface PhaseDefinitionRepository {
 
     boolean existsByCodeAndScopeAndWorkspaceId(String code, PhaseDefinitionScope scope, UUID workspaceId);
 
+    boolean existsByCodeAndScopeAndOrganizationId(String code, PhaseDefinitionScope scope, UUID organizationId);
+
     boolean isUsedByAnyProject(UUID phaseDefinitionId);
+
+    boolean isUsedByAnyTemplatePhase(UUID phaseDefinitionId);
 
     PageResult<PhaseDefinition> search(
             PhaseDefinitionScope scope,
+            UUID organizationId,
             UUID workspaceId,
             String keyword,
             PhaseDefinitionStatus status,

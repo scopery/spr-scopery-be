@@ -14,8 +14,9 @@ public class EmailOutboxPersistenceMapper {
                 e.getId(), e.getDeliveryId(),
                 e.getToEmail(), e.getSubject(), e.getHtmlBody(), e.getTextBody(),
                 EmailProviderType.valueOf(e.getProviderType()),
+                e.getDedupKey(),
                 EmailOutboxStatus.valueOf(e.getStatus()),
-                e.getFailureReason(), null,
+                e.getFailureReason(), e.getProviderMessageId(),
                 e.getRetryCount(), e.getScheduledAt(), e.getSentAt(),
                 e.getCreatedAt(), e.getUpdatedAt());
     }
@@ -30,6 +31,8 @@ public class EmailOutboxPersistenceMapper {
         e.setTextBody(d.textBody());
         e.setProviderType(d.providerType().name());
         e.setStatus(d.status().name());
+        e.setDedupKey(d.dedupKey());
+        e.setProviderMessageId(d.providerMessageId());
         e.setFailureReason(d.failureReason());
         e.setRetryCount(d.retryCount());
         e.setScheduledAt(d.scheduledAt());

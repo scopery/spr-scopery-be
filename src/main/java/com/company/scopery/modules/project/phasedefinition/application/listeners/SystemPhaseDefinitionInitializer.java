@@ -27,11 +27,15 @@ public class SystemPhaseDefinitionInitializer implements ApplicationListener<App
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         seedIfAbsent("DISCOVERY",   "Discovery",   "Initial discovery and feasibility study", 1, true);
-        seedIfAbsent("DESIGN",      "Design",      "Architecture and design phase",            2, true);
-        seedIfAbsent("DEVELOPMENT", "Development", "Implementation and development phase",     3, true);
-        seedIfAbsent("TESTING",     "Testing",     "Quality assurance and testing phase",      4, true);
-        seedIfAbsent("DEPLOYMENT",  "Deployment",  "Deployment and release phase",             5, true);
-        seedIfAbsent("MAINTENANCE", "Maintenance", "Post-release maintenance and support",     6, true);
+        seedIfAbsent("ANALYSIS",    "Analysis",    "Requirements analysis and scoping",        2, true);
+        seedIfAbsent("DESIGN",      "Design",      "Architecture and design phase",            3, true);
+        seedIfAbsent("DEVELOPMENT", "Development", "Implementation and development phase",     4, true);
+        seedIfAbsent("TESTING",     "Testing",     "Quality assurance and testing phase",      5, true);
+        seedIfAbsent("DEPLOYMENT",  "Deployment",  "Deployment and release phase",             6, true);
+        seedIfAbsent("SUPPORT",     "Support",     "Post-release support and operations",      7, true);
+        seedIfAbsent("CLOSURE",     "Closure",     "Project closure and handover",             8, true);
+        // Kept for backward compatibility with existing workspaces/projects
+        seedIfAbsent("MAINTENANCE", "Maintenance", "Post-release maintenance and support",     9, true);
     }
 
     private void seedIfAbsent(String code, String name, String description,

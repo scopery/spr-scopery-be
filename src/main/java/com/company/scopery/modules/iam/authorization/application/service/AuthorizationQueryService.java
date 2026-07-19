@@ -41,9 +41,20 @@ public class AuthorizationQueryService {
     public AuthorizationExplanationResponse check(CheckAuthorizationQuery query) {
         IamResourceType resourceType = IamEnumParser.parseRequired(IamResourceType.class, query.resourceType(),
                 IamErrorCatalog.INVALID_IAM_RESOURCE_TYPE.code(), "resourceType");
-        UUID resourceRefId = parseResourceRefId(query.resourceRefId());
-        IamAuthResource resource = readRepository.findResourceByRefIdAndType(resourceRefId, resourceType)
-                .orElseThrow(() -> IamExceptions.iamAuthResourceNotFound(resourceRefId));
+
+        IamAuthResource resource;
+        UUID resourceRefId;
+        if (resourceType == IamResourceType.GLOBAL) {
+            // GLOBAL is a singleton — no business refId; look up by code
+            resource = readRepository.findGlobalSystemResource()
+                    .orElseThrow(() -> IamExceptions.iamAuthResourceNotFound((UUID) null));
+            resourceRefId = resource.refId();
+        } else {
+            resourceRefId = parseResourceRefId(query.resourceRefId());
+            resource = readRepository.findResourceByRefIdAndType(resourceRefId, resourceType)
+                    .orElseThrow(() -> IamExceptions.iamAuthResourceNotFound(resourceRefId));
+        }
+
         UUID actorId = currentUserService.resolveCurrentUser().id();
         var explanation = decisionService.explainAccess(new AuthorizationRequest(
                 actorId, resource.id(), null,

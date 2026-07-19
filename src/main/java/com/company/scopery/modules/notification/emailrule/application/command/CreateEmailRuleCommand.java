@@ -12,5 +12,7 @@ public record CreateEmailRuleCommand(
         UUID templateId,
         String recipientStrategy,
         String recipientConfigJson,
-        int priority
+        int priority,
+        boolean mandatory,
+        boolean allowSensitiveVariables
 ) {}

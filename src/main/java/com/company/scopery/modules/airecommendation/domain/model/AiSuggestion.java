@@ -1,0 +1,60 @@
+package com.company.scopery.modules.airecommendation.domain.model;
+
+import com.company.scopery.modules.airecommendation.domain.enums.ConfidenceLabel;
+import com.company.scopery.modules.airecommendation.domain.enums.ConfidenceMethod;
+import com.company.scopery.modules.airecommendation.domain.enums.SourceSystem;
+import com.company.scopery.modules.airecommendation.domain.enums.SuggestionSeverity;
+import com.company.scopery.modules.airecommendation.domain.enums.SuggestionStatus;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+public record AiSuggestion(
+        UUID id,
+        UUID runId,
+        UUID policyId,
+        UUID workspaceId,
+        UUID projectId,
+        SourceSystem sourceSystem,
+        UUID legacyPhase21SuggestionId,
+        String packCode,
+        String detectorCode,
+        String suggestionType,
+        String schemaCode,
+        int schemaVersion,
+        String category,
+        SuggestionSeverity severity,
+        SuggestionStatus status,
+        String title,
+        String summary,
+        String reason,
+        String targetEntityType,
+        UUID targetEntityId,
+        String targetVersionToken,
+        ConfidenceMethod confidenceMethod,
+        BigDecimal confidenceValue,
+        ConfidenceLabel confidenceLabel,
+        String riskLevel,
+        String dedupKey,
+        String payloadHash,
+        int occurrenceCount,
+        UUID originConversationId,
+        UUID originMessageId,
+        UUID originTurnId,
+        UUID supersedesSuggestionId,
+        UUID supersededBySuggestionId,
+        OffsetDateTime firstObservedAt,
+        OffsetDateTime lastObservedAt,
+        OffsetDateTime viewedAt,
+        OffsetDateTime editedAt,
+        OffsetDateTime acceptedAt,
+        OffsetDateTime rejectedAt,
+        OffsetDateTime suppressedAt,
+        OffsetDateTime expiresAt,
+        OffsetDateTime staleAt,
+        String staleReasonCode,
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt,
+        long version
+) {}

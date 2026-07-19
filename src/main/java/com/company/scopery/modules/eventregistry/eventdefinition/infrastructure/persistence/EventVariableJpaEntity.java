@@ -45,6 +45,9 @@ public class EventVariableJpaEntity extends AuditableJpaEntity {
     @Column(name = "required", nullable = false)
     private boolean required;
 
+    @Column(name = "sensitive", nullable = false)
+    private boolean sensitive;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 

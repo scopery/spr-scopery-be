@@ -1,11 +1,13 @@
 package com.company.scopery.modules.project.task.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
 import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import com.company.scopery.modules.project.task.application.command.CancelTaskCommand;
 import com.company.scopery.modules.project.task.application.response.TaskResponse;
 import com.company.scopery.modules.project.task.domain.enums.TaskStatus;
@@ -20,13 +22,22 @@ public class CancelTaskAction {
     private final TaskRepository taskRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
+    private final CurrentUserAuthorizationService currentUserAuthorizationService;
 
     public CancelTaskAction(TaskRepository taskRepository,
                             ProjectActivityLogger activityLogger,
-                            ProjectWorkspaceAuthorizationService authorizationService) {
+                            ProjectWorkspaceAuthorizationService authorizationService,
+                            ProjectMutationGuard mutationGuard,
+                            ProjectPlatformPublisher platformPublisher,
+                            CurrentUserAuthorizationService currentUserAuthorizationService) {
         this.taskRepository = taskRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
+        this.currentUserAuthorizationService = currentUserAuthorizationService;
     }
 
     @Transactional
@@ -38,14 +49,18 @@ public class CancelTaskAction {
             throw ProjectExceptions.taskProjectMismatch(task.id(), cmd.projectId());
         }
 
-        authorizationService.requireProjectPermission(task.projectId(), IamAuthorities.PROJECT_TASK_UPDATE);
+        authorizationService.requireTaskStatusUpdate(task.projectId());
+        mutationGuard.requireMutableProject(task.projectId());
 
         TaskStatus current = task.status();
         if (current != TaskStatus.TODO && current != TaskStatus.IN_PROGRESS && current != TaskStatus.BLOCKED) {
             throw ProjectExceptions.taskCannotTransition(current.name(), TaskStatus.CANCELLED.name());
         }
 
-        Task saved = taskRepository.save(task.cancel());
+        var actorId = currentUserAuthorizationService.resolveCurrentUser().id();
+        Task saved = taskRepository.save(task.cancel(actorId));
+
+        platformPublisher.enqueueTask(saved, "TASK_CANCELLED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.TASK,

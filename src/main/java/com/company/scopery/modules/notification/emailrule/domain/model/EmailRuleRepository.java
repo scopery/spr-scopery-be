@@ -21,4 +21,6 @@ public interface EmailRuleRepository {
     List<EmailRule> findActiveSystemRulesForEvent(UUID eventDefinitionId);
 
     List<EmailRule> findActiveWorkspaceRulesForEvent(UUID eventDefinitionId, UUID workspaceId);
+
+    boolean existsActiveEnabledByEventDefinitionId(UUID eventDefinitionId);
 }

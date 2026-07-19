@@ -2,7 +2,9 @@ package com.company.scopery.modules.aiagent.agent.application.action;
 
 import com.company.scopery.modules.aiagent.agent.application.command.UpdateAgentCommand;
 import com.company.scopery.modules.aiagent.agent.application.response.AgentDetailResponse;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentAutonomyLevel;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentScope;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
 import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
@@ -46,12 +48,22 @@ public class UpdateAgentAction {
         AgentOutputFormat outputFormat = AiAgentEnumParser.parseOptional(
                 AgentOutputFormat.class, command.outputFormat(),
                 AiAgentErrorCatalog.INVALID_AGENT_OUTPUT_FORMAT.code(), "outputFormat");
+        AgentAutonomyLevel autonomyLevel = AiAgentEnumParser.parseOptional(
+                AgentAutonomyLevel.class, command.autonomyLevel(),
+                AiAgentErrorCatalog.INVALID_AGENT_AUTONOMY_LEVEL.code(), "autonomyLevel");
+        AgentScope scope = AiAgentEnumParser.parseOptional(
+                AgentScope.class, command.scope(),
+                AiAgentErrorCatalog.INVALID_AGENT_SCOPE.code(), "scope");
+
+        CreateAgentAction.rejectMutationAutonomy(
+                autonomyLevel != null ? autonomyLevel : agent.autonomyLevel());
 
         boolean requireActiveDeployment = agent.status() == AgentStatus.ACTIVE;
         validateDeployment(command.defaultModelDeploymentId(), requireActiveDeployment);
 
         agent.update(command.name(), type, command.description(),
-                command.defaultModelDeploymentId(), outputFormat);
+                command.defaultModelDeploymentId(), outputFormat,
+                autonomyLevel, scope, command.organizationId(), command.workspaceId());
 
         Agent saved = agentRepository.save(agent);
 

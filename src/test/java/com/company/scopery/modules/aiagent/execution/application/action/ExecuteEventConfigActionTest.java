@@ -1,6 +1,7 @@
 package com.company.scopery.modules.aiagent.execution.application.action;
 
 import com.company.scopery.common.exception.AppException;
+import com.company.scopery.common.outbox.TransactionalOutboxService;
 import com.company.scopery.integration.ai.AiProviderAdapter;
 import com.company.scopery.integration.ai.AiProviderAdapterRegistry;
 import com.company.scopery.integration.ai.AiProviderResponse;
@@ -83,6 +84,7 @@ class ExecuteEventConfigActionTest {
     @Mock private AiAgentActivityLogger activityLogger;
     @Mock private UsagePolicyEvaluator usagePolicyEvaluator;
     @Mock private AiExecutionSchemaValidator schemaValidator;
+    @Mock private TransactionalOutboxService outboxService;
 
     private ExecuteEventConfigAction action;
 
@@ -102,7 +104,7 @@ class ExecuteEventConfigActionTest {
                 agentRepository, promptVersionRepository, promptTemplateRepository,
                 modelDeploymentRepository, aiModelRepository, providerRepository,
                 executionLogRepository, promptRenderer, adapterRegistry, activityLogger,
-                usagePolicyEvaluator, schemaValidator);
+                usagePolicyEvaluator, schemaValidator, outboxService);
 
         when(usagePolicyEvaluator.evaluate(any()))
                 .thenReturn(new UsagePolicyEvaluationResult(UsagePolicyDecision.ALLOWED, List.of(), List.of()));
@@ -211,7 +213,7 @@ class ExecuteEventConfigActionTest {
     }
 
     @Test
-    void execute_blockPolicy_throwsUsagePolicyExceeded() {
+    void execute_blockPolicy_createsBlockedLogAndDoesNotCallProvider() {
         stubFullChainUpToProvider();
 
         UsagePolicyViolation violation = new UsagePolicyViolation(
@@ -228,10 +230,15 @@ class ExecuteEventConfigActionTest {
                     AppException ae = (AppException) e;
                     assertThat(ae.getHttpStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
                     assertThat(ae.getErrorCode())
-                            .isEqualTo(AiAgentErrorCatalog.USAGE_POLICY_EXCEEDED.code());
+                            .isEqualTo(AiAgentErrorCatalog.AI_EXECUTION_POLICY_BLOCKED.code());
                 });
 
-        verify(executionLogRepository, never()).save(any());
+        verify(executionLogRepository, times(1)).save(argThat(log ->
+                log.status().name().equals("BLOCKED")
+                        && "REQUEST_COUNT".equals(log.blockReasonCode())));
+        verify(outboxService).enqueue(eq("AI_EXECUTION_LOG"), any(), eq("AI_USAGE_POLICY_BLOCKED"),
+                eq("SCOPERY_AI_AGENT"), eq(1), any());
+        verify(adapterRegistry, never()).getAdapter(any());
     }
 
     @Test
@@ -330,6 +337,7 @@ class ExecuteEventConfigActionTest {
         when(pv.status()).thenReturn(PromptVersionStatus.ACTIVE);
         when(pv.templateId()).thenReturn(templateId);
         when(pv.content()).thenReturn("Hello, {{name}}!");
+        when(pv.resolvedPromptContent()).thenReturn("Hello, {{name}}!");
         return pv;
     }
 

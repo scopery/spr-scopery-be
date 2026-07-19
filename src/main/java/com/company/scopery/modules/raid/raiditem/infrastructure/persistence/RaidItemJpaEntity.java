@@ -1,0 +1,48 @@
+package com.company.scopery.modules.raid.raiditem.infrastructure.persistence;
+import com.company.scopery.common.audit.AuditableJpaEntity;
+import com.company.scopery.modules.raid.shared.constant.RaidTableNames;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import java.time.Instant; import java.time.LocalDate; import java.util.UUID;
+@Entity @Table(name = RaidTableNames.ITEM) @Getter @Setter @NoArgsConstructor
+public class RaidItemJpaEntity extends AuditableJpaEntity {
+    @Id private UUID id;
+    @Column(name="project_id", nullable=false) private UUID projectId;
+    @Column(name="workspace_id", nullable=false) private UUID workspaceId;
+    @Column(nullable=false) private String type;
+    private String code;
+    @Column(nullable=false) private String title;
+    @Column(columnDefinition="text") private String description;
+    @Column(nullable=false) private String status;
+    @Column(name="owner_user_id") private UUID ownerUserId;
+    private String severity;
+    private String probability;
+    private String impact;
+    @Column(name="risk_score") private Integer riskScore;
+    @Column(name="risk_score_formula_version") private String riskScoreFormulaVersion;
+    @Column(name="risk_response_strategy") private String riskResponseStrategy;
+    @Column(name="risk_trigger", columnDefinition="text") private String riskTrigger;
+    @Column(name="target_resolution_date") private LocalDate targetResolutionDate;
+    @Column(name="assumption_statement", columnDefinition="text") private String assumptionStatement;
+    @Column(name="validation_status") private String validationStatus;
+    @Column(name="validation_owner") private UUID validationOwner;
+    @Column(name="validation_due_date") private LocalDate validationDueDate;
+    @Column(name="impact_if_false", columnDefinition="text") private String impactIfFalse;
+    @Column(name="issue_category") private String issueCategory;
+    @Column(name="impact_summary", columnDefinition="text") private String impactSummary;
+    @Column(name="root_cause", columnDefinition="text") private String rootCause;
+    @Column(name="resolution_plan", columnDefinition="text") private String resolutionPlan;
+    @Column(name="resolution_due_date") private LocalDate resolutionDueDate;
+    @Column(name="resolved_at") private Instant resolvedAt;
+    @Column(name="resolved_by") private UUID resolvedBy;
+    @Column(name="dependency_type") private String dependencyType;
+    @Column(name="escalation_level") private String escalationLevel;
+    @Column(name="escalation_reason", columnDefinition="text") private String escalationReason;
+    @Column(name="escalated_at") private Instant escalatedAt;
+    @Column(name="escalated_by") private UUID escalatedBy;
+    @Column(name="linked_change_request_id") private UUID linkedChangeRequestId;
+    @Column(name="outcome_note", columnDefinition="text") private String outcomeNote;
+    @Version private Integer version;
+}

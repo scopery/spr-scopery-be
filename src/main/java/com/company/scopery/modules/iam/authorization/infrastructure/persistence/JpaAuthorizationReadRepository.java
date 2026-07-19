@@ -11,9 +11,11 @@ import com.company.scopery.modules.iam.permission.domain.model.IamPermissionActi
 import com.company.scopery.modules.iam.permission.domain.model.IamPermissionActionDefinitionRepository;
 import com.company.scopery.modules.iam.permission.domain.valueobject.IamPermissionCode;
 import com.company.scopery.modules.iam.permission.domain.model.IamPermissionRepository;
+import com.company.scopery.modules.iam.resource.application.listeners.IamSystemAuthResourceInitializer;
 import com.company.scopery.modules.iam.resource.domain.enums.IamResourceType;
 import com.company.scopery.modules.iam.resource.domain.model.IamAuthResource;
 import com.company.scopery.modules.iam.resource.domain.model.IamAuthResourceRepository;
+import com.company.scopery.modules.iam.resource.domain.valueobject.IamResourceCode;
 import com.company.scopery.modules.iam.right.domain.model.IamRight;
 import com.company.scopery.modules.iam.right.domain.valueobject.IamRightCode;
 import com.company.scopery.modules.iam.right.domain.model.IamRightRepository;
@@ -90,6 +92,13 @@ public class JpaAuthorizationReadRepository implements AuthorizationReadReposito
     }
 
     @Override
+    public Optional<IamAuthResource> findGlobalSystemResource() {
+        return resourceRepository.findByCodeAndResourceType(
+                IamResourceCode.of(IamSystemAuthResourceInitializer.GLOBAL_SYSTEM_RESOURCE_CODE),
+                IamResourceType.GLOBAL);
+    }
+
+    @Override
     public List<IamAccessGrant> findActiveGrantsBySubjectsAndResource(
             List<IamSubjectType> subjectTypes, List<UUID> subjectIds, UUID resourceId) {
         return grantRepository.findActiveBySubjectsAndResource(subjectTypes, subjectIds, resourceId);
@@ -143,5 +152,14 @@ public class JpaAuthorizationReadRepository implements AuthorizationReadReposito
         return orgTeamMemberRepository.findAllByUserId(userId).stream()
                 .map(member -> member.teamId())
                 .toList();
+    }
+
+    @Override
+    public boolean hasActiveGlobalResourceGrantForUser(UUID userId) {
+        List<UUID> subjectIds = new java.util.ArrayList<>();
+        subjectIds.add(userId);
+        roleAssignmentRepository.findActiveByAssigneeId(userId)
+                .forEach(assignment -> subjectIds.add(assignment.roleId()));
+        return grantRepository.hasActiveGlobalResourceGrantForSubjects(subjectIds);
     }
 }

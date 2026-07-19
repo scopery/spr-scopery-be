@@ -176,7 +176,7 @@ public final class WorkspaceExceptions {
 
     public static AppException orgInvitationNotFound(String token) {
         return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_NOT_FOUND,
-                "Organization invitation not found for token", Map.of("token", token));
+                "Organization invitation not found for token", Map.of());
     }
 
     public static AppException orgInvitationAlreadyMember(UUID organizationId, UUID userId) {

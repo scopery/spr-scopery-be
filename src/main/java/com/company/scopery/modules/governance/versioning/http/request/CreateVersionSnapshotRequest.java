@@ -1,0 +1,4 @@
+package com.company.scopery.modules.governance.versioning.http.request;
+import jakarta.validation.constraints.NotBlank; import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
+public record CreateVersionSnapshotRequest(@NotBlank String objectTypeCode, @NotNull UUID targetId, @NotBlank String snapshotJson, String changeReason) {}

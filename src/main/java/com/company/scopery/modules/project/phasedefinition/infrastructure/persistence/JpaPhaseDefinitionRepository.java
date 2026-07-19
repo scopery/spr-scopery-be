@@ -55,13 +55,24 @@ public class JpaPhaseDefinitionRepository implements PhaseDefinitionRepository {
     }
 
     @Override
+    public boolean existsByCodeAndScopeAndOrganizationId(String code, PhaseDefinitionScope scope, UUID organizationId) {
+        return springDataRepository.existsByCodeAndScopeAndOrganizationId(code, scope.name(), organizationId);
+    }
+
+    @Override
     public boolean isUsedByAnyProject(UUID phaseDefinitionId) {
         return springDataRepository.isUsedByAnyProject(phaseDefinitionId);
     }
 
     @Override
+    public boolean isUsedByAnyTemplatePhase(UUID phaseDefinitionId) {
+        return springDataRepository.isUsedByAnyTemplatePhase(phaseDefinitionId);
+    }
+
+    @Override
     public PageResult<PhaseDefinition> search(
             PhaseDefinitionScope scope,
+            UUID organizationId,
             UUID workspaceId,
             String keyword,
             PhaseDefinitionStatus status,
@@ -72,6 +83,9 @@ public class JpaPhaseDefinitionRepository implements PhaseDefinitionRepository {
 
             if (scope != null) {
                 predicates.add(cb.equal(root.get("scope"), scope.name()));
+            }
+            if (organizationId != null) {
+                predicates.add(cb.equal(root.get("organizationId"), organizationId));
             }
             if (workspaceId != null) {
                 predicates.add(cb.equal(root.get("workspaceId"), workspaceId));

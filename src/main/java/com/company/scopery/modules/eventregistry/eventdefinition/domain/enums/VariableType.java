@@ -10,5 +10,7 @@ public enum VariableType {
     EMAIL,
     URL,
     OBJECT,
-    ARRAY
+    ARRAY,
+    CURRENCY,
+    PERCENT
 }

@@ -1,9 +1,5 @@
 package com.company.scopery.modules.project.wbs.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
-import com.company.scopery.modules.project.project.domain.enums.ProjectStatus;
-import com.company.scopery.modules.project.project.domain.model.Project;
-import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
 import com.company.scopery.modules.project.projectphase.domain.enums.ProjectPhaseStatus;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhase;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhaseRepository;
@@ -12,6 +8,8 @@ import com.company.scopery.modules.project.shared.authorization.ProjectWorkspace
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import com.company.scopery.modules.project.shared.util.ProjectEnumParser;
 import com.company.scopery.modules.project.wbs.application.command.CreateWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.response.WbsNodeResponse;
@@ -25,33 +23,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateWbsNodeAction {
 
     private final WbsNodeRepository wbsNodeRepository;
-    private final ProjectRepository projectRepository;
     private final ProjectPhaseRepository projectPhaseRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public CreateWbsNodeAction(WbsNodeRepository wbsNodeRepository,
-                                ProjectRepository projectRepository,
-                                ProjectPhaseRepository projectPhaseRepository,
-                                ProjectActivityLogger activityLogger,
-                                ProjectWorkspaceAuthorizationService authorizationService) {
+                               ProjectPhaseRepository projectPhaseRepository,
+                               ProjectActivityLogger activityLogger,
+                               ProjectWorkspaceAuthorizationService authorizationService,
+                               ProjectMutationGuard mutationGuard,
+                               ProjectPlatformPublisher platformPublisher) {
         this.wbsNodeRepository = wbsNodeRepository;
-        this.projectRepository = projectRepository;
         this.projectPhaseRepository = projectPhaseRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public WbsNodeResponse execute(CreateWbsNodeCommand cmd) {
-        authorizationService.requireProjectPermission(cmd.projectId(), IamAuthorities.PROJECT_WBS_CREATE);
-
-        Project project = projectRepository.findById(cmd.projectId())
-                .orElseThrow(() -> ProjectExceptions.projectNotFound(cmd.projectId()));
-
-        if (project.status() != ProjectStatus.DRAFT && project.status() != ProjectStatus.ACTIVE) {
-            throw ProjectExceptions.projectNotActiveOrDraft(project.id());
-        }
+        authorizationService.requireWbsCreate(cmd.projectId());
+        mutationGuard.requireMutableProject(cmd.projectId());
 
         ProjectPhase phase = projectPhaseRepository.findById(cmd.projectPhaseId())
                 .orElseThrow(() -> ProjectExceptions.projectPhaseNotFound(cmd.projectPhaseId()));
@@ -113,6 +108,8 @@ public class CreateWbsNodeAction {
         );
 
         WbsNode saved = wbsNodeRepository.save(node);
+
+        platformPublisher.enqueueWbs(saved, "WBS_NODE_CREATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.WBS_NODE,

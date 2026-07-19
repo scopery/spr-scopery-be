@@ -69,12 +69,25 @@ class PromptVersionTest {
     }
 
     @Test
-    void activate_fromDraft_setsStatusToActive() {
+    void activate_fromDraft_setsActivatedAtAndBy() {
+        PromptVersion version = PromptVersion.create(TEMPLATE_ID, 1, null,
+                "Content", PromptContentFormat.TEXT, null, null);
+        version.activate("admin@scopery.io");
+
+        assertThat(version.status()).isEqualTo(PromptVersionStatus.ACTIVE);
+        assertThat(version.activatedAt()).isNotNull();
+        assertThat(version.activatedBy()).isEqualTo("admin@scopery.io");
+    }
+
+    @Test
+    void update_whenActive_isImmutable() {
         PromptVersion version = PromptVersion.create(TEMPLATE_ID, 1, null,
                 "Content", PromptContentFormat.TEXT, null, null);
         version.activate();
 
-        assertThat(version.status()).isEqualTo(PromptVersionStatus.ACTIVE);
+        assertThatThrownBy(() -> version.update(null, "New content", PromptContentFormat.TEXT, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("DRAFT");
     }
 
     @Test

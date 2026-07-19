@@ -14,12 +14,15 @@ public class EmailTemplateVersion {
     private String htmlBodyTemplate;
     private String textBodyTemplate;
     private EmailTemplateVersionStatus status;
+    private Instant publishedAt;
+    private UUID publishedBy;
     private final Instant createdAt;
     private Instant updatedAt;
 
     private EmailTemplateVersion(UUID id, UUID templateId, int versionNumber,
                                  String subjectTemplate, String htmlBodyTemplate, String textBodyTemplate,
                                  EmailTemplateVersionStatus status,
+                                 Instant publishedAt, UUID publishedBy,
                                  Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.templateId = templateId;
@@ -28,6 +31,8 @@ public class EmailTemplateVersion {
         this.htmlBodyTemplate = htmlBodyTemplate;
         this.textBodyTemplate = textBodyTemplate;
         this.status = status;
+        this.publishedAt = publishedAt;
+        this.publishedBy = publishedBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -40,16 +45,18 @@ public class EmailTemplateVersion {
         Instant now = Instant.now();
         return new EmailTemplateVersion(UUID.randomUUID(), templateId, versionNumber,
                 subjectTemplate, htmlBodyTemplate, textBodyTemplate,
-                EmailTemplateVersionStatus.DRAFT, now, now);
+                EmailTemplateVersionStatus.DRAFT, null, null, now, now);
     }
 
     public static EmailTemplateVersion reconstitute(UUID id, UUID templateId, int versionNumber,
                                                     String subjectTemplate, String htmlBodyTemplate,
                                                     String textBodyTemplate,
                                                     EmailTemplateVersionStatus status,
+                                                    Instant publishedAt, UUID publishedBy,
                                                     Instant createdAt, Instant updatedAt) {
         return new EmailTemplateVersion(id, templateId, versionNumber,
-                subjectTemplate, htmlBodyTemplate, textBodyTemplate, status, createdAt, updatedAt);
+                subjectTemplate, htmlBodyTemplate, textBodyTemplate, status,
+                publishedAt, publishedBy, createdAt, updatedAt);
     }
 
     public void updateContent(String subjectTemplate, String htmlBodyTemplate, String textBodyTemplate) {
@@ -65,10 +72,16 @@ public class EmailTemplateVersion {
     }
 
     public void publish() {
+        publish(null);
+    }
+
+    public void publish(UUID publisherUserId) {
         if (this.status == EmailTemplateVersionStatus.ARCHIVED) {
             throw new IllegalStateException("Archived version cannot be published");
         }
         this.status = EmailTemplateVersionStatus.PUBLISHED;
+        this.publishedAt = Instant.now();
+        this.publishedBy = publisherUserId;
         this.updatedAt = Instant.now();
     }
 
@@ -96,6 +109,8 @@ public class EmailTemplateVersion {
     public String htmlBodyTemplate() { return htmlBodyTemplate; }
     public String textBodyTemplate() { return textBodyTemplate; }
     public EmailTemplateVersionStatus status() { return status; }
+    public Instant publishedAt() { return publishedAt; }
+    public UUID publishedBy() { return publishedBy; }
     public Instant createdAt() { return createdAt; }
     public Instant updatedAt() { return updatedAt; }
 }

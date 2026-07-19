@@ -307,6 +307,27 @@ class AuthorizationDecisionServiceTest {
         assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.EXPLICIT_DENY);
     }
 
+    @Test
+    void authorization_teamDenyOverridesUserAllow_denied() {
+        UUID userAllowId = UUID.randomUUID();
+        UUID teamDenyId = UUID.randomUUID();
+        stubUserAndRight("VIEW");
+        stubActiveResource();
+        when(readRepository.findWorkspaceTeamIdsByUserId(USER_ID)).thenReturn(List.of(TEAM_ID));
+        when(readRepository.findActiveRoleAssignmentsByAssigneeId(USER_ID)).thenReturn(List.of());
+        when(readRepository.findActiveGrantsBySubjectsAndResource(anyList(), anyList(), eq(RESOURCE_ID)))
+                .thenReturn(List.of(
+                        grant(userAllowId, IamSubjectType.USER, USER_ID, IamGrantEffect.ALLOW),
+                        grant(teamDenyId, IamSubjectType.TEAM, TEAM_ID, IamGrantEffect.DENY)));
+        when(readRepository.findGrantIdsHavingRight(anyList(), eq(RIGHT_ID)))
+                .thenReturn(Set.of(userAllowId, teamDenyId));
+
+        AuthorizationDecision result = service.canAccess(req("VIEW"));
+
+        assertThat(result.allowed()).isFalse();
+        assertThat(result.reason()).isEqualTo(AuthorizationDecisionReason.EXPLICIT_DENY);
+    }
+
     // ── Visibility fallback ────────────────────────────────────────────────────
 
     @Test
@@ -423,7 +444,7 @@ class AuthorizationDecisionServiceTest {
     private IamUser activeUser() { return user(IamUserStatus.ACTIVE); }
 
     private IamUser user(IamUserStatus status) {
-        return new IamUser(USER_ID, Username.of("testuser"), EmailAddress.of("test@example.com"),
+        return IamUser.of(USER_ID, Username.of("testuser"), EmailAddress.of("test@example.com"),
                 "Test User", null, status, Instant.now(), Instant.now());
     }
 

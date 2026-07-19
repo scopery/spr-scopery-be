@@ -18,7 +18,18 @@ public class ExecutionLogPersistenceMapper {
         entity.setEventDefinitionId(log.eventDefinitionId());
         entity.setAgentId(log.agentId());
         entity.setPromptVersionId(log.promptVersionId());
+        entity.setPromptTemplateId(log.promptTemplateId());
         entity.setModelDeploymentId(log.modelDeploymentId());
+        entity.setProviderId(log.providerId());
+        entity.setModelId(log.modelId());
+        entity.setEnvironment(log.environment());
+        entity.setTriggeredByUserId(log.triggeredByUserId());
+        entity.setInputHash(log.inputHash());
+        entity.setInputPreviewJson(log.inputPreviewJson());
+        entity.setOutputPreviewJson(log.outputPreviewJson());
+        entity.setCurrency(log.currency());
+        entity.setTraceId(log.traceId());
+        entity.setBlockReasonCode(log.blockReasonCode());
         entity.setTriggerSource(log.triggerSource().name());
         entity.setStatus(log.status().name());
         entity.setStartedAt(log.startedAt());
@@ -46,7 +57,18 @@ public class ExecutionLogPersistenceMapper {
                 entity.getEventDefinitionId(),
                 entity.getAgentId(),
                 entity.getPromptVersionId(),
+                entity.getPromptTemplateId(),
                 entity.getModelDeploymentId(),
+                entity.getProviderId(),
+                entity.getModelId(),
+                entity.getEnvironment(),
+                entity.getTriggeredByUserId(),
+                entity.getInputHash(),
+                entity.getInputPreviewJson(),
+                entity.getOutputPreviewJson(),
+                entity.getCurrency(),
+                entity.getTraceId(),
+                entity.getBlockReasonCode(),
                 ExecutionTriggerSource.valueOf(entity.getTriggerSource()),
                 ExecutionStatus.valueOf(entity.getStatus()),
                 entity.getStartedAt(),

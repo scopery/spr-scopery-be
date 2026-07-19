@@ -15,8 +15,15 @@ public interface SpringDataPhaseDefinitionJpaRepository
 
     boolean existsByCodeAndScopeAndWorkspaceId(String code, String scope, UUID workspaceId);
 
+    boolean existsByCodeAndScopeAndOrganizationId(String code, String scope, UUID organizationId);
+
     @Query("SELECT CASE WHEN COUNT(pp) > 0 THEN true ELSE false END " +
            "FROM com.company.scopery.modules.project.projectphase.infrastructure.persistence.ProjectPhaseJpaEntity pp " +
            "WHERE pp.phaseDefinitionId = :id")
     boolean isUsedByAnyProject(@Param("id") UUID id);
+
+    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END " +
+                   "FROM project_template_phase WHERE phase_definition_id = :id",
+            nativeQuery = true)
+    boolean isUsedByAnyTemplatePhase(@Param("id") UUID id);
 }

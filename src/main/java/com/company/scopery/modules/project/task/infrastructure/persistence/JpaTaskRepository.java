@@ -15,7 +15,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,6 +64,26 @@ public class JpaTaskRepository implements TaskRepository {
     @Override
     public List<Task> findAllByWbsNodeId(UUID wbsNodeId) {
         return springDataRepository.findAllByWbsNodeId(wbsNodeId)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Task> findAllByProjectId(UUID projectId) {
+        return springDataRepository.findAllByProjectId(projectId)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Task> findDueSoonReminderCandidates(LocalDate dueDate, Collection<TaskStatus> excludedStatuses, int limit) {
+        List<String> excluded = excludedStatuses.stream().map(Enum::name).toList();
+        return springDataRepository.findDueSoonCandidates(dueDate, excluded, PageRequest.of(0, limit))
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Task> findOverdueReminderCandidates(LocalDate beforeDate, Collection<TaskStatus> excludedStatuses, int limit) {
+        List<String> excluded = excludedStatuses.stream().map(Enum::name).toList();
+        return springDataRepository.findOverdueCandidates(beforeDate, excluded, PageRequest.of(0, limit))
                 .stream().map(mapper::toDomain).toList();
     }
 

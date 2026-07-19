@@ -30,6 +30,41 @@ public final class EventRegistryExceptions {
                 "Deprecated event definition cannot be activated again: " + code, Map.of("code", code));
     }
 
+    public static AppException eventDefinitionAlreadyDeprecated(String code) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_DEFINITION_ALREADY_DEPRECATED,
+                "Event definition is already deprecated: " + code, Map.of("code", code));
+    }
+
+    public static AppException eventDefinitionDeprecatedCannotBeUpdated(String code) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_DEFINITION_DEPRECATED_CANNOT_BE_UPDATED,
+                "Deprecated event definition cannot be updated: " + code, Map.of("code", code));
+    }
+
+    public static AppException eventDefinitionHasActiveConsumers(String code) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_DEFINITION_HAS_ACTIVE_CONSUMERS,
+                "Event definition has active consumers: " + code, Map.of("code", code));
+    }
+
+    public static AppException eventVariableInvalidPath(String path) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_VARIABLE_INVALID_PATH,
+                "Invalid event variable path: " + path, Map.of("path", path == null ? "" : path));
+    }
+
+    public static AppException eventVariableDuplicatePath(String path) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_VARIABLE_DUPLICATE_PATH,
+                "Duplicate event variable path: " + path, Map.of("path", path));
+    }
+
+    public static AppException eventVariableRequiredRemovalBlocked(String path) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_VARIABLE_REQUIRED_REMOVAL_BLOCKED,
+                "Required variable removal blocked for active consumers: " + path, Map.of("path", path));
+    }
+
+    public static AppException eventVariableTypeChangeBlocked(String path) {
+        return new AppException(EventRegistryErrorCatalog.EVENT_VARIABLE_TYPE_CHANGE_BLOCKED,
+                "Variable type change blocked for active consumers: " + path, Map.of("path", path));
+    }
+
     public static AppException invalidInputSchemaJson() {
         return new AppException(EventRegistryErrorCatalog.INVALID_EVENT_DEFINITION_INPUT_SCHEMA_JSON);
     }

@@ -61,6 +61,12 @@ public final class NotificationExceptions {
                 Map.of("variablePath", variablePath));
     }
 
+    public static AppException emailTemplateSensitiveVariableNotAllowed(String variablePath, String location) {
+        return new AppException(NotificationErrorCatalog.EMAIL_TEMPLATE_SENSITIVE_VARIABLE_NOT_ALLOWED,
+                "Sensitive variable {{" + variablePath + "}} is not allowed in " + location,
+                Map.of("variablePath", variablePath, "location", location));
+    }
+
     public static AppException emailTemplateRenderFailed(String reason) {
         return new AppException(NotificationErrorCatalog.EMAIL_TEMPLATE_RENDER_FAILED,
                 "Template rendering failed: " + reason, Map.of("reason", reason));
@@ -113,6 +119,12 @@ public final class NotificationExceptions {
                 Map.of("eventDefinitionId", eventDefinitionId));
     }
 
+    public static AppException emailRuleSensitiveNotPermitted(UUID ruleId) {
+        return new AppException(NotificationErrorCatalog.EMAIL_RULE_SENSITIVE_NOT_PERMITTED,
+                "Email rule is not permitted to use sensitive variables: " + ruleId,
+                Map.of("ruleId", ruleId));
+    }
+
     // ── Email Delivery ────────────────────────────────────────────────────────
 
     public static AppException emailDeliveryNotFound(UUID id) {
@@ -137,6 +149,24 @@ public final class NotificationExceptions {
         return new AppException(NotificationErrorCatalog.EMAIL_OUTBOX_NOT_RETRYABLE,
                 "Email outbox record is not in a retryable state (status=" + status + "): " + id,
                 Map.of("id", id, "status", status));
+    }
+
+    public static AppException emailOutboxNotCancellable(UUID id, String status) {
+        return new AppException(NotificationErrorCatalog.EMAIL_OUTBOX_NOT_CANCELLABLE,
+                "Email outbox record cannot be cancelled (status=" + status + "): " + id,
+                Map.of("id", id, "status", status));
+    }
+
+    // ── Notification Item ─────────────────────────────────────────────────────
+
+    public static AppException notificationItemNotFound(UUID id) {
+        return new AppException(NotificationErrorCatalog.NOTIFICATION_ITEM_NOT_FOUND,
+                "Notification not found: " + id, Map.of("id", id));
+    }
+
+    public static AppException notificationItemAccessDenied(UUID id) {
+        return new AppException(NotificationErrorCatalog.NOTIFICATION_ITEM_ACCESS_DENIED,
+                "Access denied for notification: " + id, Map.of("id", id));
     }
 
     // ── Dispatch ──────────────────────────────────────────────────────────────

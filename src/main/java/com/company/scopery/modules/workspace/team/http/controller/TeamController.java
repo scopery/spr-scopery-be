@@ -31,9 +31,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Tag(name = "Workspace - Teams", description = "Manage workspace teams")
+@Tag(name = "Workspace - Teams (legacy)",
+        description = "DEPRECATED: prefer OrgTeam APIs. Workspace-scoped teams kept for backward compatibility; OrgTeam is the Phase 03 source of truth.")
 @RestController
 @RequestMapping(WorkspaceApiPaths.TEAMS)
+@Deprecated
 public class TeamController {
 
     private final CreateTeamAction createTeamAction;

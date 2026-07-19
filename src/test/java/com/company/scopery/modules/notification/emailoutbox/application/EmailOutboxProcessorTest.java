@@ -1,5 +1,6 @@
 package com.company.scopery.modules.notification.emailoutbox.application;
 
+import com.company.scopery.common.audit.ImmutableAuditEventService;
 import com.company.scopery.modules.notification.emailoutbox.application.jobs.EmailOutboxProcessor;
 import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDelivery;
 import com.company.scopery.modules.notification.emaildelivery.domain.model.EmailDeliveryRepository;
@@ -11,6 +12,7 @@ import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOu
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailProviderResolver;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailSendResult;
 import com.company.scopery.modules.notification.emailoutbox.infrastructure.provider.EmailSender;
+import com.company.scopery.modules.notification.shared.NotificationActivityLogger;
 import com.company.scopery.modules.notification.shared.NotificationProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,8 @@ class EmailOutboxProcessorTest {
     @Mock private EmailDeliveryRepository deliveryRepository;
     @Mock private EmailProviderResolver providerResolver;
     @Mock private EmailSender emailSender;
+    @Mock private NotificationActivityLogger activityLogger;
+    @Mock private ImmutableAuditEventService auditEventService;
 
     private NotificationProperties properties;
     private EmailOutboxProcessor processor;
@@ -42,7 +46,8 @@ class EmailOutboxProcessorTest {
         properties = new NotificationProperties();
         properties.getOutbox().setMaxRetry(3);
         properties.getOutbox().setRetryDelaySeconds(60);
-        processor = new EmailOutboxProcessor(outboxRepository, deliveryRepository, providerResolver, properties);
+        processor = new EmailOutboxProcessor(outboxRepository, deliveryRepository, providerResolver,
+                properties, activityLogger, auditEventService);
     }
 
     @Test
@@ -70,12 +75,12 @@ class EmailOutboxProcessorTest {
 
         processor.processOne(outbox);
 
-        assertThat(outbox.status()).isEqualTo(EmailOutboxStatus.PENDING);
+        assertThat(outbox.status()).isEqualTo(EmailOutboxStatus.RETRY_SCHEDULED);
         assertThat(outbox.retryCount()).isEqualTo(1);
     }
 
     @Test
-    void processOne_maxRetryReached_marksFailed() {
+    void processOne_maxRetryReached_marksDeadLetter() {
         EmailOutbox outbox = makeOutboxWithRetries(3);
         when(outboxRepository.claimForProcessing(any())).thenReturn(1);
         when(outboxRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -85,7 +90,7 @@ class EmailOutboxProcessorTest {
 
         processor.processOne(outbox);
 
-        assertThat(outbox.status()).isEqualTo(EmailOutboxStatus.FAILED);
+        assertThat(outbox.status()).isEqualTo(EmailOutboxStatus.DEAD_LETTER);
     }
 
     @Test
@@ -103,14 +108,15 @@ class EmailOutboxProcessorTest {
     private EmailOutbox makeOutbox() {
         return EmailOutbox.create(UUID.randomUUID(),
                 new EmailMessage("to@example.com", "Subject", "<p>Body</p>", "Body"),
-                EmailProviderType.LOG_ONLY);
+                EmailProviderType.LOG_ONLY, "dedup-" + UUID.randomUUID());
     }
 
     private EmailOutbox makeOutboxWithRetries(int retryCount) {
         return EmailOutbox.reconstitute(
                 UUID.randomUUID(), UUID.randomUUID(),
                 "to@example.com", "Subject", "<p>Body</p>", "Body",
-                EmailProviderType.LOG_ONLY, EmailOutboxStatus.PENDING,
+                EmailProviderType.LOG_ONLY, "dedup-key",
+                EmailOutboxStatus.PENDING,
                 null, null, retryCount, Instant.now(), null,
                 Instant.now(), Instant.now());
     }

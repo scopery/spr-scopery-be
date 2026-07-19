@@ -24,10 +24,22 @@ public class AiAgentSecurityInterceptor implements HandlerInterceptor {
     private String requiredAuthority(String path, String method) {
         if (path.contains("/provider-secrets")) return "AI_PROVIDER_SECRET_MANAGE";
         if (path.contains("/playground") && !HttpMethod.GET.matches(method)) return "AI_PLAYGROUND_RUN";
+        if (path.contains("/tool-executions")) return "AI_TOOL_EXECUTE";
+        if (path.contains("/tools") && path.contains("/execute") && !HttpMethod.GET.matches(method)) {
+            return "AI_TOOL_EXECUTE";
+        }
+        if (path.contains("/tools") && !HttpMethod.GET.matches(method)) return "AI_TOOL_MANAGE";
         if (path.contains("/execution-logs") || path.contains("/executions")) return "AI_EXECUTION_VIEW_OR_RUN";
         if (path.contains("/prompt-versions") && !HttpMethod.GET.matches(method)) return "AI_PROMPT_PUBLISH";
         if (path.contains("/event-configs") && !HttpMethod.GET.matches(method)) return "AI_EVENT_CONFIG_MANAGE";
-        if ((path.contains("/providers") || path.contains("/deployments")) && !HttpMethod.GET.matches(method)) {
+        if ((path.contains("/providers")
+                || path.contains("/deployments")
+                || path.contains("/models")
+                || path.contains("/agents")
+                || path.contains("/prompt-templates")
+                || path.contains("/usage-policies")
+                || path.contains("/model-parameter-capabilities"))
+                && !HttpMethod.GET.matches(method)) {
             return "AI_PLATFORM_MANAGE";
         }
         return null;

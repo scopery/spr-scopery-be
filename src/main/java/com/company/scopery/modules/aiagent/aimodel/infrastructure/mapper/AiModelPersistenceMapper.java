@@ -19,6 +19,14 @@ public class AiModelPersistenceMapper {
         entity.setProviderModelId(model.providerModelId());
         entity.setType(model.type().name());
         entity.setDescription(model.description());
+        entity.setSupportsChat(model.supportsChat());
+        entity.setSupportsEmbedding(model.supportsEmbedding());
+        entity.setSupportsToolCalling(model.supportsToolCalling());
+        entity.setSupportsJsonMode(model.supportsJsonMode());
+        entity.setContextWindowTokens(model.contextWindowTokens());
+        entity.setMaxOutputTokens(model.maxOutputTokens());
+        entity.setModelFamily(model.modelFamily());
+        entity.setCapabilitiesJson(model.capabilitiesJson());
         entity.setStatus(model.status().name());
         if (model.createdAt() != null) {
             entity.setCreatedAt(model.createdAt());
@@ -35,6 +43,14 @@ public class AiModelPersistenceMapper {
                 entity.getProviderModelId(),
                 AiModelType.valueOf(entity.getType()),
                 entity.getDescription(),
+                entity.isSupportsChat(),
+                entity.isSupportsEmbedding(),
+                entity.isSupportsToolCalling(),
+                entity.isSupportsJsonMode(),
+                entity.getContextWindowTokens(),
+                entity.getMaxOutputTokens(),
+                entity.getModelFamily(),
+                entity.getCapabilitiesJson(),
                 AiModelStatus.valueOf(entity.getStatus()),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()

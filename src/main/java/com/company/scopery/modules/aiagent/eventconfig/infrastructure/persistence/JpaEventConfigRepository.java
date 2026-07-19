@@ -87,6 +87,15 @@ public class JpaEventConfigRepository implements EventConfigRepository {
     }
 
     @Override
+    public boolean existsActiveByEventDefinitionId(UUID eventDefinitionId) {
+        Specification<EventConfigJpaEntity> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("eventDefinitionId"), eventDefinitionId),
+                cb.equal(root.get("status"), EventConfigStatus.ACTIVE.name())
+        );
+        return springDataRepository.count(spec) > 0;
+    }
+
+    @Override
     public PageResult<EventConfig> findAll(String keyword, UUID eventDefinitionId,
                                       EventConfigEnvironment environment, EventTriggerType triggerType,
                                       EventConfigStatus status, UUID agentId, PageQuery pageQuery) {

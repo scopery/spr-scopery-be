@@ -4,5 +4,10 @@ import java.util.UUID;
 
 public record PublishEmailTemplateVersionCommand(
         UUID templateId,
-        UUID versionId
-) {}
+        UUID versionId,
+        boolean allowSensitiveVariables
+) {
+    public PublishEmailTemplateVersionCommand(UUID templateId, UUID versionId) {
+        this(templateId, versionId, false);
+    }
+}

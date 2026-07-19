@@ -2,7 +2,6 @@ package com.company.scopery.modules.project.project.application.service;
 
 import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.project.application.query.SearchProjectQuery;
 import com.company.scopery.modules.project.project.application.response.ProjectResponse;
 import com.company.scopery.modules.project.project.domain.enums.ProjectStatus;
@@ -33,13 +32,13 @@ public class ProjectQueryService {
     public ProjectResponse getProject(UUID id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> ProjectExceptions.projectNotFound(id));
-        authorizationService.requireWorkspacePermission(project.workspaceId(), IamAuthorities.PROJECT_VIEW);
+        authorizationService.requireProjectView(project.workspaceId());
         return ProjectResponse.from(project);
     }
 
     @Transactional(readOnly = true)
     public PageResult<ProjectResponse> searchProjects(SearchProjectQuery query) {
-        authorizationService.requireWorkspacePermission(query.workspaceId(), IamAuthorities.PROJECT_VIEW);
+        authorizationService.requireProjectView(query.workspaceId());
 
         ProjectStatus status = ProjectEnumParser.parseOptional(
                 ProjectStatus.class, query.status(),

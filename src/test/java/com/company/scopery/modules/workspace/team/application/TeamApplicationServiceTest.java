@@ -58,7 +58,7 @@ class TeamActionTest {
         createTeamAction = new CreateTeamAction(teamRepository, workspaceRepository, activityLogger, currentUserService, iamIntegrationService);
         updateTeamAction = new UpdateTeamAction(teamRepository, activityLogger);
         Instant now = Instant.now();
-        currentUser = new IamUser(UUID.randomUUID(), Username.of("admin"),
+        currentUser = IamUser.of(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
     }

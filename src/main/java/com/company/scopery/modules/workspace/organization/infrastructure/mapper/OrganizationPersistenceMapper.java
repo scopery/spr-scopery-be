@@ -30,8 +30,10 @@ public class OrganizationPersistenceMapper {
         entity.setDescription(domain.description());
         entity.setOwnerUserId(domain.ownerUserId());
         entity.setStatus(domain.status().name());
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt()); // required for Spring Data merge()
+        if (domain.createdAt() != null) {
+            entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
+        }
         return entity;
     }
 }

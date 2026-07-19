@@ -1,10 +1,9 @@
 package com.company.scopery.modules.notification.emailtemplate.application;
 
+import com.company.scopery.common.exception.AppException;
+import com.company.scopery.modules.notification.emailtemplate.application.service.EmailTemplateRenderer;
 import com.company.scopery.modules.notification.emailtemplate.application.service.EmailTemplateVariableValidator;
 import com.company.scopery.modules.notification.emailtemplate.application.service.SimpleMustacheEmailTemplateRenderer;
-
-import com.company.scopery.common.exception.AppException;
-import com.company.scopery.modules.notification.shared.error.NotificationErrorCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,41 +17,42 @@ class EmailTemplateVariableValidatorTest {
 
     @BeforeEach
     void setUp() {
-        validator = new EmailTemplateVariableValidator(new SimpleMustacheEmailTemplateRenderer());
+        EmailTemplateRenderer renderer = new SimpleMustacheEmailTemplateRenderer();
+        validator = new EmailTemplateVariableValidator(renderer);
     }
 
     @Test
-    void validate_allVariablesAllowed_passes() {
-        Set<String> allowed = Set.of("user.name", "workspace.name");
-        assertThatNoException().isThrownBy(() ->
-                validator.validate("Hello {{user.name}}", "<p>{{workspace.name}}</p>", null, allowed));
-    }
-
-    @Test
-    void validate_undeclaredVariable_throws422() {
-        Set<String> allowed = Set.of("user.name");
-        assertThatThrownBy(() ->
-                validator.validate("Hello {{user.name}}", "<p>{{unknown.var}}</p>", null, allowed))
+    void validate_unknownVariable_rejected() {
+        assertThatThrownBy(() -> validator.validate(
+                "Hello {{actor.name}}", "<p>{{unknown.path}}</p>", null,
+                Set.of("actor.name"), Set.of(), false))
                 .isInstanceOf(AppException.class)
-                .satisfies(e -> {
-                    AppException ex = (AppException) e;
-                    assertThat(ex.getErrorCode())
-                            .isEqualTo(NotificationErrorCatalog.EMAIL_TEMPLATE_VERSION_VARIABLE_MISSING.code());
-                });
+                .hasMessageContaining("unknown.path");
     }
 
     @Test
-    void validate_textBodyAlsoChecked() {
-        Set<String> allowed = Set.of("user.name");
-        assertThatThrownBy(() ->
-                validator.validate("Subject", "<p>{{user.name}}</p>", "Text {{bad.var}}", allowed))
-                .isInstanceOf(AppException.class);
+    void validate_sensitiveInSubject_alwaysRejected() {
+        assertThatThrownBy(() -> validator.validate(
+                "Reset {{invitee.token}}", "<p>Hello</p>", null,
+                Set.of("invitee.token"), Set.of("invitee.token"), true))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("subject");
     }
 
     @Test
-    void validate_nullTextBody_skipped() {
-        Set<String> allowed = Set.of("user.name");
-        assertThatNoException().isThrownBy(() ->
-                validator.validate("{{user.name}}", "<p>{{user.name}}</p>", null, allowed));
+    void validate_sensitiveInBody_rejectedUnlessAllowed() {
+        assertThatThrownBy(() -> validator.validate(
+                "Hello", "<p>{{invitee.token}}</p>", null,
+                Set.of("invitee.token"), Set.of("invitee.token"), false))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("body");
+    }
+
+    @Test
+    void validate_sensitiveInBody_allowedWhenFlagTrue() {
+        assertThatCode(() -> validator.validate(
+                "Hello", "<p>{{invitee.token}}</p>", null,
+                Set.of("invitee.token"), Set.of("invitee.token"), true))
+                .doesNotThrowAnyException();
     }
 }

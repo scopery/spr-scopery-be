@@ -1,11 +1,12 @@
 package com.company.scopery.modules.project.wbs.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import com.company.scopery.modules.project.shared.util.ProjectEnumParser;
 import com.company.scopery.modules.project.wbs.application.command.UpdateWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.response.WbsNodeResponse;
@@ -22,13 +23,19 @@ public class UpdateWbsNodeAction {
     private final WbsNodeRepository wbsNodeRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public UpdateWbsNodeAction(WbsNodeRepository wbsNodeRepository,
-                                ProjectActivityLogger activityLogger,
-                                ProjectWorkspaceAuthorizationService authorizationService) {
+                               ProjectActivityLogger activityLogger,
+                               ProjectWorkspaceAuthorizationService authorizationService,
+                               ProjectMutationGuard mutationGuard,
+                               ProjectPlatformPublisher platformPublisher) {
         this.wbsNodeRepository = wbsNodeRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
@@ -36,7 +43,12 @@ public class UpdateWbsNodeAction {
         WbsNode node = wbsNodeRepository.findById(cmd.id())
                 .orElseThrow(() -> ProjectExceptions.wbsNodeNotFound(cmd.id()));
 
-        authorizationService.requireProjectPermission(node.projectId(), IamAuthorities.PROJECT_WBS_UPDATE);
+        if (cmd.projectId() != null && !node.projectId().equals(cmd.projectId())) {
+            throw ProjectExceptions.wbsNodeProjectMismatch(node.id(), cmd.projectId());
+        }
+
+        authorizationService.requireWbsUpdate(node.projectId());
+        mutationGuard.requireMutableProject(node.projectId());
 
         if (node.status() == WbsNodeStatus.ARCHIVED) {
             throw ProjectExceptions.wbsNodeAlreadyArchived(node.id());
@@ -47,6 +59,8 @@ public class UpdateWbsNodeAction {
 
         WbsNode updated = node.update(cmd.title(), cmd.description(), nodeType);
         WbsNode saved = wbsNodeRepository.save(updated);
+
+        platformPublisher.enqueueWbs(saved, "WBS_NODE_UPDATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.WBS_NODE,

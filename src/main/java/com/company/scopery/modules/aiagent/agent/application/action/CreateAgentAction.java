@@ -2,7 +2,9 @@ package com.company.scopery.modules.aiagent.agent.application.action;
 
 import com.company.scopery.modules.aiagent.agent.application.command.CreateAgentCommand;
 import com.company.scopery.modules.aiagent.agent.application.response.AgentResponse;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentAutonomyLevel;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentScope;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
 import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
 import com.company.scopery.modules.aiagent.agent.domain.model.AgentRepository;
@@ -50,11 +52,19 @@ public class CreateAgentAction {
         AgentOutputFormat outputFormat = AiAgentEnumParser.parseOptional(
                 AgentOutputFormat.class, command.outputFormat(),
                 AiAgentErrorCatalog.INVALID_AGENT_OUTPUT_FORMAT.code(), "outputFormat");
+        AgentAutonomyLevel autonomyLevel = AiAgentEnumParser.parseOptional(
+                AgentAutonomyLevel.class, command.autonomyLevel(),
+                AiAgentErrorCatalog.INVALID_AGENT_AUTONOMY_LEVEL.code(), "autonomyLevel");
+        AgentScope scope = AiAgentEnumParser.parseOptional(
+                AgentScope.class, command.scope(),
+                AiAgentErrorCatalog.INVALID_AGENT_SCOPE.code(), "scope");
 
+        rejectMutationAutonomy(autonomyLevel);
         validateDeployment(command.defaultModelDeploymentId(), true);
 
         Agent agent = Agent.create(command.name(), code, type, command.description(),
-                command.defaultModelDeploymentId(), outputFormat);
+                command.defaultModelDeploymentId(), outputFormat,
+                autonomyLevel, scope, command.organizationId(), command.workspaceId());
 
         Agent saved = agentRepository.save(agent);
 
@@ -63,6 +73,15 @@ public class CreateAgentAction {
                 "Agent created: " + saved.code().value());
 
         return AgentResponse.from(saved);
+    }
+
+    /**
+     * Phase 07: agents must not mutate business data. AUTO_EXECUTE_RESTRICTED is reserved for later phases.
+     */
+    static void rejectMutationAutonomy(AgentAutonomyLevel autonomyLevel) {
+        if (autonomyLevel == AgentAutonomyLevel.AUTO_EXECUTE_RESTRICTED) {
+            throw AiAgentExceptions.agentAutonomyNotAllowed(autonomyLevel.name());
+        }
     }
 
     private void validateDeployment(UUID deploymentId, boolean requireActive) {

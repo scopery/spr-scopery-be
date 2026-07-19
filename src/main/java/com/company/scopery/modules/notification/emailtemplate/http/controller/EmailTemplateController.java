@@ -130,8 +130,10 @@ public class EmailTemplateController {
     @Operation(summary = "Publish a version")
     @PatchMapping("/{id}/versions/{versionId}/publish")
     public ResponseEntity<ApiResponse<EmailTemplateVersionResponse>> publishVersion(
-            @PathVariable UUID id, @PathVariable UUID versionId) {
-        var cmd = new PublishEmailTemplateVersionCommand(id, versionId);
+            @PathVariable UUID id,
+            @PathVariable UUID versionId,
+            @RequestParam(defaultValue = "false") boolean allowSensitiveVariables) {
+        var cmd = new PublishEmailTemplateVersionCommand(id, versionId, allowSensitiveVariables);
         return ResponseEntity.ok(ApiResponse.success(publishVersionAction.execute(cmd)));
     }
 

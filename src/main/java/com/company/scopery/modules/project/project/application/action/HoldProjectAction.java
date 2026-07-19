@@ -1,6 +1,5 @@
 package com.company.scopery.modules.project.project.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.project.project.application.command.HoldProjectCommand;
 import com.company.scopery.modules.project.project.application.response.ProjectResponse;
 import com.company.scopery.modules.project.project.domain.enums.ProjectStatus;
@@ -31,7 +30,7 @@ public class HoldProjectAction {
 
     @Transactional
     public ProjectResponse execute(HoldProjectCommand command) {
-        authorizationService.requireProjectPermission(command.id(), IamAuthorities.PROJECT_UPDATE);
+        authorizationService.requireProjectUpdate(command.id());
 
         Project project = projectRepository.findById(command.id())
                 .orElseThrow(() -> ProjectExceptions.projectNotFound(command.id()));

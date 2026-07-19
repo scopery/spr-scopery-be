@@ -18,6 +18,8 @@ public record EmailRuleResponse(
         String recipientConfigJson,
         int priority,
         boolean enabled,
+        boolean mandatory,
+        boolean allowSensitiveVariables,
         String status,
         Instant createdAt,
         Instant updatedAt
@@ -27,7 +29,8 @@ public record EmailRuleResponse(
                 r.id(), r.code(), r.name(), r.description(),
                 r.scope().name(), r.workspaceId(), r.eventDefinitionId(), r.templateId(),
                 r.recipientStrategy().name(), r.recipientConfigJson(),
-                r.priority(), r.enabled(), r.status().name(),
+                r.priority(), r.enabled(), r.mandatory(), r.allowSensitiveVariables(),
+                r.status().name(),
                 r.createdAt(), r.updatedAt());
     }
 }

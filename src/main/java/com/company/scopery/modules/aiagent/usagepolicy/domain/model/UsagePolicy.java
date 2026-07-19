@@ -22,6 +22,14 @@ public class UsagePolicy {
     private BigDecimal maxCostPerPeriod;
     private Integer maxConcurrentRequests;
     private BigDecimal dailyBudget;
+    private String environment;
+    private Integer maxRequestsPerMinute;
+    private Integer maxRequestsPerDay;
+    private Integer maxTokensPerRequest;
+    private Integer maxTokensPerDay;
+    private BigDecimal maxEstimatedCostPerDay;
+    private String allowedEventDefinitionIds;
+    private String blockedEventDefinitionIds;
     private UsagePolicyPeriod period;
     private UsagePolicyAction action;
     private int priority;
@@ -34,7 +42,12 @@ public class UsagePolicy {
                         UsagePolicyTargetType targetType, UUID targetId,
                         Integer maxRequestsPerPeriod, Long maxTokensPerPeriod,
                         BigDecimal maxCostPerPeriod, Integer maxConcurrentRequests,
-                        BigDecimal dailyBudget, UsagePolicyPeriod period,
+                        BigDecimal dailyBudget,
+                        String environment, Integer maxRequestsPerMinute, Integer maxRequestsPerDay,
+                        Integer maxTokensPerRequest, Integer maxTokensPerDay,
+                        BigDecimal maxEstimatedCostPerDay,
+                        String allowedEventDefinitionIds, String blockedEventDefinitionIds,
+                        UsagePolicyPeriod period,
                         UsagePolicyAction action, int priority, String description,
                         UsagePolicyStatus status, Instant createdAt, Instant updatedAt) {
         this.id = id;
@@ -47,6 +60,14 @@ public class UsagePolicy {
         this.maxCostPerPeriod = maxCostPerPeriod;
         this.maxConcurrentRequests = maxConcurrentRequests;
         this.dailyBudget = dailyBudget;
+        this.environment = environment;
+        this.maxRequestsPerMinute = maxRequestsPerMinute;
+        this.maxRequestsPerDay = maxRequestsPerDay;
+        this.maxTokensPerRequest = maxTokensPerRequest;
+        this.maxTokensPerDay = maxTokensPerDay;
+        this.maxEstimatedCostPerDay = maxEstimatedCostPerDay;
+        this.allowedEventDefinitionIds = allowedEventDefinitionIds;
+        this.blockedEventDefinitionIds = blockedEventDefinitionIds;
         this.period = period;
         this.action = action;
         this.priority = priority;
@@ -62,11 +83,31 @@ public class UsagePolicy {
                                      BigDecimal maxCostPerPeriod, Integer maxConcurrentRequests,
                                      BigDecimal dailyBudget, UsagePolicyPeriod period,
                                      UsagePolicyAction action, int priority, String description) {
+        return create(code, name, targetType, targetId,
+                maxRequestsPerPeriod, maxTokensPerPeriod, maxCostPerPeriod, maxConcurrentRequests,
+                dailyBudget, null, null, null, null, null, null, null, null,
+                period, action, priority, description);
+    }
+
+    public static UsagePolicy create(UsagePolicyCode code, String name,
+                                     UsagePolicyTargetType targetType, UUID targetId,
+                                     Integer maxRequestsPerPeriod, Long maxTokensPerPeriod,
+                                     BigDecimal maxCostPerPeriod, Integer maxConcurrentRequests,
+                                     BigDecimal dailyBudget,
+                                     String environment, Integer maxRequestsPerMinute, Integer maxRequestsPerDay,
+                                     Integer maxTokensPerRequest, Integer maxTokensPerDay,
+                                     BigDecimal maxEstimatedCostPerDay,
+                                     String allowedEventDefinitionIds, String blockedEventDefinitionIds,
+                                     UsagePolicyPeriod period,
+                                     UsagePolicyAction action, int priority, String description) {
         validateName(name);
         Instant now = Instant.now();
         return new UsagePolicy(UUID.randomUUID(), code, name, targetType, targetId,
                 maxRequestsPerPeriod, maxTokensPerPeriod, maxCostPerPeriod, maxConcurrentRequests,
-                dailyBudget, period, action, priority, description,
+                dailyBudget, environment, maxRequestsPerMinute, maxRequestsPerDay,
+                maxTokensPerRequest, maxTokensPerDay, maxEstimatedCostPerDay,
+                allowedEventDefinitionIds, blockedEventDefinitionIds,
+                period, action, priority, description,
                 UsagePolicyStatus.INACTIVE, now, now);
     }
 
@@ -77,14 +118,51 @@ public class UsagePolicy {
                                            BigDecimal dailyBudget, UsagePolicyPeriod period,
                                            UsagePolicyAction action, int priority, String description,
                                            UsagePolicyStatus status, Instant createdAt, Instant updatedAt) {
+        return reconstitute(id, code, name, targetType, targetId,
+                maxRequestsPerPeriod, maxTokensPerPeriod, maxCostPerPeriod, maxConcurrentRequests,
+                dailyBudget, null, null, null, null, null, null, null, null,
+                period, action, priority, description, status, createdAt, updatedAt);
+    }
+
+    public static UsagePolicy reconstitute(UUID id, UsagePolicyCode code, String name,
+                                           UsagePolicyTargetType targetType, UUID targetId,
+                                           Integer maxRequestsPerPeriod, Long maxTokensPerPeriod,
+                                           BigDecimal maxCostPerPeriod, Integer maxConcurrentRequests,
+                                           BigDecimal dailyBudget,
+                                           String environment, Integer maxRequestsPerMinute, Integer maxRequestsPerDay,
+                                           Integer maxTokensPerRequest, Integer maxTokensPerDay,
+                                           BigDecimal maxEstimatedCostPerDay,
+                                           String allowedEventDefinitionIds, String blockedEventDefinitionIds,
+                                           UsagePolicyPeriod period,
+                                           UsagePolicyAction action, int priority, String description,
+                                           UsagePolicyStatus status, Instant createdAt, Instant updatedAt) {
         return new UsagePolicy(id, code, name, targetType, targetId,
                 maxRequestsPerPeriod, maxTokensPerPeriod, maxCostPerPeriod, maxConcurrentRequests,
-                dailyBudget, period, action, priority, description, status, createdAt, updatedAt);
+                dailyBudget, environment, maxRequestsPerMinute, maxRequestsPerDay,
+                maxTokensPerRequest, maxTokensPerDay, maxEstimatedCostPerDay,
+                allowedEventDefinitionIds, blockedEventDefinitionIds,
+                period, action, priority, description, status, createdAt, updatedAt);
     }
 
     public void update(String name, Integer maxRequestsPerPeriod, Long maxTokensPerPeriod,
                        BigDecimal maxCostPerPeriod, Integer maxConcurrentRequests,
                        BigDecimal dailyBudget, UsagePolicyPeriod period,
+                       UsagePolicyAction action, int priority, String description) {
+        update(name, maxRequestsPerPeriod, maxTokensPerPeriod, maxCostPerPeriod, maxConcurrentRequests,
+                dailyBudget, this.environment, this.maxRequestsPerMinute, this.maxRequestsPerDay,
+                this.maxTokensPerRequest, this.maxTokensPerDay, this.maxEstimatedCostPerDay,
+                this.allowedEventDefinitionIds, this.blockedEventDefinitionIds,
+                period, action, priority, description);
+    }
+
+    public void update(String name, Integer maxRequestsPerPeriod, Long maxTokensPerPeriod,
+                       BigDecimal maxCostPerPeriod, Integer maxConcurrentRequests,
+                       BigDecimal dailyBudget,
+                       String environment, Integer maxRequestsPerMinute, Integer maxRequestsPerDay,
+                       Integer maxTokensPerRequest, Integer maxTokensPerDay,
+                       BigDecimal maxEstimatedCostPerDay,
+                       String allowedEventDefinitionIds, String blockedEventDefinitionIds,
+                       UsagePolicyPeriod period,
                        UsagePolicyAction action, int priority, String description) {
         validateName(name);
         this.name = name;
@@ -93,6 +171,14 @@ public class UsagePolicy {
         this.maxCostPerPeriod = maxCostPerPeriod;
         this.maxConcurrentRequests = maxConcurrentRequests;
         this.dailyBudget = dailyBudget;
+        this.environment = environment;
+        this.maxRequestsPerMinute = maxRequestsPerMinute;
+        this.maxRequestsPerDay = maxRequestsPerDay;
+        this.maxTokensPerRequest = maxTokensPerRequest;
+        this.maxTokensPerDay = maxTokensPerDay;
+        this.maxEstimatedCostPerDay = maxEstimatedCostPerDay;
+        this.allowedEventDefinitionIds = allowedEventDefinitionIds;
+        this.blockedEventDefinitionIds = blockedEventDefinitionIds;
         this.period = period;
         this.action = action;
         this.priority = priority;
@@ -129,6 +215,14 @@ public class UsagePolicy {
     public BigDecimal maxCostPerPeriod() { return maxCostPerPeriod; }
     public Integer maxConcurrentRequests() { return maxConcurrentRequests; }
     public BigDecimal dailyBudget() { return dailyBudget; }
+    public String environment() { return environment; }
+    public Integer maxRequestsPerMinute() { return maxRequestsPerMinute; }
+    public Integer maxRequestsPerDay() { return maxRequestsPerDay; }
+    public Integer maxTokensPerRequest() { return maxTokensPerRequest; }
+    public Integer maxTokensPerDay() { return maxTokensPerDay; }
+    public BigDecimal maxEstimatedCostPerDay() { return maxEstimatedCostPerDay; }
+    public String allowedEventDefinitionIds() { return allowedEventDefinitionIds; }
+    public String blockedEventDefinitionIds() { return blockedEventDefinitionIds; }
     public UsagePolicyPeriod period() { return period; }
     public UsagePolicyAction action() { return action; }
     public int priority() { return priority; }

@@ -30,4 +30,13 @@ public interface SpringDataIamAccessGrantJpaRepository
 
     List<IamAccessGrantJpaEntity> findAllBySubjectTypeAndSubjectIdAndResourceIdAndStatus(
             String subjectType, UUID subjectId, UUID resourceId, String status);
+
+    @Query("""
+            SELECT COUNT(g) > 0 FROM IamAccessGrantJpaEntity g
+            WHERE g.subjectId IN :subjectIds
+              AND g.scopeType = 'GLOBAL_RESOURCE'
+              AND g.effect = 'ALLOW'
+              AND g.status = 'ACTIVE'
+            """)
+    boolean existsActiveGlobalGrantForSubjects(@Param("subjectIds") List<UUID> subjectIds);
 }

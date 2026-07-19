@@ -18,6 +18,7 @@ import java.util.UUID;
 public class ImmutableAuditEventJpaEntity {
     @Id @Column(name = "id", nullable = false, updatable = false) private UUID id;
     @Column(name = "event_type", nullable = false, updatable = false) private String eventType;
+    @Column(name = "severity", nullable = false, updatable = false) private String severity;
     @Column(name = "actor_id", updatable = false) private UUID actorId;
     @Column(name = "actor_type", nullable = false, updatable = false) private String actorType;
     @Column(name = "resource_type", updatable = false) private String resourceType;

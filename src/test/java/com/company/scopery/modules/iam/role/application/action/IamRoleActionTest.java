@@ -65,7 +65,7 @@ class IamRoleActionTest {
         activeSystemRole = new IamRole(UUID.randomUUID(), IamRoleCode.of("ADMIN"), "Administrator", "Description",
                 IamRoleStatus.ACTIVE, IamRoleScope.SYSTEM, IamRoleSource.SYSTEM_BUILT_IN,
                 null, null, null, null, now, now);
-        currentUser = new IamUser(UUID.randomUUID(), Username.of("admin"),
+        currentUser = IamUser.of(UUID.randomUUID(), Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
     }

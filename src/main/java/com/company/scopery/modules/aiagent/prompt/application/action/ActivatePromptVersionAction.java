@@ -12,6 +12,8 @@ import com.company.scopery.modules.aiagent.shared.activity.AiAgentActivityLogger
 import com.company.scopery.modules.aiagent.shared.constant.AiAgentActivityActions;
 import com.company.scopery.modules.aiagent.shared.constant.AiAgentEntityTypes;
 import com.company.scopery.modules.aiagent.shared.error.AiAgentExceptions;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +50,7 @@ public class ActivatePromptVersionAction {
 
         versionRepository.archiveOtherActiveVersions(version.templateId(), version.id());
 
-        version.activate();
+        version.activate(currentActor());
         PromptVersion saved = versionRepository.save(version);
 
         activityLogger.logSuccess(AiAgentEntityTypes.PROMPT_VERSION, saved.id(),
@@ -56,5 +58,14 @@ public class ActivatePromptVersionAction {
                 "Prompt version activated: " + template.code().value() + " v" + saved.versionNumber());
 
         return PromptVersionDetailResponse.from(saved, template.code().value());
+    }
+
+    private static String currentActor() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getName() != null && !auth.getName().isBlank()
+                && !"anonymousUser".equals(auth.getName())) {
+            return auth.getName();
+        }
+        return "SYSTEM";
     }
 }

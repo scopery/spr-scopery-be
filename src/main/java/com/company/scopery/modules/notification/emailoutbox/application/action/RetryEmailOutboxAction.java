@@ -4,10 +4,12 @@ import com.company.scopery.modules.iam.authorization.application.service.IamSyst
 import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.notification.emailoutbox.application.jobs.EmailOutboxProcessor;
 import com.company.scopery.modules.notification.emailoutbox.application.response.EmailOutboxResponse;
+import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailOutboxStatus;
 import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutbox;
 import com.company.scopery.modules.notification.emailoutbox.domain.model.EmailOutboxRepository;
-import com.company.scopery.modules.notification.emailoutbox.domain.enums.EmailOutboxStatus;
-import com.company.scopery.modules.notification.shared.NotificationProperties;
+import com.company.scopery.modules.notification.shared.NotificationActivityActions;
+import com.company.scopery.modules.notification.shared.NotificationActivityLogger;
+import com.company.scopery.modules.notification.shared.NotificationEntityTypes;
 import com.company.scopery.modules.notification.shared.error.NotificationExceptions;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,17 +21,17 @@ public class RetryEmailOutboxAction {
 
     private final EmailOutboxRepository outboxRepository;
     private final EmailOutboxProcessor outboxProcessor;
-    private final NotificationProperties properties;
     private final IamSystemAuthorizationService systemAuthorizationService;
+    private final NotificationActivityLogger activityLogger;
 
     public RetryEmailOutboxAction(EmailOutboxRepository outboxRepository,
                                    EmailOutboxProcessor outboxProcessor,
-                                   NotificationProperties properties,
-                                   IamSystemAuthorizationService systemAuthorizationService) {
+                                   IamSystemAuthorizationService systemAuthorizationService,
+                                   NotificationActivityLogger activityLogger) {
         this.outboxRepository = outboxRepository;
         this.outboxProcessor = outboxProcessor;
-        this.properties = properties;
         this.systemAuthorizationService = systemAuthorizationService;
+        this.activityLogger = activityLogger;
     }
 
     @Transactional
@@ -37,17 +39,17 @@ public class RetryEmailOutboxAction {
         systemAuthorizationService.requireSystemRight(
                 IamAuthorities.SYSTEM_NOTIFICATION_RETRY_DELIVERY.legacyRightCode());
         EmailOutbox outbox = findOrThrow(id);
-        int maxRetry = properties.getOutbox().getMaxRetry();
 
-        if (outbox.status() != EmailOutboxStatus.FAILED) {
+        if (outbox.status() != EmailOutboxStatus.FAILED
+                && outbox.status() != EmailOutboxStatus.DEAD_LETTER) {
             throw NotificationExceptions.emailOutboxNotRetryable(id, outbox.status().name());
         }
-        if (outbox.retryCount() >= maxRetry) {
-            throw NotificationExceptions.emailOutboxMaxRetryReached(id, maxRetry);
-        }
 
-        outbox.scheduleRetry(0);
+        outbox.resetForManualRetry();
         outbox = outboxRepository.save(outbox);
+        activityLogger.logSuccess(NotificationEntityTypes.EMAIL_OUTBOX, outbox.id(),
+                NotificationActivityActions.RETRY_EMAIL,
+                "Email outbox manually retried");
         outboxProcessor.processOne(outbox);
         return EmailOutboxResponse.from(findOrThrow(id));
     }

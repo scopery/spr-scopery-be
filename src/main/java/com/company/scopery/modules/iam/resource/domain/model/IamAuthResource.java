@@ -27,10 +27,9 @@ public record IamAuthResource(
 
     public static IamAuthResource create(IamResourceCode code, IamResourceType resourceType,
                                           String name, String description) {
-        Instant now = Instant.now();
         return new IamAuthResource(UUID.randomUUID(), code, resourceType, name, description,
                 null, null, null, null, null, null,
-                IamResourceStatus.ACTIVE, 0, now, now);
+                IamResourceStatus.ACTIVE, 0, null, null);
     }
 
     public static IamAuthResource createWithOwnership(IamResourceCode code, IamResourceType resourceType,
@@ -47,10 +46,9 @@ public record IamAuthResource(
                                                        UUID refId, UUID ownerUserId, UUID organizationId,
                                                        UUID workspaceId, IamResourceVisibility visibility,
                                                        UUID parentResourceId) {
-        Instant now = Instant.now();
         return new IamAuthResource(UUID.randomUUID(), code, resourceType, name, description,
                 refId, ownerUserId, organizationId, workspaceId, visibility, parentResourceId,
-                IamResourceStatus.ACTIVE, 0, now, now);
+                IamResourceStatus.ACTIVE, 0, null, null);
     }
 
     public IamAuthResource update(String name, String description) {

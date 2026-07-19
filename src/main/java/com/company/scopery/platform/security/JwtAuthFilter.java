@@ -37,8 +37,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
         if (token != null && jwtService.isTokenValid(token)) {
             String username = jwtService.extractUsername(token);
-            var auth = new UsernamePasswordAuthenticationToken(
-                    username, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            boolean portal = jwtService.isPortalToken(token);
+            var authority = new SimpleGrantedAuthority(portal ? "ROLE_PORTAL_USER" : "ROLE_USER");
+            var auth = new UsernamePasswordAuthenticationToken(username, null, List.of(authority));
+            auth.setDetails(MapTokenDetails.of(jwtService.extractUserId(token), jwtService.extractPrincipalType(token)));
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
@@ -58,5 +60,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     .orElse(null);
         }
         return null;
+    }
+
+    public record MapTokenDetails(java.util.UUID subjectId, String principalType) {
+        public static MapTokenDetails of(java.util.UUID subjectId, String principalType) {
+            return new MapTokenDetails(subjectId, principalType);
+        }
     }
 }

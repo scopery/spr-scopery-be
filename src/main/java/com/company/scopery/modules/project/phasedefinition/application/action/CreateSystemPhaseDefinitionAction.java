@@ -11,6 +11,7 @@ import com.company.scopery.modules.project.shared.activity.ProjectActivityLogger
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +21,16 @@ public class CreateSystemPhaseDefinitionAction {
     private final PhaseDefinitionRepository repository;
     private final IamSystemAuthorizationService systemAuthorizationService;
     private final ProjectActivityLogger activityLogger;
+    private final ProjectPlatformPublisher platformPublisher;
 
     public CreateSystemPhaseDefinitionAction(PhaseDefinitionRepository repository,
                                               IamSystemAuthorizationService systemAuthorizationService,
-                                              ProjectActivityLogger activityLogger) {
+                                              ProjectActivityLogger activityLogger,
+                                              ProjectPlatformPublisher platformPublisher) {
         this.repository = repository;
         this.systemAuthorizationService = systemAuthorizationService;
         this.activityLogger = activityLogger;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
@@ -47,6 +51,8 @@ public class CreateSystemPhaseDefinitionAction {
         );
 
         PhaseDefinition saved = repository.save(pd);
+
+        platformPublisher.enqueuePhaseDefinition(saved, "PHASE_DEFINITION_CREATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PHASE_DEFINITION,

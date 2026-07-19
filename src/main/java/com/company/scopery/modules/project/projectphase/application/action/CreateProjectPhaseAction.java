@@ -1,8 +1,5 @@
 package com.company.scopery.modules.project.projectphase.application.action;
 
-import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
-import com.company.scopery.modules.project.project.domain.enums.ProjectStatus;
-import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
 import com.company.scopery.modules.project.projectphase.application.command.CreateProjectPhaseCommand;
 import com.company.scopery.modules.project.projectphase.application.response.ProjectPhaseResponse;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhase;
@@ -12,37 +9,36 @@ import com.company.scopery.modules.project.shared.authorization.ProjectWorkspace
 import com.company.scopery.modules.project.shared.constant.ProjectActivityActions;
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
+import com.company.scopery.modules.project.shared.support.ProjectMutationGuard;
+import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class CreateProjectPhaseAction {
 
-    private final ProjectRepository projectRepository;
     private final ProjectPhaseRepository projectPhaseRepository;
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
+    private final ProjectMutationGuard mutationGuard;
+    private final ProjectPlatformPublisher platformPublisher;
 
-    public CreateProjectPhaseAction(ProjectRepository projectRepository,
-                                    ProjectPhaseRepository projectPhaseRepository,
+    public CreateProjectPhaseAction(ProjectPhaseRepository projectPhaseRepository,
                                     ProjectActivityLogger activityLogger,
-                                    ProjectWorkspaceAuthorizationService authorizationService) {
-        this.projectRepository = projectRepository;
+                                    ProjectWorkspaceAuthorizationService authorizationService,
+                                    ProjectMutationGuard mutationGuard,
+                                    ProjectPlatformPublisher platformPublisher) {
         this.projectPhaseRepository = projectPhaseRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
+        this.mutationGuard = mutationGuard;
+        this.platformPublisher = platformPublisher;
     }
 
     @Transactional
     public ProjectPhaseResponse execute(CreateProjectPhaseCommand cmd) {
-        authorizationService.requireProjectPermission(cmd.projectId(), IamAuthorities.PROJECT_PHASE_CREATE);
-
-        var project = projectRepository.findById(cmd.projectId())
-                .orElseThrow(() -> ProjectExceptions.projectNotFound(cmd.projectId()));
-
-        if (project.status() != ProjectStatus.DRAFT && project.status() != ProjectStatus.ACTIVE) {
-            throw ProjectExceptions.projectNotActiveOrDraft(cmd.projectId());
-        }
+        authorizationService.requireProjectPhaseCreate(cmd.projectId());
+        mutationGuard.requireMutableProject(cmd.projectId());
 
         if (cmd.plannedStartDate() != null && cmd.plannedEndDate() != null
                 && cmd.plannedEndDate().isBefore(cmd.plannedStartDate())) {
@@ -68,6 +64,8 @@ public class CreateProjectPhaseAction {
         );
 
         ProjectPhase saved = projectPhaseRepository.save(phase);
+
+        platformPublisher.enqueuePhase(saved, "PROJECT_PHASE_CREATED");
 
         activityLogger.logSuccess(
                 ProjectEntityTypes.PROJECT_PHASE,

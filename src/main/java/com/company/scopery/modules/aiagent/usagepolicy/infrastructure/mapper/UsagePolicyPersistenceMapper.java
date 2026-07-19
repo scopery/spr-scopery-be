@@ -24,6 +24,14 @@ public class UsagePolicyPersistenceMapper {
         entity.setMaxCostPerPeriod(policy.maxCostPerPeriod());
         entity.setMaxConcurrentRequests(policy.maxConcurrentRequests());
         entity.setDailyBudget(policy.dailyBudget());
+        entity.setEnvironment(policy.environment());
+        entity.setMaxRequestsPerMinute(policy.maxRequestsPerMinute());
+        entity.setMaxRequestsPerDay(policy.maxRequestsPerDay());
+        entity.setMaxTokensPerRequest(policy.maxTokensPerRequest());
+        entity.setMaxTokensPerDay(policy.maxTokensPerDay());
+        entity.setMaxEstimatedCostPerDay(policy.maxEstimatedCostPerDay());
+        entity.setAllowedEventDefinitionIds(policy.allowedEventDefinitionIds());
+        entity.setBlockedEventDefinitionIds(policy.blockedEventDefinitionIds());
         entity.setPeriod(policy.period() != null ? policy.period().name() : null);
         entity.setAction(policy.action().name());
         entity.setPriority(policy.priority());
@@ -47,6 +55,14 @@ public class UsagePolicyPersistenceMapper {
                 entity.getMaxCostPerPeriod(),
                 entity.getMaxConcurrentRequests(),
                 entity.getDailyBudget(),
+                entity.getEnvironment(),
+                entity.getMaxRequestsPerMinute(),
+                entity.getMaxRequestsPerDay(),
+                entity.getMaxTokensPerRequest(),
+                entity.getMaxTokensPerDay(),
+                entity.getMaxEstimatedCostPerDay(),
+                entity.getAllowedEventDefinitionIds(),
+                entity.getBlockedEventDefinitionIds(),
                 entity.getPeriod() != null ? UsagePolicyPeriod.valueOf(entity.getPeriod()) : null,
                 UsagePolicyAction.valueOf(entity.getAction()),
                 entity.getPriority(),

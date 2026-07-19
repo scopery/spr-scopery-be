@@ -158,6 +158,41 @@ class AgentActionTest {
         verify(agentRepository, never()).save(any());
     }
 
+    @Test
+    void createAgent_mutationAutonomyLevel_rejectedInPhase07() {
+        CreateAgentCommand command = new CreateAgentCommand(
+                "Mutation Agent", "MUTATION_AGENT", "GENERATION",
+                null, null, null, "AUTO_EXECUTE_RESTRICTED", null, null, null);
+
+        when(agentRepository.existsByCode(any())).thenReturn(false);
+
+        assertThatThrownBy(() -> createAction.execute(command))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> {
+                    AppException ae = (AppException) e;
+                    assertThat(ae.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                    assertThat(ae.getErrorCode())
+                            .isEqualTo(AiAgentErrorCatalog.AI_AGENT_AUTONOMY_NOT_ALLOWED.code());
+                });
+
+        verify(agentRepository, never()).save(any());
+    }
+
+    @Test
+    void createAgent_defaultsToSuggestOnlyAutonomy() {
+        CreateAgentCommand command = new CreateAgentCommand(
+                "Safe Agent", "SAFE_AGENT", "SUMMARIZATION",
+                null, null, null);
+
+        when(agentRepository.existsByCode(any())).thenReturn(false);
+        when(agentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AgentResponse response = createAction.execute(command);
+
+        assertThat(response.autonomyLevel()).isEqualTo("SUGGEST_ONLY");
+        assertThat(response.scope()).isEqualTo("SYSTEM");
+    }
+
     // --- helpers ---
 
     private ModelDeployment activeDeployment(UUID id) {

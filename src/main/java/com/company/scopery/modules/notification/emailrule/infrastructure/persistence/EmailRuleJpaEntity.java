@@ -57,6 +57,12 @@ public class EmailRuleJpaEntity extends AuditableJpaEntity {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
+    @Column(name = "mandatory", nullable = false)
+    private boolean mandatory;
+
+    @Column(name = "allow_sensitive_variables", nullable = false)
+    private boolean allowSensitiveVariables;
+
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 

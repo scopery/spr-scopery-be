@@ -33,7 +33,7 @@ public class JpaOrgInvitationRepository implements OrgInvitationRepository {
     }
 
     @Override
-    public Optional<OrgInvitation> findByToken(String token) {
-        return springDataRepository.findByToken(token).map(mapper::toDomain);
+    public Optional<OrgInvitation> findByTokenHash(String tokenHash) {
+        return springDataRepository.findByTokenHash(tokenHash).map(mapper::toDomain);
     }
 }

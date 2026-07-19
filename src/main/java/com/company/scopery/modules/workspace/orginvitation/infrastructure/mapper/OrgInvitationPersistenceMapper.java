@@ -1,9 +1,9 @@
 package com.company.scopery.modules.workspace.orginvitation.infrastructure.mapper;
 
-import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipType;
 import com.company.scopery.modules.workspace.orginvitation.domain.enums.OrgInvitationStatus;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitation;
 import com.company.scopery.modules.workspace.orginvitation.infrastructure.persistence.OrgInvitationJpaEntity;
+import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipType;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,7 +18,8 @@ public class OrgInvitationPersistenceMapper {
                 OrgMembershipType.valueOf(entity.getMembershipType()),
                 OrgInvitationStatus.valueOf(entity.getStatus()),
                 entity.getInvitedBy(),
-                entity.getToken(),
+                entity.getTokenHash(),
+                entity.getTokenHint(),
                 entity.getExpiresAt(),
                 entity.getRespondedAt(),
                 entity.getCreatedAt(),
@@ -34,7 +35,8 @@ public class OrgInvitationPersistenceMapper {
         entity.setMembershipType(domain.membershipType().name());
         entity.setStatus(domain.status().name());
         entity.setInvitedBy(domain.invitedBy());
-        entity.setToken(domain.token());
+        entity.setTokenHash(domain.tokenHash());
+        entity.setTokenHint(domain.tokenHint());
         entity.setExpiresAt(domain.expiresAt());
         entity.setRespondedAt(domain.respondedAt());
         entity.setCreatedAt(domain.createdAt());

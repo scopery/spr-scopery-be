@@ -37,8 +37,10 @@ public class OrgMemberPersistenceMapper {
         entity.setJoinedAt(domain.joinedAt());
         entity.setSuspendedAt(domain.suspendedAt());
         entity.setRemovedAt(domain.removedAt());
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt());
+        if (domain.createdAt() != null) {
+            entity.setCreatedAt(domain.createdAt());
+            entity.setVersion(domain.version());
+        }
         return entity;
     }
 }

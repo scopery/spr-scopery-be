@@ -1,6 +1,8 @@
 package com.company.scopery.modules.aiagent.agent.infrastructure.mapper;
 
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentAutonomyLevel;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentOutputFormat;
+import com.company.scopery.modules.aiagent.agent.domain.enums.AgentScope;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentStatus;
 import com.company.scopery.modules.aiagent.agent.domain.enums.AgentType;
 import com.company.scopery.modules.aiagent.agent.domain.model.Agent;
@@ -20,6 +22,11 @@ public class AgentPersistenceMapper {
         entity.setDescription(agent.description());
         entity.setDefaultModelDeploymentId(agent.defaultModelDeploymentId());
         entity.setOutputFormat(agent.outputFormat() != null ? agent.outputFormat().name() : null);
+        entity.setAutonomyLevel(agent.autonomyLevel() != null
+                ? agent.autonomyLevel().name() : AgentAutonomyLevel.SUGGEST_ONLY.name());
+        entity.setScope(agent.scope() != null ? agent.scope().name() : AgentScope.SYSTEM.name());
+        entity.setOrganizationId(agent.organizationId());
+        entity.setWorkspaceId(agent.workspaceId());
         entity.setStatus(agent.status().name());
         if (agent.createdAt() != null) {
             entity.setCreatedAt(agent.createdAt());
@@ -36,6 +43,12 @@ public class AgentPersistenceMapper {
                 entity.getDescription(),
                 entity.getDefaultModelDeploymentId(),
                 entity.getOutputFormat() != null ? AgentOutputFormat.valueOf(entity.getOutputFormat()) : null,
+                entity.getAutonomyLevel() != null
+                        ? AgentAutonomyLevel.valueOf(entity.getAutonomyLevel())
+                        : AgentAutonomyLevel.SUGGEST_ONLY,
+                entity.getScope() != null ? AgentScope.valueOf(entity.getScope()) : AgentScope.SYSTEM,
+                entity.getOrganizationId(),
+                entity.getWorkspaceId(),
                 AgentStatus.valueOf(entity.getStatus()),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()

@@ -81,7 +81,7 @@ class WorkspaceOnboardingActionTest {
 
         Instant now = Instant.now();
         currentUserId = UUID.randomUUID();
-        IamUser currentUser = new IamUser(currentUserId, Username.of("admin"),
+        IamUser currentUser = IamUser.of(currentUserId, Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
     }

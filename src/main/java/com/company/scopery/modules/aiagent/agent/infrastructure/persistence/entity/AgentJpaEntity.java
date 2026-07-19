@@ -48,6 +48,18 @@ public class AgentJpaEntity extends AuditableJpaEntity {
     @Column(name = "output_format", length = 50)
     private String outputFormat;
 
+    @Column(name = "autonomy_level", nullable = false, length = 100)
+    private String autonomyLevel;
+
+    @Column(name = "scope", nullable = false, length = 50)
+    private String scope;
+
+    @Column(name = "organization_id")
+    private UUID organizationId;
+
+    @Column(name = "workspace_id")
+    private UUID workspaceId;
+
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 }

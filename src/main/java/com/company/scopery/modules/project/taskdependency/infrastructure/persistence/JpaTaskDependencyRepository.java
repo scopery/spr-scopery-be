@@ -56,11 +56,25 @@ public class JpaTaskDependencyRepository implements TaskDependencyRepository {
     }
 
     @Override
-    public List<TaskDependency> findActiveDependenciesFrom(UUID taskId) {
-        return springDataRepository.findActiveDependenciesFrom(taskId)
+    public List<TaskDependency> findActiveDependenciesFrom(UUID successorTaskId) {
+        return springDataRepository.findActiveDependenciesFrom(successorTaskId)
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<TaskDependency> findActiveDependenciesOutgoing(UUID predecessorTaskId) {
+        return springDataRepository.findActiveDependenciesOutgoing(predecessorTaskId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<TaskDependency> findActiveByProjectId(UUID projectId) {
+        return springDataRepository.findAllByProjectIdAndStatus(projectId, TaskDependencyStatus.ACTIVE.name())
+                .stream().map(mapper::toDomain).toList();
     }
 
     @Override

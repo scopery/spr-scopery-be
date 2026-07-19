@@ -19,7 +19,13 @@ public interface TaskDependencyRepository {
 
     boolean existsByPredecessorAndSuccessorAndType(UUID predecessorId, UUID successorId, TaskDependencyType type);
 
-    List<TaskDependency> findActiveDependenciesFrom(UUID taskId);
+    /** Incoming edges: dependencies where this task is the successor. */
+    List<TaskDependency> findActiveDependenciesFrom(UUID successorTaskId);
+
+    /** Outgoing edges: dependencies where this task is the predecessor. */
+    List<TaskDependency> findActiveDependenciesOutgoing(UUID predecessorTaskId);
+
+    List<TaskDependency> findActiveByProjectId(UUID projectId);
 
     PageResult<TaskDependency> search(UUID projectId, UUID taskId, TaskDependencyStatus status, PageQuery pageQuery);
 }

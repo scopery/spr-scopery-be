@@ -60,8 +60,7 @@ public class IamAccessGrantPersistenceMapper {
         entity.setStatus(domain.status().name());
         entity.setGrantedBy(domain.grantedBy());
         entity.setGrantedAt(domain.grantedAt());
-        entity.setVersion(domain.version());
-        entity.setCreatedAt(domain.createdAt());
+        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); entity.setVersion(domain.version()); }
         return entity;
     }
 }

@@ -16,6 +16,9 @@ import java.util.UUID;
 public class JwtService {
 
     private static final String CLAIM_USERNAME = "username";
+    public static final String CLAIM_PRINCIPAL_TYPE = "principalType";
+    public static final String PRINCIPAL_INTERNAL = "INTERNAL";
+    public static final String PRINCIPAL_PORTAL = "PORTAL";
 
     private final SecretKey signingKey;
     private final long expirationMs;
@@ -26,10 +29,18 @@ public class JwtService {
     }
 
     public String generateToken(UUID userId, String username) {
+        return generateToken(userId, username, PRINCIPAL_INTERNAL);
+    }
+
+    public String generatePortalToken(UUID portalAccountId, String email) {
+        return generateToken(portalAccountId, email, PRINCIPAL_PORTAL);
+    }
+
+    public String generateToken(UUID subjectId, String username, String principalType) {
         Date now = new Date();
         return Jwts.builder()
-                .subject(userId.toString())
-                .claims(Map.of(CLAIM_USERNAME, username))
+                .subject(subjectId.toString())
+                .claims(Map.of(CLAIM_USERNAME, username, CLAIM_PRINCIPAL_TYPE, principalType))
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(signingKey)
@@ -59,6 +70,15 @@ public class JwtService {
 
     public String extractUsername(String token) {
         return parseToken(token).get(CLAIM_USERNAME, String.class);
+    }
+
+    public String extractPrincipalType(String token) {
+        String type = parseToken(token).get(CLAIM_PRINCIPAL_TYPE, String.class);
+        return type == null ? PRINCIPAL_INTERNAL : type;
+    }
+
+    public boolean isPortalToken(String token) {
+        return PRINCIPAL_PORTAL.equals(extractPrincipalType(token));
     }
 
     public long getExpirationMs() {
