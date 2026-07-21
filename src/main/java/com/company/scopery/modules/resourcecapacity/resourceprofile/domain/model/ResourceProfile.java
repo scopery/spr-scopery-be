@@ -8,10 +8,10 @@ public record ResourceProfile(UUID id, UUID workspaceId, UUID linkedUserId, UUID
         ResourceProfileStatus status, Instant archivedAt, UUID archivedBy, int version, Instant createdAt, Instant updatedAt) {
     public static ResourceProfile create(UUID workspaceId, ResourceType type, String displayName, UUID linkedUserId,
                                          UUID linkedMemberId, UUID primaryRoleId) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new ResourceProfile(UUID.randomUUID(), workspaceId, linkedUserId, linkedMemberId, null, null,
                 type, displayName, primaryRoleId, null, null, null, ResourceProfileStatus.ACTIVE,
-                null, null, 0, now, now);
+                null, null, 0, null, null);
     }
     public static ResourceProfile placeholder(UUID workspaceId, String displayName, UUID primaryRoleId) {
         return create(workspaceId, ResourceType.PLACEHOLDER_ROLE, displayName, null, null, primaryRoleId);

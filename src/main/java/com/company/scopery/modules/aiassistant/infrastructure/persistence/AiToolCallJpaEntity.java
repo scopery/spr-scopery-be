@@ -2,6 +2,8 @@ package com.company.scopery.modules.aiassistant.infrastructure.persistence;
 
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantTableNames;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -55,13 +57,16 @@ public class AiToolCallJpaEntity {
     @Column(name = "request_hash", nullable = false, length = 64)
     private String requestHash;
 
-    @Column(name = "masked_arguments", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "masked_arguments", columnDefinition = "jsonb")
     private String maskedArguments;
 
-    @Column(name = "server_resolved_scope", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "server_resolved_scope", columnDefinition = "jsonb")
     private String serverResolvedScope;
 
-    @Column(name = "result_summary", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "result_summary", columnDefinition = "jsonb")
     private String resultSummary;
 
     @Column(name = "retrieval_trace_id")

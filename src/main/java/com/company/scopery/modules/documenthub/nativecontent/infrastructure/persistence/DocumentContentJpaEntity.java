@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -34,6 +36,7 @@ public class DocumentContentJpaEntity extends AuditableJpaEntity {
     @Column(name = "revision_no", nullable = false)
     private long revisionNo;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "ast", nullable = false, columnDefinition = "jsonb")
     private String ast;
 

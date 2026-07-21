@@ -16,8 +16,7 @@ public class GeneratedDocumentJobPersistenceMapper {
         e.setTemplateVersionId(d.templateVersionId()); e.setJobType(d.jobType()); e.setStatus(d.status().name());
         e.setSourceType(d.sourceType()); e.setSourceId(d.sourceId()); e.setOutputDocumentId(d.outputDocumentId());
         e.setErrorMessage(d.errorMessage()); e.setRequestedBy(d.requestedBy()); e.setStartedAt(d.startedAt()); e.setCompletedAt(d.completedAt());
-        e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

@@ -18,6 +18,8 @@ import com.company.scopery.modules.aiassistant.shared.error.AiAssistantException
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -110,7 +112,12 @@ public class SendMessageAction {
                 cmd.modelProvider(),
                 cmd.modelName()
         );
-        executor.execute(() -> orchestrator.executeTurn(turnReq));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                executor.execute(() -> orchestrator.executeTurn(turnReq));
+            }
+        });
 
         // 9. Return SSE start response
         String streamUrl = AiAssistantApiPaths.MESSAGES + "/" + savedAssistant.id() + "/stream";

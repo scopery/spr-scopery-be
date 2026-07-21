@@ -2,6 +2,8 @@ package com.company.scopery.modules.aiassistant.infrastructure.persistence;
 
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantTableNames;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -50,7 +52,8 @@ public class AiMessageCitationJpaEntity {
     @Column(name = "title", length = 500)
     private String title;
 
-    @Column(name = "heading_path", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "heading_path", columnDefinition = "jsonb")
     private String headingPath;
 
     @Column(name = "quoted_fragment", columnDefinition = "TEXT")

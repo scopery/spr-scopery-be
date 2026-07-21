@@ -2,6 +2,8 @@ package com.company.scopery.modules.integrationhub.mapping.infrastructure.persis
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.integrationhub.shared.constant.IntegrationTableNames;
 import jakarta.persistence.*; import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant; import java.util.UUID;
 @Entity @Table(name = IntegrationTableNames.MAPPING_PROFILE) @Getter @Setter @NoArgsConstructor
 public class DataMappingProfileJpaEntity extends AuditableJpaEntity {
@@ -12,7 +14,9 @@ public class DataMappingProfileJpaEntity extends AuditableJpaEntity {
     @Column(nullable=false) private String name;
     @Column(name="target_object_type", nullable=false) private String targetObjectType;
     @Column(name="source_format", nullable=false) private String sourceFormat;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="mapping_json", nullable=false, columnDefinition="jsonb") private String mappingJson;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="validation_rules_json", columnDefinition="jsonb") private String validationRulesJson;
     @Column(nullable=false) private String status;
     @Column(name="archived_at") private Instant archivedAt;

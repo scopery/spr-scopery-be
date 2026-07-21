@@ -2,6 +2,8 @@ package com.company.scopery.modules.aiassistant.infrastructure.persistence;
 
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantTableNames;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -79,19 +81,24 @@ public class AiContextSnapshotJpaEntity {
     @Column(name = "client_context_version", nullable = false)
     private int clientContextVersion;
 
-    @Column(name = "client_visible_field_codes", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "client_visible_field_codes", columnDefinition = "jsonb")
     private String clientVisibleFieldCodes;
 
-    @Column(name = "client_reported_action_codes", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "client_reported_action_codes", columnDefinition = "jsonb")
     private String clientReportedActionCodes;
 
-    @Column(name = "server_visible_field_codes", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "server_visible_field_codes", columnDefinition = "jsonb")
     private String serverVisibleFieldCodes;
 
-    @Column(name = "available_action_codes", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "available_action_codes", columnDefinition = "jsonb")
     private String availableActionCodes;
 
-    @Column(name = "disabled_action_reasons", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "disabled_action_reasons", columnDefinition = "jsonb")
     private String disabledActionReasons;
 
     @Column(name = "permission_signature", length = 500)
@@ -103,7 +110,8 @@ public class AiContextSnapshotJpaEntity {
     @Column(name = "context_hash", nullable = false, length = 64)
     private String contextHash;
 
-    @Column(name = "server_context", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "server_context", columnDefinition = "jsonb")
     private String serverContext;
 
     @Column(name = "context_status", nullable = false, length = 50)

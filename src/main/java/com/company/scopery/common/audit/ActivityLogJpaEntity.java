@@ -58,8 +58,8 @@ public class ActivityLogJpaEntity {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "metadata", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
     private String metadata;
 
     @Column(name = "created_at", nullable = false, updatable = false)

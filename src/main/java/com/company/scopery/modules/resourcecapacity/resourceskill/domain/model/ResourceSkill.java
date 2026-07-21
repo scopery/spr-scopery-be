@@ -5,9 +5,9 @@ public record ResourceSkill(UUID id, UUID workspaceId, String skillCode, String 
         UUID defaultRateCardId, ResourceSkillStatus status, Instant archivedAt, UUID archivedBy,
         int version, Instant createdAt, Instant updatedAt) {
     public static ResourceSkill create(UUID workspaceId, String code, String name, String description, UUID rateCardId) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new ResourceSkill(UUID.randomUUID(), workspaceId, code, name, description, rateCardId,
-                ResourceSkillStatus.ACTIVE, null, null, 0, now, now);
+                ResourceSkillStatus.ACTIVE, null, null, 0, null, null);
     }
     public ResourceSkill archive(UUID actor) {
         return new ResourceSkill(id, workspaceId, skillCode, name, description, defaultRateCardId,

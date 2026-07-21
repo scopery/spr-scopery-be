@@ -30,4 +30,13 @@ public class ProviderSecretResolver {
         return secretEncryptor.decrypt(
                 new EncryptedSecret(secret.encryptedValue(), secret.iv(), secret.keyVersion()));
     }
+
+    public String resolveApiKeyByProviderCode(String providerCode) {
+        ProviderSecret secret = providerSecretRepository
+                .findActiveByProviderCodeAndSecretType(providerCode, ProviderSecretType.API_KEY)
+                .orElseThrow(() -> AiAgentExceptions.providerSecretNotFound(null));
+
+        return secretEncryptor.decrypt(
+                new EncryptedSecret(secret.encryptedValue(), secret.iv(), secret.keyVersion()));
+    }
 }

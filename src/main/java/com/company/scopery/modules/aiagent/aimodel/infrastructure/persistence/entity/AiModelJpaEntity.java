@@ -3,6 +3,8 @@ package com.company.scopery.modules.aiagent.aimodel.infrastructure.persistence.e
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.aiagent.shared.constant.AiAgentTableNames;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -72,7 +74,8 @@ public class AiModelJpaEntity extends AuditableJpaEntity {
     @Column(name = "model_family", length = 100)
     private String modelFamily;
 
-    @Column(name = "capabilities_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "capabilities_json", columnDefinition = "jsonb")
     private String capabilitiesJson;
 
     @Column(name = "status", nullable = false, length = 50)

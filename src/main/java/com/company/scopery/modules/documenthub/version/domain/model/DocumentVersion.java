@@ -14,21 +14,19 @@ public record DocumentVersion(
 
     public static DocumentVersion create(UUID documentId, UUID projectId, UUID workspaceId, int versionNumber, String storageKey,
                                          String fileName, String contentType, Long fileSizeBytes, String checksum, String changeNotes, UUID uploadedBy) {
-        Instant now = Instant.now();
         return new DocumentVersion(UUID.randomUUID(), documentId, projectId, workspaceId, versionNumber, storageKey, fileName, contentType,
-                fileSizeBytes, checksum, DocumentVersionStatus.CURRENT, changeNotes, uploadedBy, now,
+                fileSizeBytes, checksum, DocumentVersionStatus.CURRENT, changeNotes, uploadedBy, Instant.now(),
                 null, "NOT_APPLICABLE", null, null, null,
-                0, now, now);
+                0, null, null);
     }
 
     public static DocumentVersion createForPresignedUpload(UUID documentId, UUID projectId, UUID workspaceId, int versionNumber,
                                                            String storageKey, String fileName, String contentType,
                                                            String storageProvider, String changeNotes, UUID uploadedBy) {
-        Instant now = Instant.now();
         return new DocumentVersion(UUID.randomUUID(), documentId, projectId, workspaceId, versionNumber, storageKey, fileName, contentType,
                 null, null, DocumentVersionStatus.PENDING,
-                changeNotes, uploadedBy, now,
+                changeNotes, uploadedBy, Instant.now(),
                 storageProvider, "PENDING_UPLOAD", null, null, null,
-                0, now, now);
+                0, null, null);
     }
 }

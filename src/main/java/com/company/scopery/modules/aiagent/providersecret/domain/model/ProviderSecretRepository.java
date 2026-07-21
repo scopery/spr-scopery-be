@@ -16,6 +16,8 @@ public interface ProviderSecretRepository {
 
     Optional<ProviderSecret> findActiveByProviderIdAndSecretType(UUID providerId, ProviderSecretType secretType);
 
+    Optional<ProviderSecret> findActiveByProviderCodeAndSecretType(String providerCode, ProviderSecretType secretType);
+
     PageResult<ProviderSecret> findAll(UUID providerId, ProviderSecretType secretType,
                                        ProviderSecretStatus status, PageQuery pageQuery);
 }

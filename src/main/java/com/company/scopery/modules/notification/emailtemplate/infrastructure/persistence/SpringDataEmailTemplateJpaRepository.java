@@ -16,7 +16,7 @@ public interface SpringDataEmailTemplateJpaRepository extends JpaRepository<Emai
 
     @Query("""
             SELECT e FROM EmailTemplateJpaEntity e
-            WHERE (:keyword IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            WHERE (:keyword = '' OR LOWER(e.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(e.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:scope IS NULL OR e.scope = :scope)
               AND (:status IS NULL OR e.status = :status)
@@ -34,7 +34,7 @@ public interface SpringDataEmailTemplateJpaRepository extends JpaRepository<Emai
 
     @Query("""
             SELECT COUNT(e) FROM EmailTemplateJpaEntity e
-            WHERE (:keyword IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            WHERE (:keyword = '' OR LOWER(e.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(e.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:scope IS NULL OR e.scope = :scope)
               AND (:status IS NULL OR e.status = :status)

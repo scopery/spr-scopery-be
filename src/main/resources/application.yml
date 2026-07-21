@@ -99,6 +99,7 @@ scopery:
       openai:
         base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
         timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:60}
+        api-key: ${OPENAI_API_KEY:}
 
   storage:
     provider: s3-compatible
@@ -120,6 +121,8 @@ scopery:
 
   ai-assistant:
     prompt-profile-code: ${AI_ASSISTANT_PROMPT_PROFILE:SCOPERY_CONTEXTUAL_ASSISTANT_V1}
+    default-model-provider: ${AI_ASSISTANT_DEFAULT_MODEL_PROVIDER:OPENAI}
+    default-model-name: ${AI_ASSISTANT_DEFAULT_MODEL_NAME:gpt-4o}
     emitter-timeout: ${AI_ASSISTANT_EMITTER_TIMEOUT:180s}
     heartbeat-interval: ${AI_ASSISTANT_HEARTBEAT_INTERVAL:15s}
     stream-event-retention: ${AI_ASSISTANT_STREAM_EVENT_RETENTION:24h}
@@ -194,3 +197,27 @@ logging:
     org.hibernate.orm.jdbc.bind: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId}] %-5level %logger{36} - %msg%n"
+
+ai-action:
+  enabled: true
+  worker:
+    concurrency: 4
+    lease-seconds: 60
+    renew-seconds: 20
+    poll-interval-ms: 1000
+  limits:
+    max-plan-steps: 25
+    max-plan-targets: 100
+    max-concurrent-per-user-workspace: 2
+  ttl:
+    plan-seconds: 1800
+    preview-seconds: 900
+    confirmation-seconds: 600
+    realtime-event-days: 7
+  websocket:
+    endpoint: /api/ws/ai-actions
+    heartbeat-ms: 15000
+    max-frame-bytes: 65536
+  redis:
+    channel: scopery:ai-action:events:v1
+    replay-delay-ms: 30000

@@ -120,4 +120,16 @@ public final class AiAssistantExceptions {
         return new AppException(AiAssistantErrorCatalog.AI_TOOL_NOT_ALLOWED,
                 "Tool not allowed in this context: " + toolCode, Map.of("toolCode", toolCode));
     }
+
+    public static AppException guideNotAvailable() {
+        return new AppException(AiAssistantErrorCatalog.AI_GUIDE_NOT_AVAILABLE,
+                "AI contextual guide is not yet available. Please use the AI Assistant chat instead.",
+                Map.of());
+    }
+
+    public static AppException workspaceConfigNotFound(UUID workspaceId) {
+        return new AppException(AiAssistantErrorCatalog.AI_WORKSPACE_CONFIG_NOT_FOUND,
+                "AI Assistant workspace configuration not found for workspace: " + workspaceId,
+                Map.of("workspaceId", workspaceId));
+    }
 }

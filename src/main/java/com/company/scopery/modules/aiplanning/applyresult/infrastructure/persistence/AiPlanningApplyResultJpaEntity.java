@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant; import java.util.UUID;
 
 @Entity @Table(name = AiPlanningTableNames.APPLY_RESULT) @Getter @Setter @NoArgsConstructor
@@ -17,6 +19,7 @@ public class AiPlanningApplyResultJpaEntity {
     @Column(name = "domain_action") private String domainAction;
     @Column(name = "target_type") private String targetType;
     @Column(name = "target_id") private UUID targetId;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "result_payload_json", columnDefinition = "jsonb") private String resultPayloadJson;
     @Column(name = "error_code") private String errorCode;
     @Column(name = "error_message", columnDefinition = "text") private String errorMessage;

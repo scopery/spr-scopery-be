@@ -63,7 +63,13 @@ public final class ScheduledJobRegistry {
                         "Emit SSE heartbeat to all active AI assistant stream emitters"),
                 new JobInfo("RecommendationExpiryJob", "airecommendation/jobs",
                         "${scopery.ai.recommendation.expiry-cron:0 0 * * * *}",
-                        "Mark active AI recommendations past their expires_at as EXPIRED (batch 500)")
+                        "Mark active AI recommendations past their expires_at as EXPIRED (batch 500)"),
+                new JobInfo("AiActionExecutionWorker", "aiaction/worker",
+                        "${ai-action.worker.poll-interval-ms:1000}ms fixed delay",
+                        "Poll QUEUED ai-action executions, claim via lease, and run the execution orchestrator"),
+                new JobInfo("AiActionEventReplayJob", "aiaction/redis",
+                        "${ai-action.redis.replay-delay-ms:30000}ms fixed delay",
+                        "Republish unpublished ai-action execution events to Redis (redis_published_at IS NULL)")
         );
     }
 

@@ -14,6 +14,7 @@ public final class AiAssistantTableNames {
     public static final String STREAM_EVENT       = "aiassistant_stream_event";
     public static final String ACTIVE_STREAM      = "aiassistant_active_stream";
     public static final String QUOTA_USAGE        = "aiassistant_quota_usage";
+    public static final String WORKSPACE_CONFIG   = "aiassistant_workspace_config";
 
     private AiAssistantTableNames() {}
 }

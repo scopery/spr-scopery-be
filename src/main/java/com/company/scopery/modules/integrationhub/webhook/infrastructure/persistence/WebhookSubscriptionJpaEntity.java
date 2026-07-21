@@ -2,6 +2,8 @@ package com.company.scopery.modules.integrationhub.webhook.infrastructure.persis
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.integrationhub.shared.constant.IntegrationTableNames;
 import jakarta.persistence.*; import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant; import java.util.UUID;
 @Entity @Table(name = IntegrationTableNames.WEBHOOK_SUB) @Getter @Setter @NoArgsConstructor
 public class WebhookSubscriptionJpaEntity extends AuditableJpaEntity {
@@ -10,6 +12,7 @@ public class WebhookSubscriptionJpaEntity extends AuditableJpaEntity {
     @Column(name="connection_id") private UUID connectionId;
     @Column(nullable=false) private String name;
     @Column(name="endpoint_url", nullable=false) private String endpointUrl;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="event_types_json", nullable=false, columnDefinition="jsonb") private String eventTypesJson;
     @Column(name="payload_version", nullable=false) private String payloadVersion;
     @Column(name="signing_secret_reference_id") private UUID signingSecretReferenceId;

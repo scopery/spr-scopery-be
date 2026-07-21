@@ -6,9 +6,8 @@ public record GeneratedDocumentJob(UUID id, UUID workspaceId, UUID projectId, UU
                                    UUID requestedBy, Instant startedAt, Instant completedAt, int version, Instant createdAt, Instant updatedAt) {
     public static GeneratedDocumentJob create(UUID workspaceId, UUID projectId, UUID templateId, UUID templateVersionId, String jobType,
                                               String sourceType, UUID sourceId, UUID requestedBy) {
-        Instant now = Instant.now();
         return new GeneratedDocumentJob(UUID.randomUUID(), workspaceId, projectId, templateId, templateVersionId, jobType,
-                GeneratedDocumentJobStatus.QUEUED, sourceType, sourceId, null, null, requestedBy, null, null, 0, now, now);
+                GeneratedDocumentJobStatus.QUEUED, sourceType, sourceId, null, null, requestedBy, null, null, 0, null, null);
     }
     public GeneratedDocumentJob markRunning() {
         return new GeneratedDocumentJob(id, workspaceId, projectId, templateId, templateVersionId, jobType, GeneratedDocumentJobStatus.RUNNING,

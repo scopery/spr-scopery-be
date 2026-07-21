@@ -5,8 +5,9 @@ public record AssignmentConflict(UUID id, UUID workspaceId, UUID projectId, UUID
         int version, Instant createdAt, Instant updatedAt) {
     public static AssignmentConflict detect(UUID workspaceId, UUID projectId, UUID resourceProfileId, String type, String severity, String description) {
         Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new AssignmentConflict(UUID.randomUUID(), workspaceId, projectId, resourceProfileId, type, severity, description,
-                "OPEN", now, null, null, 0, now, now);
+                "OPEN", now, null, null, 0, null, null);
     }
     public AssignmentConflict acknowledge() {
         if (!"OPEN".equals(status)) throw new IllegalStateException("invalid");

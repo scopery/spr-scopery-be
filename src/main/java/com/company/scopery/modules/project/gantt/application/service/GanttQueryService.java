@@ -22,6 +22,8 @@ import com.company.scopery.modules.project.scheduling.schedulingissue.domain.mod
 import com.company.scopery.modules.project.scheduling.schedulingissue.domain.model.SchedulingIssueRepository;
 import com.company.scopery.modules.project.scheduling.taskschedule.domain.model.TaskSchedule;
 import com.company.scopery.modules.project.scheduling.taskschedule.domain.model.TaskScheduleRepository;
+import com.company.scopery.modules.project.scheduleoverride.domain.model.TaskScheduleOverride;
+import com.company.scopery.modules.project.scheduleoverride.domain.model.TaskScheduleOverrideRepository;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.project.shared.util.ProjectEnumParser;
@@ -56,6 +58,7 @@ public class GanttQueryService {
     private final TaskDependencyRepository dependencies;
     private final ScheduleRunRepository runs;
     private final TaskScheduleRepository schedules;
+    private final TaskScheduleOverrideRepository overrides;
     private final SchedulingIssueRepository issues;
     private final ProjectMilestoneRepository milestones;
 
@@ -67,6 +70,7 @@ public class GanttQueryService {
                              TaskDependencyRepository dependencies,
                              ScheduleRunRepository runs,
                              TaskScheduleRepository schedules,
+                             TaskScheduleOverrideRepository overrides,
                              SchedulingIssueRepository issues,
                              ProjectMilestoneRepository milestones) {
         this.authorization = authorization;
@@ -77,6 +81,7 @@ public class GanttQueryService {
         this.dependencies = dependencies;
         this.runs = runs;
         this.schedules = schedules;
+        this.overrides = overrides;
         this.issues = issues;
         this.milestones = milestones;
     }
@@ -116,8 +121,11 @@ public class GanttQueryService {
             issueList = issues.findAllByScheduleRunId(scheduleRun.id());
         }
 
+        Map<UUID, TaskScheduleOverride> overrideByTask = overrides.findActiveByProjectId(project.id()).stream()
+                .collect(Collectors.toMap(TaskScheduleOverride::taskId, o -> o, (a, b) -> a));
+
         List<GanttItemResponse> items = buildItems(
-                project, phaseList, wbsList, taskList, milestoneList, scheduleByTask,
+                project, phaseList, wbsList, taskList, milestoneList, scheduleByTask, overrideByTask,
                 query.includeUnscheduled(), query.dateFrom(), query.dateTo(), groupBy);
 
         Set<UUID> taskIds = taskList.stream().map(Task::id).collect(Collectors.toSet());
@@ -276,6 +284,7 @@ public class GanttQueryService {
             List<Task> taskList,
             List<ProjectMilestone> milestoneList,
             Map<UUID, TaskSchedule> scheduleByTask,
+            Map<UUID, TaskScheduleOverride> overrideByTask,
             boolean includeUnscheduled,
             LocalDate dateFrom,
             LocalDate dateTo,
@@ -283,6 +292,14 @@ public class GanttQueryService {
 
         List<GanttItemResponse> items = new ArrayList<>();
         String projectItemId = "PROJECT:" + project.id();
+
+        Map<UUID, GanttTaskDateResolver.EffectiveTaskDates> effectiveByTask = new HashMap<>();
+        for (Task task : taskList) {
+            effectiveByTask.put(task.id(), GanttTaskDateResolver.resolve(
+                    task,
+                    scheduleByTask.get(task.id()),
+                    overrideByTask.get(task.id())));
+        }
 
         Map<UUID, List<Task>> tasksByPhase = taskList.stream()
                 .filter(t -> t.projectPhaseId() != null)
@@ -293,9 +310,9 @@ public class GanttQueryService {
 
         LocalDate projectStart = project.plannedStartDate();
         LocalDate projectEnd = project.plannedEndDate();
-        for (TaskSchedule s : scheduleByTask.values()) {
-            projectStart = minDate(projectStart, s.estimatedStartDate());
-            projectEnd = maxDate(projectEnd, s.estimatedFinishDate());
+        for (GanttTaskDateResolver.EffectiveTaskDates effective : effectiveByTask.values()) {
+            projectStart = minDate(projectStart, effective.start());
+            projectEnd = maxDate(projectEnd, effective.end());
         }
         for (ProjectMilestone m : milestoneList) {
             projectStart = minDate(projectStart, m.milestoneDate());
@@ -316,13 +333,10 @@ public class GanttQueryService {
                 LocalDate start = phase.plannedStartDate();
                 LocalDate end = phase.plannedEndDate();
                 for (Task t : tasksByPhase.getOrDefault(phase.id(), List.of())) {
-                    TaskSchedule s = scheduleByTask.get(t.id());
-                    if (s != null) {
-                        start = minDate(start, s.estimatedStartDate());
-                        end = maxDate(end, s.estimatedFinishDate());
-                    } else {
-                        start = minDate(start, t.plannedStartDate());
-                        end = maxDate(end, t.dueDate());
+                    GanttTaskDateResolver.EffectiveTaskDates effective = effectiveByTask.get(t.id());
+                    if (effective != null) {
+                        start = minDate(start, effective.start());
+                        end = maxDate(end, effective.end());
                     }
                 }
                 items.add(new GanttItemResponse(
@@ -344,10 +358,10 @@ public class GanttQueryService {
             LocalDate start = null;
             LocalDate end = null;
             for (Task t : subtreeTasks(node, wbsList, taskList)) {
-                TaskSchedule s = scheduleByTask.get(t.id());
-                if (s != null) {
-                    start = minDate(start, s.estimatedStartDate());
-                    end = maxDate(end, s.estimatedFinishDate());
+                GanttTaskDateResolver.EffectiveTaskDates effective = effectiveByTask.get(t.id());
+                if (effective != null) {
+                    start = minDate(start, effective.start());
+                    end = maxDate(end, effective.end());
                 }
             }
             items.add(new GanttItemResponse(
@@ -359,9 +373,11 @@ public class GanttQueryService {
 
         for (Task task : taskList) {
             TaskSchedule schedule = scheduleByTask.get(task.id());
-            LocalDate start = schedule != null ? schedule.estimatedStartDate() : null;
-            LocalDate end = schedule != null ? schedule.estimatedFinishDate() : null;
-            GanttItemScheduleStatus status = resolveTaskScheduleStatus(schedule);
+            TaskScheduleOverride override = overrideByTask.get(task.id());
+            GanttTaskDateResolver.EffectiveTaskDates effective = effectiveByTask.get(task.id());
+            LocalDate start = effective != null ? effective.start() : null;
+            LocalDate end = effective != null ? effective.end() : null;
+            GanttItemScheduleStatus status = GanttTaskDateResolver.resolveDisplayStatus(schedule, effective);
             if (!includeUnscheduled && status == GanttItemScheduleStatus.UNSCHEDULED) {
                 continue;
             }
@@ -375,6 +391,10 @@ public class GanttQueryService {
             Map<String, Object> meta = new LinkedHashMap<>();
             meta.put("taskStatus", task.status().name());
             meta.put("priority", task.priority() != null ? task.priority().name() : null);
+            if (override != null) {
+                meta.put("hasManualOverride", true);
+                meta.put("overrideType", override.overrideType().name());
+            }
             // Intentionally omit finance/quote/cost/baseline fields.
             items.add(new GanttItemResponse(
                     "TASK:" + task.id(), GanttItemType.TASK.name(), "TASK", task.id(),
@@ -416,18 +436,6 @@ public class GanttQueryService {
             }
         }
         return allTasks.stream().filter(t -> t.wbsNodeId() != null && nodeIds.contains(t.wbsNodeId())).toList();
-    }
-
-    private GanttItemScheduleStatus resolveTaskScheduleStatus(TaskSchedule schedule) {
-        if (schedule == null) {
-            return GanttItemScheduleStatus.UNSCHEDULED;
-        }
-        return switch (schedule.scheduleStatus()) {
-            case SCHEDULED -> GanttItemScheduleStatus.SCHEDULED;
-            case PARTIALLY_SCHEDULED -> GanttItemScheduleStatus.PARTIAL;
-            case BLOCKED -> GanttItemScheduleStatus.BLOCKED;
-            default -> GanttItemScheduleStatus.UNSCHEDULED;
-        };
     }
 
     private GanttDependencyResponse toDependency(TaskDependency d) {

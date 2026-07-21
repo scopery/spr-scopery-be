@@ -30,8 +30,7 @@ public class DocumentContentPersistenceMapper {
         e.setChecksum(d.checksum());
         e.setLastSavedAt(d.lastSavedAt());
         e.setLastSavedBy(d.lastSavedBy());
-        e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

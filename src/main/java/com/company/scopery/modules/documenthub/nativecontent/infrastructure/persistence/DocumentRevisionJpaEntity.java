@@ -33,7 +33,7 @@ public class DocumentRevisionJpaEntity {
     @Column(name = "revision_type", nullable = false, updatable = false, length = 32)
     private String revisionType;
 
-    @Column(name = "ast", nullable = false, updatable = false, columnDefinition = "jsonb")
+    @Column(name = "ast", nullable = false, updatable = false, columnDefinition = "text")
     private String ast;
 
     @Column(name = "plain_text", updatable = false, columnDefinition = "text")

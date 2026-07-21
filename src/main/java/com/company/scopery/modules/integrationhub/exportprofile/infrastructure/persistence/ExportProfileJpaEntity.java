@@ -2,6 +2,8 @@ package com.company.scopery.modules.integrationhub.exportprofile.infrastructure.
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.integrationhub.shared.constant.IntegrationTableNames;
 import jakarta.persistence.*; import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant; import java.util.UUID;
 @Entity @Table(name = IntegrationTableNames.EXPORT_PROFILE) @Getter @Setter @NoArgsConstructor
 public class ExportProfileJpaEntity extends AuditableJpaEntity {
@@ -13,7 +15,9 @@ public class ExportProfileJpaEntity extends AuditableJpaEntity {
     @Column(name="export_format", nullable=false) private String exportFormat;
     @Column(name="target_destination", nullable=false) private String targetDestination;
     @Column(name="object_scope", nullable=false) private String objectScope;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="columns_json", columnDefinition="jsonb") private String columnsJson;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="filters_json", columnDefinition="jsonb") private String filtersJson;
     @Column(name="masking_policy") private String maskingPolicy;
     @Column(nullable=false) private String status;

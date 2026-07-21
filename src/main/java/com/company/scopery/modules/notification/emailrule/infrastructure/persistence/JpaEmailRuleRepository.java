@@ -53,7 +53,7 @@ public class JpaEmailRuleRepository implements EmailRuleRepository {
         String scopeStr = criteria.scope() != null ? criteria.scope().name() : null;
         String statusStr = criteria.status() != null ? criteria.status().name() : null;
         List<EmailRuleJpaEntity> results = springRepo.search(
-                criteria.keyword(), scopeStr, statusStr,
+                criteria.keyword() != null ? criteria.keyword() : "", scopeStr, statusStr,
                 criteria.workspaceId(), criteria.eventDefinitionId(), criteria.templateId());
         int from = criteria.page() * criteria.size();
         int to = Math.min(from + criteria.size(), results.size());
@@ -67,7 +67,7 @@ public class JpaEmailRuleRepository implements EmailRuleRepository {
         String scopeStr = criteria.scope() != null ? criteria.scope().name() : null;
         String statusStr = criteria.status() != null ? criteria.status().name() : null;
         return springRepo.countSearch(
-                criteria.keyword(), scopeStr, statusStr,
+                criteria.keyword() != null ? criteria.keyword() : "", scopeStr, statusStr,
                 criteria.workspaceId(), criteria.eventDefinitionId(), criteria.templateId());
     }
 

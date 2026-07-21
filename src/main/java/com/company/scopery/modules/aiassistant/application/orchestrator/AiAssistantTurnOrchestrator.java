@@ -29,6 +29,8 @@ import com.company.scopery.modules.aiassistant.shared.activity.AiAssistantActivi
 import com.company.scopery.modules.aiassistant.shared.config.AiAssistantProperties;
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantActivityActions;
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantEntityTypes;
+import com.company.scopery.modules.aiassistant.workspaceconfig.domain.model.AiAssistantWorkspaceConfig;
+import com.company.scopery.modules.aiassistant.workspaceconfig.domain.model.AiAssistantWorkspaceConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -73,6 +75,7 @@ public class AiAssistantTurnOrchestrator {
     private final AiStreamingProviderAdapterRegistry streamingProviderRegistry;
     private final AiAssistantProperties properties;
     private final AiAssistantActivityLogger activityLogger;
+    private final AiAssistantWorkspaceConfigRepository workspaceConfigRepository;
     private final TransactionTemplate transactionTemplate;
 
     public AiAssistantTurnOrchestrator(AiMessageRepository messageRepository,
@@ -88,6 +91,7 @@ public class AiAssistantTurnOrchestrator {
                                        AiStreamingProviderAdapterRegistry streamingProviderRegistry,
                                        AiAssistantProperties properties,
                                        AiAssistantActivityLogger activityLogger,
+                                       AiAssistantWorkspaceConfigRepository workspaceConfigRepository,
                                        PlatformTransactionManager transactionManager) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
@@ -102,6 +106,7 @@ public class AiAssistantTurnOrchestrator {
         this.streamingProviderRegistry = streamingProviderRegistry;
         this.properties = properties;
         this.activityLogger = activityLogger;
+        this.workspaceConfigRepository = workspaceConfigRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -265,8 +270,30 @@ public class AiAssistantTurnOrchestrator {
                     List.of(MessageRole.USER, MessageRole.ASSISTANT),
                     properties.getMemory().getKeepLatestMessages());
 
+            // Resolve model config from workspace config (falls back to request-level then global defaults)
+            AiAssistantWorkspaceConfig wsConfig =
+                    workspaceConfigRepository.findByWorkspaceId(req.workspaceId()).orElse(null);
+
+            String resolvedProvider = (wsConfig != null && wsConfig.modelProvider() != null
+                    && !wsConfig.modelProvider().isBlank())
+                    ? wsConfig.modelProvider()
+                    : (req.modelProvider() != null && !req.modelProvider().isBlank()
+                            ? req.modelProvider() : properties.getDefaultModelProvider());
+            String resolvedModel = (wsConfig != null && wsConfig.modelName() != null
+                    && !wsConfig.modelName().isBlank())
+                    ? wsConfig.modelName()
+                    : (req.modelName() != null && !req.modelName().isBlank()
+                            ? req.modelName() : properties.getDefaultModelName());
+            BigDecimal temperature = (wsConfig != null && wsConfig.temperatureOverride() != null)
+                    ? wsConfig.temperatureOverride() : new BigDecimal("0.7");
+            int maxOutputTokens = (wsConfig != null && wsConfig.maxOutputTokensOverride() != null)
+                    ? wsConfig.maxOutputTokensOverride() : properties.getMaxOutputTokens();
+            String systemPrompt = (wsConfig != null && wsConfig.systemPromptOverride() != null
+                    && !wsConfig.systemPromptOverride().isBlank())
+                    ? wsConfig.systemPromptOverride() : "You are Scopery AI Assistant.";
+
             List<AiChatMessage> chatMessages = new ArrayList<>();
-            chatMessages.add(new AiChatMessage("system", "You are Scopery AI Assistant."));
+            chatMessages.add(new AiChatMessage("system", systemPrompt));
 
             List<AiMessage> priorMessages = new ArrayList<>(recentMessages);
             Collections.reverse(priorMessages);
@@ -295,12 +322,12 @@ public class AiAssistantTurnOrchestrator {
 
             // J. Check streaming provider availability
             try {
-                streamingProviderRegistry.getAdapter(req.modelProvider());
+                streamingProviderRegistry.getAdapter(resolvedProvider);
             } catch (Exception e) {
                 log.warn("[AiAssistantTurnOrchestrator] No streaming provider for provider={}: {}",
-                        req.modelProvider(), e.getMessage());
+                        resolvedProvider, e.getMessage());
                 markFailed(req.assistantMessageId(), "AI_ASSISTANT_MODEL_UNAVAILABLE",
-                        "No streaming provider adapter available: " + req.modelProvider());
+                        "No streaming provider adapter available: " + resolvedProvider);
                 persistAndEmit(req.assistantMessageId(), seqHolder[0] + 1, "answer.failed",
                         Map.of("errorCode", "AI_ASSISTANT_MODEL_UNAVAILABLE"));
                 return;
@@ -308,8 +335,8 @@ public class AiAssistantTurnOrchestrator {
 
             // K. Stream via provider
             AiStreamingRequest streamingRequest = new AiStreamingRequest(
-                    null, req.modelName(), chatMessages,
-                    new BigDecimal("0.7"), properties.getMaxOutputTokens());
+                    null, resolvedModel, chatMessages,
+                    temperature, maxOutputTokens);
 
             StringBuilder contentBuilder = new StringBuilder();
             final int[] inputTokensHolder = {0};
@@ -318,7 +345,7 @@ public class AiAssistantTurnOrchestrator {
             final boolean[] streamLimitExceeded = {false};
             final boolean[] cancelledDuringStream = {false};
 
-            streamingProviderRegistry.getAdapter(req.modelProvider()).streamChat(streamingRequest,
+            streamingProviderRegistry.getAdapter(resolvedProvider).streamChat(streamingRequest,
                     (textDelta, isLast, finishReason, inputTokens, outputTokens) -> {
                         if (isCancelRequested(req.assistantMessageId())) {
                             cancelledDuringStream[0] = true;
@@ -385,12 +412,14 @@ public class AiAssistantTurnOrchestrator {
             final ResponseMode finalResponseMode = responseMode;
             final int latencyMs = (int) (Instant.now().toEpochMilli() - turnStarted.toEpochMilli());
             final List<ValidatedCitation> finalCitations = validatedCitations;
+            final String finalResolvedProvider = resolvedProvider;
+            final String finalResolvedModel = resolvedModel;
 
             transactionTemplate.execute(status -> {
                 AiMessage assistantMsg = findMessageOrThrow(req.assistantMessageId());
                 assistantMsg.markCompleted(
                         finalContent, finalResponseMode,
-                        req.modelProvider(), req.modelName(),
+                        finalResolvedProvider, finalResolvedModel,
                         req.modelDeploymentId() != null ? req.modelDeploymentId().toString() : null,
                         req.promptProfileCode(),
                         finalInputTokens, finalOutputTokens, latencyMs, finalFinishReason);

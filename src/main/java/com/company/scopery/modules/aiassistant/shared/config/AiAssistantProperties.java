@@ -10,6 +10,8 @@ import java.time.Duration;
 public class AiAssistantProperties {
 
     private String promptProfileCode = "SCOPERY_CONTEXTUAL_ASSISTANT_V1";
+    private String defaultModelProvider = "OPENAI";
+    private String defaultModelName = "gpt-4o";
     private Duration emitterTimeout = Duration.ofSeconds(180);
     private Duration heartbeatInterval = Duration.ofSeconds(15);
     private Duration streamEventRetention = Duration.ofHours(24);
@@ -44,6 +46,10 @@ public class AiAssistantProperties {
 
     public String getPromptProfileCode() { return promptProfileCode; }
     public void setPromptProfileCode(String promptProfileCode) { this.promptProfileCode = promptProfileCode; }
+    public String getDefaultModelProvider() { return defaultModelProvider; }
+    public void setDefaultModelProvider(String defaultModelProvider) { this.defaultModelProvider = defaultModelProvider; }
+    public String getDefaultModelName() { return defaultModelName; }
+    public void setDefaultModelName(String defaultModelName) { this.defaultModelName = defaultModelName; }
     public Duration getEmitterTimeout() { return emitterTimeout; }
     public void setEmitterTimeout(Duration emitterTimeout) { this.emitterTimeout = emitterTimeout; }
     public Duration getHeartbeatInterval() { return heartbeatInterval; }

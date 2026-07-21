@@ -8,6 +8,7 @@ import com.company.scopery.platform.security.SecurityPathPolicy;
 import com.company.scopery.platform.security.SwaggerAccessPolicy;
 import com.company.scopery.platform.web.idempotency.IdempotencyKeyFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -89,6 +90,7 @@ public class SecurityConfig {
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityPathPolicy.healthPath()).permitAll()
                         .requestMatchers(swaggerAccessPolicy.infraPublicPaths().toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.POST,

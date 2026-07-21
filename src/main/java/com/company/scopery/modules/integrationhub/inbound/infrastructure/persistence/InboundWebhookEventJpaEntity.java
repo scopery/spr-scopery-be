@@ -2,6 +2,8 @@ package com.company.scopery.modules.integrationhub.inbound.infrastructure.persis
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.integrationhub.shared.constant.IntegrationTableNames;
 import jakarta.persistence.*; import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant; import java.util.UUID;
 @Entity @Table(name = IntegrationTableNames.INBOUND_EVENT) @Getter @Setter @NoArgsConstructor
 public class InboundWebhookEventJpaEntity extends AuditableJpaEntity {
@@ -13,6 +15,7 @@ public class InboundWebhookEventJpaEntity extends AuditableJpaEntity {
     @Column(name="event_type", nullable=false) private String eventType;
     @Column(nullable=false) private String status;
     @Column(name="payload_reference") private String payloadReference;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="payload_redacted_json", columnDefinition="jsonb") private String payloadRedactedJson;
     @Column(name="received_at", nullable=false) private Instant receivedAt;
     @Column(name="processed_at") private Instant processedAt;

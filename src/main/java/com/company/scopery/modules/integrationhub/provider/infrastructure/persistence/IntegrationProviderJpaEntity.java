@@ -2,6 +2,8 @@ package com.company.scopery.modules.integrationhub.provider.infrastructure.persi
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.integrationhub.shared.constant.IntegrationTableNames;
 import jakarta.persistence.*; import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.util.UUID;
 @Entity @Table(name = IntegrationTableNames.PROVIDER) @Getter @Setter @NoArgsConstructor
 public class IntegrationProviderJpaEntity extends AuditableJpaEntity {
@@ -13,6 +15,7 @@ public class IntegrationProviderJpaEntity extends AuditableJpaEntity {
     @Column(name="adapter_key") private String adapterKey;
     @Column(nullable=false) private Boolean enabled = true;
     @Column(name="seed_only", nullable=false) private Boolean seedOnly = false;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="capabilities_json", columnDefinition="jsonb") private String capabilitiesJson;
     @Version private Integer version;
 }

@@ -26,8 +26,7 @@ public class DocumentVersionPersistenceMapper {
         e.setStorageEtag(d.storageEtag());
         e.setUploadCompletedAt(d.uploadCompletedAt());
         e.setStorageVerifiedAt(d.storageVerifiedAt());
-        e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

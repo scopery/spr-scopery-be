@@ -5,10 +5,10 @@ public record UtilizationThresholdPolicy(UUID id, UUID workspaceId, UUID project
         BigDecimal watchMaxPercent, BigDecimal overloadedPercent, BigDecimal criticalOverloadPercent,
         boolean enabled, int version, Instant createdAt, Instant updatedAt) {
     public static UtilizationThresholdPolicy defaults(UUID workspaceId, UUID projectId) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new UtilizationThresholdPolicy(UUID.randomUUID(), workspaceId, projectId,
                 new BigDecimal("50"), new BigDecimal("50"), new BigDecimal("85"),
                 new BigDecimal("100"), new BigDecimal("100"), new BigDecimal("120"),
-                true, 0, now, now);
+                true, 0, null, null);
     }
 }

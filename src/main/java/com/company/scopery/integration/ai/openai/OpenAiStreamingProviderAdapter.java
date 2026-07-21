@@ -37,6 +37,7 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
     private final RestClient restClient;
     private final ProviderSecretResolver providerSecretResolver;
     private final ObjectMapper objectMapper;
+    private final String envApiKey;
 
     public OpenAiStreamingProviderAdapter(OpenAiProperties properties,
                                           ProviderSecretResolver providerSecretResolver,
@@ -52,6 +53,7 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
                 .build();
         this.providerSecretResolver = providerSecretResolver;
         this.objectMapper = objectMapper;
+        this.envApiKey = properties.apiKey();
     }
 
     @Override
@@ -61,7 +63,14 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
 
     @Override
     public void streamChat(AiStreamingRequest request, StreamDeltaCallback callback) {
-        String apiKey = providerSecretResolver.resolveApiKey(request.providerId());
+        String apiKey;
+        if (request.providerId() != null) {
+            apiKey = providerSecretResolver.resolveApiKey(request.providerId());
+        } else if (envApiKey != null && !envApiKey.isBlank()) {
+            apiKey = envApiKey;
+        } else {
+            apiKey = providerSecretResolver.resolveApiKeyByProviderCode(SUPPORTED_PROVIDER_CODE);
+        }
 
         Map<String, Object> body = buildRequestBody(request);
 
@@ -72,6 +81,15 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .exchange((req, resp) -> {
+                        if (resp.getStatusCode().isError()) {
+                            String errorBody = new String(resp.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                            throw new org.springframework.web.client.HttpClientErrorException(
+                                    resp.getStatusCode(),
+                                    "OpenAI API error: " + errorBody,
+                                    resp.getHeaders(),
+                                    errorBody.getBytes(StandardCharsets.UTF_8),
+                                    StandardCharsets.UTF_8);
+                        }
                         try (InputStream is = resp.getBody();
                              BufferedReader reader = new BufferedReader(
                                      new InputStreamReader(is, StandardCharsets.UTF_8))) {

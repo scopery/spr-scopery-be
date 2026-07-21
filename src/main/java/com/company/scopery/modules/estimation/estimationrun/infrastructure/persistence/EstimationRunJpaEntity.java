@@ -10,6 +10,8 @@ import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -39,8 +41,10 @@ public class EstimationRunJpaEntity extends AuditableJpaEntity {
     private String rateTargetDateStrategy;
     @Column(name = "currency_policy", nullable = false)
     private String currencyPolicy;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "assumptions_json", columnDefinition = "jsonb")
     private String assumptionsJson;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "result_summary_json", columnDefinition = "jsonb")
     private String resultSummaryJson;
     @Column(name = "error_code")

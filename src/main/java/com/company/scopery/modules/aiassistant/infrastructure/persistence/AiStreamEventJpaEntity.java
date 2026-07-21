@@ -2,6 +2,8 @@ package com.company.scopery.modules.aiassistant.infrastructure.persistence;
 
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantTableNames;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,7 +38,8 @@ public class AiStreamEventJpaEntity {
     @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
 
-    @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
     private String payload;
 
     @Column(name = "payload_hash", nullable = false, length = 64)

@@ -2,6 +2,8 @@ package com.company.scopery.modules.integrationhub.sync.infrastructure.persisten
 import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.integrationhub.shared.constant.IntegrationTableNames;
 import jakarta.persistence.*; import lombok.Getter; import lombok.NoArgsConstructor; import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant; import java.util.UUID;
 @Entity @Table(name = IntegrationTableNames.SYNC_JOB) @Getter @Setter @NoArgsConstructor
 public class SyncJobJpaEntity extends AuditableJpaEntity {
@@ -16,6 +18,7 @@ public class SyncJobJpaEntity extends AuditableJpaEntity {
     @Column(name="sync_mode", nullable=false) private String syncMode;
     @Column(name="object_scope", nullable=false) private String objectScope;
     @Column(name="conflict_strategy", nullable=false) private String conflictStrategy;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name="schedule_json", columnDefinition="jsonb") private String scheduleJson;
     @Column(nullable=false) private String status;
     @Column(name="disabled_at") private Instant disabledAt;

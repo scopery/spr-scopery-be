@@ -38,7 +38,10 @@ public class CorsProperties {
             "Content-Type",
             "X-XSRF-TOKEN",
             "X-Trace-Id",
-            "Idempotency-Key"
+            "Idempotency-Key",
+            "X-Workspace-Id",
+            "X-Actor-Id",
+            "Last-Event-ID"
     ));
 
     private List<String> exposedHeaders = new ArrayList<>(List.of(

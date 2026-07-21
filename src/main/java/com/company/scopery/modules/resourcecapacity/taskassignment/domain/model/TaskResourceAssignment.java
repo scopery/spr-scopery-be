@@ -6,9 +6,9 @@ public record TaskResourceAssignment(UUID id, UUID workspaceId, UUID projectId, 
         TaskAssignmentStatus status, String notes, Instant removedAt, UUID removedBy, int version, Instant createdAt, Instant updatedAt) {
     public static TaskResourceAssignment create(UUID workspaceId, UUID projectId, UUID taskId, UUID resourceProfileId,
                                                 TaskAssignmentType type, BigDecimal hours) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new TaskResourceAssignment(UUID.randomUUID(), workspaceId, projectId, taskId, resourceProfileId, type, hours,
-                null, null, TaskAssignmentStatus.ACTIVE, null, null, null, 0, now, now);
+                null, null, TaskAssignmentStatus.ACTIVE, null, null, null, 0, null, null);
     }
     public TaskResourceAssignment remove(UUID actorId) {
         if (status != TaskAssignmentStatus.ACTIVE) throw new IllegalStateException("Only ACTIVE can be removed");

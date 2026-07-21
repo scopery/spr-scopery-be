@@ -14,8 +14,8 @@ public class DocumentFolderPersistenceMapper {
         DocumentFolderJpaEntity e = new DocumentFolderJpaEntity();
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId()); e.setParentFolderId(d.parentFolderId());
         e.setName(d.name()); e.setDescription(d.description()); e.setStatus(d.status().name()); e.setSortOrder(d.sortOrder());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

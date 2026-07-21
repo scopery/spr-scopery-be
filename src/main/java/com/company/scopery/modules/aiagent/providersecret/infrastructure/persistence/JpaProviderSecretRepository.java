@@ -53,6 +53,13 @@ public class JpaProviderSecretRepository implements ProviderSecretRepository {
     }
 
     @Override
+    public Optional<ProviderSecret> findActiveByProviderCodeAndSecretType(String providerCode, ProviderSecretType secretType) {
+        return springDataRepository.findByProviderCodeAndSecretTypeAndStatus(
+                        providerCode, secretType.name(), ProviderSecretStatus.ACTIVE.name())
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public PageResult<ProviderSecret> findAll(UUID providerId, ProviderSecretType secretType,
                                               ProviderSecretStatus status, PageQuery pageQuery) {
         Specification<ProviderSecretJpaEntity> spec = buildSearchSpec(providerId, secretType, status);

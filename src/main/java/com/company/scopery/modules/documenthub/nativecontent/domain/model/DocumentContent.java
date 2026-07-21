@@ -25,10 +25,9 @@ public record DocumentContent(
                                           Integer schemaVersion, long revisionNo, String ast,
                                           String plainText, int wordCount, int characterCount,
                                           String checksum, UUID savedBy) {
-        Instant now = Instant.now();
         return new DocumentContent(UUID.randomUUID(), documentId, workspaceId, projectId,
                 schemaVersion, revisionNo, ast, plainText, wordCount, characterCount,
-                checksum, now, savedBy, 0, now, now);
+                checksum, Instant.now(), savedBy, 0, null, null);
     }
 
     public DocumentContent withUpdatedContent(long newRevisionNo, String newAst, String newPlainText,

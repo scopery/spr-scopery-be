@@ -59,7 +59,7 @@ public class JpaEmailTemplateRepository implements EmailTemplateRepository {
         String scopeStr = criteria.scope() != null ? criteria.scope().name() : null;
         String statusStr = criteria.status() != null ? criteria.status().name() : null;
         List<EmailTemplateJpaEntity> page = templateRepo.search(
-                criteria.keyword(), scopeStr, statusStr, criteria.workspaceId(), criteria.eventDefinitionId());
+                criteria.keyword() != null ? criteria.keyword() : "", scopeStr, statusStr, criteria.workspaceId(), criteria.eventDefinitionId());
         int from = criteria.page() * criteria.size();
         int to = Math.min(from + criteria.size(), page.size());
         if (from >= page.size()) return List.of();
@@ -72,7 +72,7 @@ public class JpaEmailTemplateRepository implements EmailTemplateRepository {
         String scopeStr = criteria.scope() != null ? criteria.scope().name() : null;
         String statusStr = criteria.status() != null ? criteria.status().name() : null;
         return templateRepo.countSearch(
-                criteria.keyword(), scopeStr, statusStr, criteria.workspaceId(), criteria.eventDefinitionId());
+                criteria.keyword() != null ? criteria.keyword() : "", scopeStr, statusStr, criteria.workspaceId(), criteria.eventDefinitionId());
     }
 
     @Override

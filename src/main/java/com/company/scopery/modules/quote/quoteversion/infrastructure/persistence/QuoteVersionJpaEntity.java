@@ -10,6 +10,8 @@ import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -36,8 +38,10 @@ public class QuoteVersionJpaEntity extends AuditableJpaEntity {
     private String status;
     @Column(name = "title_snapshot", nullable = false)
     private String titleSnapshot;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "client_snapshot_json", columnDefinition = "jsonb")
     private String clientSnapshotJson;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "finance_snapshot_json", nullable = false, columnDefinition = "jsonb")
     private String financeSnapshotJson;
     @Column(name = "formula_version", nullable = false)

@@ -7,9 +7,9 @@ public record ActualEffortRecord(UUID id, UUID workspaceId, UUID projectId, UUID
     public static ActualEffortRecord record(UUID workspaceId, UUID projectId, UUID resourceProfileId, String targetType, UUID targetId,
                                             LocalDate date, BigDecimal hours, ActualEffortInputMode mode, String description) {
         if (hours == null || hours.signum() < 0) throw new IllegalArgumentException("hours");
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new ActualEffortRecord(UUID.randomUUID(), workspaceId, projectId, resourceProfileId, targetType, targetId,
-                date, hours, mode, description, ActualEffortStatus.RECORDED, null, null, null, 0, now, now);
+                date, hours, mode, description, ActualEffortStatus.RECORDED, null, null, null, 0, null, null);
     }
     public ActualEffortRecord cancel(UUID actor, String reason) {
         if (status == ActualEffortStatus.CANCELLED) throw new IllegalStateException("already cancelled");

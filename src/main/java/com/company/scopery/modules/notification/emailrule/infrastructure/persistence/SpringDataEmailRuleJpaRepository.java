@@ -51,7 +51,7 @@ public interface SpringDataEmailRuleJpaRepository extends JpaRepository<EmailRul
 
     @Query("""
             SELECT r FROM EmailRuleJpaEntity r
-            WHERE (:keyword IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            WHERE (:keyword = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(r.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:scope IS NULL OR r.scope = :scope)
               AND (:status IS NULL OR r.status = :status)
@@ -71,7 +71,7 @@ public interface SpringDataEmailRuleJpaRepository extends JpaRepository<EmailRul
 
     @Query("""
             SELECT COUNT(r) FROM EmailRuleJpaEntity r
-            WHERE (:keyword IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            WHERE (:keyword = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    OR LOWER(r.code) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:scope IS NULL OR r.scope = :scope)
               AND (:status IS NULL OR r.status = :status)

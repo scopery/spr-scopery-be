@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -21,5 +23,5 @@ public class SchedulingIssueJpaEntity extends AuditableJpaEntity {
     @Column(nullable=false) private String severity;
     @Column(nullable=false) private String message;
     @Column(name="issue_date") private LocalDate issueDate;
-    @Column(name="details_json",columnDefinition="jsonb") private String detailsJson;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name="details_json",columnDefinition="jsonb") private String detailsJson;
 }

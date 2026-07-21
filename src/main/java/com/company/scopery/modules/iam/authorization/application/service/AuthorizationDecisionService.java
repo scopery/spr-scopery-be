@@ -58,6 +58,11 @@ public class AuthorizationDecisionService {
             return AuthorizationDecision.deny(AuthorizationDecisionReason.USER_INACTIVE);
         }
 
+        boolean hasGlobalGrant = readRepository.hasActiveGlobalResourceGrantForUser(request.userId());
+        if (hasGlobalGrant) {
+            return AuthorizationDecision.allow(AuthorizationDecisionReason.GLOBAL_RESOURCE_GRANT_ALLOW);
+        }
+
         ResolvedAuthority authority = resolveAuthority(request);
         if (authority.denyReason() != null) {
             return AuthorizationDecision.deny(authority.denyReason());
@@ -69,10 +74,6 @@ public class AuthorizationDecisionService {
         }
         if (resource.status() != IamResourceStatus.ACTIVE) {
             return AuthorizationDecision.deny(AuthorizationDecisionReason.RESOURCE_INACTIVE);
-        }
-
-        if (readRepository.hasActiveGlobalResourceGrantForUser(request.userId())) {
-            return AuthorizationDecision.allow(AuthorizationDecisionReason.GLOBAL_RESOURCE_GRANT_ALLOW);
         }
 
         List<IamAccessGrant> allGrants = collectAllGrants(request.userId(), request.resourceId());

@@ -17,8 +17,8 @@ public class DocumentTemplatePersistenceMapper {
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setCode(d.code()); e.setName(d.name());
         e.setDescription(d.description()); e.setCategory(d.category()); e.setStatus(d.status().name());
         e.setTemplateMode(d.templateMode() != null ? d.templateMode().name() : TemplateMode.FILE.name());
-        e.setCurrentVersionId(d.currentVersionId()); e.setArchivedAt(d.archivedAt()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setCurrentVersionId(d.currentVersionId()); e.setArchivedAt(d.archivedAt());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

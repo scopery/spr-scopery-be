@@ -10,6 +10,8 @@ import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -58,6 +60,7 @@ public class ProjectFinanceScenarioJpaEntity extends AuditableJpaEntity {
     private BigDecimal overheadFixedAmount;
     @Column(name = "target_margin_percent")
     private BigDecimal targetMarginPercent;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "assumptions_json", columnDefinition = "jsonb")
     private String assumptionsJson;
     @Column(name = "formula_version", nullable = false)

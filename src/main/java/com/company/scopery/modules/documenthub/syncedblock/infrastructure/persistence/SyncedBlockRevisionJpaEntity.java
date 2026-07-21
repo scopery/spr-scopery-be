@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -29,6 +31,7 @@ public class SyncedBlockRevisionJpaEntity {
     @Column(name = "revision_no", nullable = false, updatable = false)
     private long revisionNo;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "ast", nullable = false, updatable = false, columnDefinition = "jsonb")
     private String ast;
 

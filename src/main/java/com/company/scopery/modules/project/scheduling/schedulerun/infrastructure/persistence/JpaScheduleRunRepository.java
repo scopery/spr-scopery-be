@@ -38,8 +38,8 @@ public class JpaScheduleRunRepository implements ScheduleRunRepository {
         e.setAlgorithmVersion(d.algorithmVersion()); e.setPlanningStartDate(d.planningStartDate()); e.setPlanningEndDate(d.planningEndDate());
         e.setInputSummaryJson(d.inputSummaryJson()); e.setResultSummaryJson(d.resultSummaryJson()); e.setErrorCode(d.errorCode());
         e.setErrorMessage(d.errorMessage()); e.setStartedAt(d.startedAt()); e.setCompletedAt(d.completedAt());
-        e.setActorUserId(d.actorUserId()); e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        e.setActorUserId(d.actorUserId()); e.setTraceId(d.traceId());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

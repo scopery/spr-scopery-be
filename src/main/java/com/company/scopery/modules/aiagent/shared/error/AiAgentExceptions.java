@@ -617,7 +617,8 @@ public final class AiAgentExceptions {
 
     public static AppException providerSecretNotFound(UUID id) {
         return new AppException(AiAgentErrorCatalog.PROVIDER_SECRET_NOT_FOUND,
-                "Provider secret not found: " + id, Map.of("id", id));
+                "Provider secret not found: " + id,
+                id != null ? Map.of("id", id) : Map.of());
     }
 
     public static AppException providerSecretProviderNotFound(UUID providerId) {

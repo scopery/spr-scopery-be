@@ -8,9 +8,9 @@ public record EffortEstimate(UUID id, UUID workspaceId, UUID projectId, String t
     public static EffortEstimate create(UUID workspaceId, UUID projectId, String targetType, UUID targetId,
                                         EffortEstimateType type, BigDecimal hours, UUID roleId, UUID profileId, String reason) {
         if (hours == null || hours.signum() < 0) throw new IllegalArgumentException("effortHours must be non-negative");
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() → persist() (not merge/optimistic-lock).
         return new EffortEstimate(UUID.randomUUID(), workspaceId, projectId, targetType, targetId, roleId, profileId,
-                type, hours, null, reason, EffortEstimateStatus.ACTIVE, null, null, 0, now, now);
+                type, hours, null, reason, EffortEstimateStatus.ACTIVE, null, null, 0, null, null);
     }
     public EffortEstimate supersede() {
         return new EffortEstimate(id, workspaceId, projectId, targetType, targetId, resourceRoleId, resourceProfileId,

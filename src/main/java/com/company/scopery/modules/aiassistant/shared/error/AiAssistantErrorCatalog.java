@@ -103,7 +103,17 @@ public enum AiAssistantErrorCatalog implements ErrorCatalog {
     AI_TOOL_NOT_ALLOWED(
             "AI_TOOL_NOT_ALLOWED",
             "AI tool is not allowed in this context",
-            HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN),
+
+    AI_GUIDE_NOT_AVAILABLE(
+            "AI_GUIDE_NOT_AVAILABLE",
+            "AI contextual guide is not yet available. Please use the AI Assistant chat instead.",
+            HttpStatus.SERVICE_UNAVAILABLE),
+
+    AI_WORKSPACE_CONFIG_NOT_FOUND(
+            "AI_WORKSPACE_CONFIG_NOT_FOUND",
+            "AI Assistant workspace configuration not found",
+            HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String defaultMessage;

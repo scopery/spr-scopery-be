@@ -61,23 +61,33 @@ public class AdminUserSeedInitializer implements ApplicationListener<Application
         }
 
         Username username = Username.of(adminUsername);
-        if (userRepository.existsByUsername(username)) {
-            log.info("[AdminSeed] Admin user already exists: {}", adminUsername);
+        var superAdminRole = roleRepository.findByCode(IamRoleCode.of("SUPER_ADMIN"));
+        if (superAdminRole.isEmpty()) {
+            log.warn("[AdminSeed] SUPER_ADMIN role not found — skipping admin seed");
             return;
         }
 
-        IamUser admin = IamUser.create(username, EmailAddress.of(adminEmail), "Admin",
-                        IamRegistrationSource.SYSTEM_BOOTSTRAP)
-                .withPassword(passwordEncoder.encode(adminPassword));
-        IamUser saved = userRepository.save(admin);
+        IamUser saved;
+        if (userRepository.existsByUsername(username)) {
+            saved = userRepository.findByUsername(username).orElse(null);
+            if (saved == null) {
+                log.warn("[AdminSeed] Admin user lookup failed after existsByUsername check");
+                return;
+            }
+            log.info("[AdminSeed] Admin user already exists: {}", adminUsername);
+        } else {
+            IamUser admin = IamUser.create(username, EmailAddress.of(adminEmail), "Admin",
+                            IamRegistrationSource.SYSTEM_BOOTSTRAP)
+                    .withPassword(passwordEncoder.encode(adminPassword));
+            saved = userRepository.save(admin);
+            log.info("[AdminSeed] Admin user created: {}", adminUsername);
+        }
 
-        var superAdminRole = roleRepository.findByCode(IamRoleCode.of("SUPER_ADMIN"));
-        if (superAdminRole.isPresent()) {
+        if (!roleAssignmentRepository.existsActiveAssignment(
+                RoleAssigneeType.USER, saved.id(), superAdminRole.get().id(), null)) {
             roleAssignmentRepository.save(IamRoleAssignment.create(
                     RoleAssigneeType.USER, saved.id(), superAdminRole.get().id(), null, saved.id()));
-            log.info("[AdminSeed] Admin user seeded: {}", adminUsername);
-        } else {
-            log.warn("[AdminSeed] SUPER_ADMIN role not found — admin user created without role assignment");
+            log.info("[AdminSeed] SUPER_ADMIN role assigned to admin user: {}", adminUsername);
         }
     }
 }

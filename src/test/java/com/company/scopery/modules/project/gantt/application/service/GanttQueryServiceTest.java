@@ -16,6 +16,9 @@ import com.company.scopery.modules.project.scheduling.taskschedule.domain.enums.
 import com.company.scopery.modules.project.scheduling.taskschedule.domain.enums.TaskScheduleStatus;
 import com.company.scopery.modules.project.scheduling.taskschedule.domain.model.TaskSchedule;
 import com.company.scopery.modules.project.scheduling.taskschedule.domain.model.TaskScheduleRepository;
+import com.company.scopery.modules.project.scheduleoverride.domain.enums.ScheduleOverrideType;
+import com.company.scopery.modules.project.scheduleoverride.domain.model.TaskScheduleOverride;
+import com.company.scopery.modules.project.scheduleoverride.domain.model.TaskScheduleOverrideRepository;
 import com.company.scopery.modules.project.shared.authorization.ProjectWorkspaceAuthorizationService;
 import com.company.scopery.modules.project.shared.error.ProjectErrorCatalog;
 import com.company.scopery.modules.project.task.domain.enums.TaskPriority;
@@ -50,6 +53,7 @@ class GanttQueryServiceTest {
     @Mock TaskDependencyRepository dependencies;
     @Mock ScheduleRunRepository runs;
     @Mock TaskScheduleRepository schedules;
+    @Mock TaskScheduleOverrideRepository overrides;
     @Mock SchedulingIssueRepository issues;
     @Mock ProjectMilestoneRepository milestones;
 
@@ -61,7 +65,7 @@ class GanttQueryServiceTest {
     @BeforeEach
     void setUp() {
         service = new GanttQueryService(authorization, projects, phases, wbsNodes, tasks, dependencies,
-                runs, schedules, issues, milestones);
+                runs, schedules, overrides, issues, milestones);
     }
 
     @Test
@@ -91,6 +95,7 @@ class GanttQueryServiceTest {
                         new BigDecimal("4"), BigDecimal.ZERO, scheduled.dueDate(), BigDecimal.ZERO,
                         TaskScheduleRiskStatus.ON_TRACK, TaskScheduleStatus.SCHEDULED)));
         when(issues.findAllByScheduleRunId(run.id())).thenReturn(List.of());
+        when(overrides.findActiveByProjectId(projectId)).thenReturn(List.of());
 
         GanttViewResponse view = service.getView(new GanttViewQuery(
                 projectId, null, null, null, true, false, "PHASE"));
@@ -109,6 +114,47 @@ class GanttQueryServiceTest {
                                 || k.toLowerCase().contains("baseline"));
             }
         });
+    }
+
+    @Test
+    void activeOverrideDatesAppearInProjectionWithoutRecalculate() {
+        Project project = project();
+        when(projects.findById(projectId)).thenReturn(Optional.of(project));
+        ProjectPhase phase = ProjectPhase.create(projectId, "P1", "Phase 1", null, 1,
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31));
+        when(phases.findAllByProjectId(projectId)).thenReturn(List.of(phase));
+        when(wbsNodes.findAllByProjectId(projectId)).thenReturn(List.of());
+        Task scheduled = Task.create(projectId, phase.id(), null, "T1", "Scheduled", null,
+                UUID.randomUUID(), null, null, new BigDecimal("4"), LocalDate.of(2026, 8, 1),
+                LocalDate.of(2026, 8, 5), TaskPriority.MEDIUM);
+        when(tasks.findAllByProjectId(projectId)).thenReturn(List.of(scheduled));
+        when(milestones.findAllByProjectId(projectId)).thenReturn(List.of());
+        when(dependencies.findActiveByProjectId(projectId)).thenReturn(List.of());
+
+        ScheduleRun run = ScheduleRun.create(projectId, workspaceId,
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31), "{}", null, null)
+                .completed("{}");
+        when(runs.findAllByProjectId(projectId)).thenReturn(List.of(run));
+        when(schedules.findAllByScheduleRunId(run.id())).thenReturn(List.of(
+                TaskSchedule.create(run.id(), projectId, scheduled.id(), scheduled.inChargeUserId(), null,
+                        LocalDate.of(2026, 8, 2), LocalDate.of(2026, 8, 3),
+                        new BigDecimal("4"), BigDecimal.ZERO, scheduled.dueDate(), BigDecimal.ZERO,
+                        TaskScheduleRiskStatus.ON_TRACK, TaskScheduleStatus.SCHEDULED)));
+        when(issues.findAllByScheduleRunId(run.id())).thenReturn(List.of());
+        when(overrides.findActiveByProjectId(projectId)).thenReturn(List.of(
+                TaskScheduleOverride.create(projectId, scheduled.id(), ScheduleOverrideType.PIN_RANGE,
+                        LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 10), null, "drag")));
+
+        GanttViewResponse view = service.getView(new GanttViewQuery(
+                projectId, null, null, null, true, false, "PHASE"));
+
+        assertThat(view.items()).filteredOn(i -> "TASK".equals(i.itemType()))
+                .singleElement()
+                .satisfies(item -> {
+                    assertThat(item.startDate()).isEqualTo(LocalDate.of(2026, 9, 1));
+                    assertThat(item.endDate()).isEqualTo(LocalDate.of(2026, 9, 10));
+                    assertThat(item.metadata()).containsEntry("hasManualOverride", true);
+                });
     }
 
     @Test

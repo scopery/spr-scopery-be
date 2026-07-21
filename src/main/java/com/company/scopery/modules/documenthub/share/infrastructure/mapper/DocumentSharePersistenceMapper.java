@@ -13,8 +13,8 @@ public class DocumentSharePersistenceMapper {
         DocumentShareJpaEntity e = new DocumentShareJpaEntity();
         e.setId(d.id()); e.setDocumentId(d.documentId()); e.setProjectId(d.projectId());
         e.setShareType(d.shareType()); e.setGranteeType(d.granteeType()); e.setGranteeId(d.granteeId());
-        e.setExpiresAt(d.expiresAt()); e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setExpiresAt(d.expiresAt()); e.setStatus(d.status().name());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }
