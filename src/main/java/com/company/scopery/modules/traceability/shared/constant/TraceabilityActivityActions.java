@@ -27,5 +27,24 @@ public final class TraceabilityActivityActions {
     public static final String REQUIREMENT_CRITERIA_CREATED = "REQUIREMENT_CRITERIA_CREATED";
     public static final String TRACE_LINK_CREATED = "TRACE_LINK_CREATED";
     public static final String TRACE_LINK_ARCHIVED = "TRACE_LINK_ARCHIVED";
+    public static final String FUNCTIONAL_ITEM_CREATED = "FUNCTIONAL_ITEM_CREATED";
+    public static final String FUNCTIONAL_ITEM_UPDATED = "FUNCTIONAL_ITEM_UPDATED";
+    public static final String FUNCTIONAL_ITEM_DELETED = "FUNCTIONAL_ITEM_DELETED";
+    public static final String NON_FUNCTIONAL_ITEM_CREATED = "NON_FUNCTIONAL_ITEM_CREATED";
+    public static final String NON_FUNCTIONAL_ITEM_UPDATED = "NON_FUNCTIONAL_ITEM_UPDATED";
+    public static final String NON_FUNCTIONAL_ITEM_DELETED = "NON_FUNCTIONAL_ITEM_DELETED";
+    public static final String BUSINESS_RULE_CREATED = "BUSINESS_RULE_CREATED";
+    public static final String BUSINESS_RULE_UPDATED = "BUSINESS_RULE_UPDATED";
+    public static final String BUSINESS_RULE_DELETED = "BUSINESS_RULE_DELETED";
+    public static final String STRUCTURE_RELATION_ADDED = "STRUCTURE_RELATION_ADDED";
+    public static final String STRUCTURE_RELATION_REMOVED = "STRUCTURE_RELATION_REMOVED";
+    public static final String FUNCTION_SCREEN_LINKED = "FUNCTION_SCREEN_LINKED";
+    public static final String FUNCTION_SCREEN_UNLINKED = "FUNCTION_SCREEN_UNLINKED";
+    public static final String FUNCTION_API_LINKED = "FUNCTION_API_LINKED";
+    public static final String FUNCTION_API_UNLINKED = "FUNCTION_API_UNLINKED";
+    public static final String SCREEN_COMPONENT_LINKED = "SCREEN_COMPONENT_LINKED";
+    public static final String SCREEN_COMPONENT_UNLINKED = "SCREEN_COMPONENT_UNLINKED";
+    public static final String NFR_SCOPE_TARGET_LINKED = "NFR_SCOPE_TARGET_LINKED";
+    public static final String NFR_SCOPE_TARGET_UNLINKED = "NFR_SCOPE_TARGET_UNLINKED";
     private TraceabilityActivityActions() {}
 }

@@ -16,8 +16,11 @@ public class RegistryScreenActionPersistenceMapper {
         e.setId(d.id()); e.setScreenId(d.screenId()); e.setWorkspaceId(d.workspaceId());
         e.setActionCode(d.actionCode()); e.setName(d.name()); e.setActionType(d.actionType());
         e.setDescription(d.description()); e.setDisplayOrder(d.displayOrder());
-        e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setStatus(d.status().name());
+        if (d.createdAt() != null) {
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

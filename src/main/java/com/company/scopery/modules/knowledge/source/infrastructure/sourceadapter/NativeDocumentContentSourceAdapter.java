@@ -40,7 +40,7 @@ public class NativeDocumentContentSourceAdapter {
                 projectId,
                 KnowledgeSourceType.NATIVE_DOCUMENT_CONTENT,
                 documentId,
-                null,
+                content.id(),
                 document.title(),
                 "und",
                 "INTERNAL",

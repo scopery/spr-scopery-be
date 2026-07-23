@@ -19,6 +19,11 @@ public class RegistryDataEntityQueryService {
         return repo.findByApplicationId(applicationId).stream().map(RegistryDataEntityResponse::from).toList();
     }
     @Transactional(readOnly = true)
+    public List<RegistryDataEntityResponse> listByModule(UUID workspaceId, UUID applicationId, UUID moduleId) {
+        authorization.requireWorkspaceView(workspaceId);
+        return repo.findByApplicationIdAndModuleId(applicationId, moduleId).stream().map(RegistryDataEntityResponse::from).toList();
+    }
+    @Transactional(readOnly = true)
     public RegistryDataEntityResponse get(UUID workspaceId, UUID dataEntityId) {
         authorization.requireWorkspaceView(workspaceId);
         return repo.findByIdAndWorkspaceId(dataEntityId, workspaceId).map(RegistryDataEntityResponse::from)

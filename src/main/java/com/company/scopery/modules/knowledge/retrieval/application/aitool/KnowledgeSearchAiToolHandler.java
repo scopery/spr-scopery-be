@@ -25,8 +25,8 @@ public class KnowledgeSearchAiToolHandler implements AiToolHandler {
     private static final String TOOL_VERSION = "v1";
     private static final int DEFAULT_TOP_K = 20;
     private static final int MAX_TOP_K = 20;
-    // snippet length per item — safe, bounded
-    private static final int MAX_SNIPPET_CHARS = 500;
+    // snippet length per item — 2000 chars covers typical document chunk without blowing AI context
+    private static final int MAX_SNIPPET_CHARS = 2000;
 
     private final HybridRetrievalService hybridRetrievalService;
 
@@ -72,13 +72,18 @@ public class KnowledgeSearchAiToolHandler implements AiToolHandler {
 
         try {
             RetrievalResponse response = hybridRetrievalService.search(searchQuery);
+            log.info("[KnowledgeSearch] query='{}' workspace={} project={} acl={} → {} results",
+                    query, context.workspaceId(), context.projectId(), context.aclTokens(), response.results().size());
             List<AiToolResultItem> items = mapToToolItems(response.results());
+            for (AiToolResultItem item : items) {
+                log.info("[KnowledgeSearch] chunk title='{}' snippetLen={} snippet='{}'",
+                        item.title(),
+                        item.safeSnippet() != null ? item.safeSnippet().length() : 0,
+                        item.safeSnippet() != null ? item.safeSnippet().substring(0, Math.min(200, item.safeSnippet().length())) : "NULL");
+            }
             boolean truncated = response.results().size() >= effectiveTopK;
-
-            // retrievalTraceId comes from the first item's citation (all items share one trace in practice)
             String retrievalTraceId = items.isEmpty() ? null
                     : extractRetrievalTraceId(response.results());
-
             return AiToolResult.success(items.size(), truncated, retrievalTraceId, items);
         } catch (Exception e) {
             log.warn("[KnowledgeSearchAiToolHandler] Retrieval failed: {}", e.getMessage());

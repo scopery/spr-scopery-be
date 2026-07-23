@@ -14,7 +14,7 @@ public class RequirementSourcePersistenceMapper {
         RequirementSourceJpaEntity e = new RequirementSourceJpaEntity();
         e.setId(d.id()); e.setRequirementId(d.requirementId()); e.setWorkspaceId(d.workspaceId());
         e.setSourceType(d.sourceType()); e.setSourceReference(d.sourceReference()); e.setDescription(d.description());
-        e.setStatus(d.status().name()); e.setVersion(d.version());
+        e.setStatus(d.status().name());
         if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
         return e;
     }

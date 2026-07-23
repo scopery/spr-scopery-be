@@ -16,6 +16,6 @@ public class CreateRegistryDataEntityAction {
     @Transactional
     public RegistryDataEntityResponse execute(CreateRegistryDataEntityCommand c) {
         authorization.requireWorkspaceCreate(c.workspaceId());
-        return RegistryDataEntityResponse.from(repo.save(RegistryDataEntity.create(c.applicationId(), c.workspaceId(), c.code().trim(), c.name().trim(), c.description(), c.tableName())));
+        return RegistryDataEntityResponse.from(repo.save(RegistryDataEntity.create(c.applicationId(), c.workspaceId(), c.moduleId(), c.code().trim(), c.name().trim(), c.description(), c.tableName())));
     }
 }

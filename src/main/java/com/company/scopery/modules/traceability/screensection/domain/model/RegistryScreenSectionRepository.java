@@ -4,4 +4,5 @@ public interface RegistryScreenSectionRepository {
     RegistryScreenSection save(RegistryScreenSection entity);
     Optional<RegistryScreenSection> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryScreenSection> findByScreenId(UUID screenId);
+    void delete(UUID id, UUID workspaceId);
 }

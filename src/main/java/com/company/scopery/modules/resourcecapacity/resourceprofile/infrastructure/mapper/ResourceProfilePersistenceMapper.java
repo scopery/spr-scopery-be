@@ -13,8 +13,14 @@ public class ResourceProfilePersistenceMapper {
         e.setLinkedExternalContactId(d.linkedExternalContactId()); e.setResourceType(d.resourceType().name());
         e.setDisplayName(d.displayName()); e.setPrimaryRoleId(d.primaryRoleId()); e.setDefaultCalendarId(d.defaultCalendarId());
         e.setDefaultRateCardId(d.defaultRateCardId()); e.setTimezone(d.timezone()); e.setStatus(d.status().name());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        e.setCreatedAt(d.createdAt()); return e;
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        // New entities: leave version/createdAt null so Persistable.isNew() → persist().
+        // Setting version=0 with an assigned id makes Hibernate treat the entity as detached.
+        if (d.createdAt() != null) {
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
+        return e;
     }
     public ResourceProfile toDomain(ResourceProfileJpaEntity e) {
         return new ResourceProfile(e.getId(), e.getWorkspaceId(), e.getLinkedUserId(), e.getLinkedWorkspaceMemberId(),

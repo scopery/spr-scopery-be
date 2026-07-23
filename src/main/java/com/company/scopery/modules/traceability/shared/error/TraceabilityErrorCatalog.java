@@ -32,7 +32,29 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     DATA_ENTITY_CODE_EXISTS("DATA_ENTITY_CODE_ALREADY_EXISTS", "Data entity code already exists", HttpStatus.CONFLICT),
     ACCESS_DENIED("TRACEABILITY_ACCESS_DENIED", "Traceability access denied", HttpStatus.FORBIDDEN),
     PROJECT_ARCHIVED("TRACEABILITY_PROJECT_ARCHIVED", "Project archived", HttpStatus.UNPROCESSABLE_ENTITY),
-    TITLE_REQUIRED("REQUIREMENT_TITLE_REQUIRED", "Title required", HttpStatus.BAD_REQUEST);
+    TITLE_REQUIRED("REQUIREMENT_TITLE_REQUIRED", "Title required", HttpStatus.BAD_REQUEST),
+    FUNCTIONAL_ITEM_NOT_FOUND("FUNCTIONAL_ITEM_NOT_FOUND", "Functional item not found", HttpStatus.NOT_FOUND),
+    FUNCTIONAL_ITEM_CODE_EXISTS("FUNCTIONAL_ITEM_CODE_ALREADY_EXISTS", "Functional item code already exists", HttpStatus.CONFLICT),
+    NON_FUNCTIONAL_ITEM_NOT_FOUND("NON_FUNCTIONAL_ITEM_NOT_FOUND", "Non-functional item not found", HttpStatus.NOT_FOUND),
+    NON_FUNCTIONAL_ITEM_CODE_EXISTS("NON_FUNCTIONAL_ITEM_CODE_ALREADY_EXISTS", "Non-functional item code already exists", HttpStatus.CONFLICT),
+    BUSINESS_RULE_NOT_FOUND("BUSINESS_RULE_NOT_FOUND", "Business rule not found", HttpStatus.NOT_FOUND),
+    BUSINESS_RULE_CODE_EXISTS("BUSINESS_RULE_CODE_ALREADY_EXISTS", "Business rule code already exists", HttpStatus.CONFLICT),
+    FUNC_ITEM_CUSTOM_PROP_NOT_FOUND("FUNC_ITEM_CUSTOM_PROP_NOT_FOUND", "Custom property not found", HttpStatus.NOT_FOUND),
+    FUNC_ITEM_CUSTOM_PROP_KEY_EXISTS("FUNC_ITEM_CUSTOM_PROP_KEY_EXISTS", "Custom property key already exists", HttpStatus.CONFLICT),
+    FUNC_ITEM_ANCHOR_NOT_FOUND("FUNC_ITEM_ANCHOR_NOT_FOUND", "Anchor not found", HttpStatus.NOT_FOUND),
+    FUNC_ITEM_ANCHOR_DUPLICATE("FUNC_ITEM_ANCHOR_DUPLICATE", "Duplicate anchor for this node", HttpStatus.CONFLICT),
+    STRUCTURE_RELATION_NOT_FOUND("STRUCTURE_RELATION_NOT_FOUND", "Structure relation not found", HttpStatus.NOT_FOUND),
+    STRUCTURE_RELATION_DUPLICATE("STRUCTURE_RELATION_DUPLICATE", "Relation between these nodes already exists", HttpStatus.CONFLICT),
+    FUNCTION_SCREEN_DUPLICATE("FUNCTION_SCREEN_DUPLICATE", "Screen already linked to this function", HttpStatus.CONFLICT),
+    FUNCTION_SCREEN_NOT_FOUND("FUNCTION_SCREEN_NOT_FOUND", "Function-screen link not found", HttpStatus.NOT_FOUND),
+    FUNCTION_API_DUPLICATE("FUNCTION_API_DUPLICATE", "API endpoint already linked to this function", HttpStatus.CONFLICT),
+    FUNCTION_API_NOT_FOUND("FUNCTION_API_NOT_FOUND", "Function-api link not found", HttpStatus.NOT_FOUND),
+    SCREEN_COMPONENT_DUPLICATE("SCREEN_COMPONENT_DUPLICATE", "Component already linked to this screen", HttpStatus.CONFLICT),
+    SCREEN_COMPONENT_NOT_FOUND("SCREEN_COMPONENT_NOT_FOUND", "Screen-component link not found", HttpStatus.NOT_FOUND),
+    MODULE_NOT_FOUND("APP_MODULE_NOT_FOUND_FOR_LINK", "Module not found", HttpStatus.NOT_FOUND),
+    STRUCTURE_RELATION_SELF_LOOP("STRUCTURE_RELATION_SELF_LOOP", "A node cannot be related to itself", HttpStatus.UNPROCESSABLE_ENTITY),
+    NFR_SCOPE_TARGET_DUPLICATE("NFR_SCOPE_TARGET_DUPLICATE", "This target is already linked to the NFR", HttpStatus.CONFLICT),
+    NFR_SCOPE_TARGET_NOT_FOUND("NFR_SCOPE_TARGET_NOT_FOUND", "NFR scope target link not found", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String defaultMessage;

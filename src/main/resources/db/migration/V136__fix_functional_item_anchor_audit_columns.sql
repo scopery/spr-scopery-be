@@ -1,0 +1,4 @@
+ALTER TABLE app_functional_item_anchor
+    ADD COLUMN updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ADD COLUMN updated_by  VARCHAR(255) NOT NULL DEFAULT 'SYSTEM',
+    ADD COLUMN version     INTEGER      NOT NULL DEFAULT 0;

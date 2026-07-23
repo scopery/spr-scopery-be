@@ -16,4 +16,5 @@ public final class KnowledgeTableNames {
     public static final String KNOWLEDGE_GRAPH_NODE = "knowledge_graph_node";
     public static final String KNOWLEDGE_GRAPH_EDGE = "knowledge_graph_edge";
     public static final String KNOWLEDGE_RETRIEVAL_TRACE = "knowledge_retrieval_trace";
+    public static final String KNOWLEDGE_QUERY_REWRITER_CONFIG = "knowledge_query_rewriter_config";
 }

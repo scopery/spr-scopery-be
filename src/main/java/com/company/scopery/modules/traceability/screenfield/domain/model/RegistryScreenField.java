@@ -8,8 +8,11 @@ public record RegistryScreenField(UUID id, UUID screenId, UUID sectionId, UUID w
     public static RegistryScreenField create(UUID screenId, UUID sectionId, UUID workspaceId, String fieldKey,
                                              String label, String fieldType, String description,
                                              boolean required, int displayOrder) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() stays true on first persist.
         return new RegistryScreenField(UUID.randomUUID(), screenId, sectionId, workspaceId, fieldKey, label, fieldType,
-                description, required, displayOrder, RegistryScreenFieldStatus.ACTIVE, 0, now, now);
+                description, required, displayOrder, RegistryScreenFieldStatus.ACTIVE, 0, null, null);
+    }
+    public RegistryScreenField withUpdated(String label, String fieldType, String description, boolean required, int displayOrder) {
+        return new RegistryScreenField(id, screenId, sectionId, workspaceId, fieldKey, label, fieldType, description, required, displayOrder, status, version, createdAt, Instant.now());
     }
 }

@@ -4,4 +4,5 @@ public interface RegistryAppModuleRepository {
     RegistryAppModule save(RegistryAppModule e);
     Optional<RegistryAppModule> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryAppModule> findByApplicationId(UUID applicationId);
+    void delete(UUID id, UUID workspaceId);
 }

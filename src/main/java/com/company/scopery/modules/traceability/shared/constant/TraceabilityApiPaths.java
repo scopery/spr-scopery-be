@@ -3,6 +3,11 @@ import com.company.scopery.common.constant.ApiPaths;
 public final class TraceabilityApiPaths {
     private static final String BASE = ApiPaths.BASE_PATH + "/projects/{projectId}";
     private static final String WS = ApiPaths.BASE_PATH + "/workspaces/{workspaceId}";
+    public static final String FUNCTIONAL_ITEMS = BASE + "/functional-items";
+    public static final String FUNCTIONAL_ITEM_BUSINESS_RULES = FUNCTIONAL_ITEMS + "/{functionalItemId}/business-rules";
+    public static final String FUNCTIONAL_ITEM_CUSTOM_PROPS = FUNCTIONAL_ITEMS + "/{functionalItemId}/custom-properties";
+    public static final String FUNCTIONAL_ITEM_ANCHORS = FUNCTIONAL_ITEMS + "/{functionalItemId}/anchors";
+    public static final String NON_FUNCTIONAL_ITEMS = BASE + "/non-functional-items";
     public static final String REQUIREMENTS = BASE + "/requirements";
     public static final String TRACE_LINKS = BASE + "/trace-links";
     public static final String APPLICATIONS = WS + "/applications";
@@ -22,6 +27,14 @@ public final class TraceabilityApiPaths {
     public static final String REQUIREMENT_VERSIONS = REQUIREMENTS + "/{requirementId}/versions";
     public static final String REQUIREMENT_SOURCES = REQUIREMENTS + "/{requirementId}/sources";
     public static final String REQUIREMENT_CRITERIA = REQUIREMENTS + "/{requirementId}/acceptance-criteria";
+    public static final String PROJECT_FUNCTIONAL_ITEM_ANCHORS = BASE + "/functional-item-anchors";
     public static final String REPORTS = BASE + "/reports";
+    public static final String STRUCTURE_RELATIONS = APPLICATIONS + "/{applicationId}/structure-relations";
+    public static final String FUNCTION_SCREENS = FUNCTIONAL_ITEMS + "/{functionalItemId}/screens";
+    public static final String FUNCTION_APIS = FUNCTIONAL_ITEMS + "/{functionalItemId}/api-endpoints";
+    public static final String SCREEN_COMPONENTS = SCREEN_ITEM + "/{screenId}/components";
+    public static final String OVERALL_STRUCTURE = APPLICATIONS + "/{applicationId}/overall-structure";
+    public static final String OVERALL_STRUCTURE_CANDIDATES = OVERALL_STRUCTURE + "/candidates";
+    public static final String NFR_SCOPE_TARGETS = NON_FUNCTIONAL_ITEMS + "/{nfrId}/scope-targets";
     private TraceabilityApiPaths() {}
 }

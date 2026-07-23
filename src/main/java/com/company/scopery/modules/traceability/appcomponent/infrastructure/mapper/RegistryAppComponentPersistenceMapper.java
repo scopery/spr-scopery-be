@@ -13,8 +13,11 @@ public class RegistryAppComponentPersistenceMapper {
         RegistryAppComponentJpaEntity e = new RegistryAppComponentJpaEntity();
         e.setId(d.id()); e.setApplicationId(d.applicationId()); e.setWorkspaceId(d.workspaceId());
         e.setCode(d.code()); e.setName(d.name()); e.setDescription(d.description());
-        e.setComponentType(d.componentType()); e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setComponentType(d.componentType()); e.setStatus(d.status().name());
+        if (d.createdAt() != null) {
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

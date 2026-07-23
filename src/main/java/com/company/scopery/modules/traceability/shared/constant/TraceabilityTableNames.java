@@ -15,5 +15,15 @@ public final class TraceabilityTableNames {
     public static final String REQUIREMENT_SOURCE = "requirements_requirement_source";
     public static final String REQUIREMENT_CRITERIA = "requirements_acceptance_criteria";
     public static final String TRACE_LINK = "traceability_link";
+    public static final String FUNCTIONAL_ITEM = "app_functional_item";
+    public static final String FUNCTIONAL_ITEM_CUSTOM_PROPERTY = "app_functional_item_custom_property";
+    public static final String FUNCTIONAL_ITEM_ANCHOR = "app_functional_item_anchor";
+    public static final String NON_FUNCTIONAL_ITEM = "app_non_functional_item";
+    public static final String BUSINESS_RULE = "app_business_rule";
+    public static final String STRUCTURE_RELATION = "app_structure_relation";
+    public static final String FUNCTION_SCREEN = "app_function_screen";
+    public static final String FUNCTION_API = "app_function_api";
+    public static final String SCREEN_COMPONENT = "app_screen_component";
+    public static final String NFR_SCOPE_TARGET = "app_nfr_scope_target";
     private TraceabilityTableNames() {}
 }

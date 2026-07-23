@@ -16,7 +16,7 @@ public class RequirementCriteriaPersistenceMapper {
         RequirementCriteriaJpaEntity e = new RequirementCriteriaJpaEntity();
         e.setId(d.id()); e.setRequirementId(d.requirementId()); e.setWorkspaceId(d.workspaceId());
         e.setDescription(d.description()); e.setAcceptanceType(d.acceptanceType().name());
-        e.setStatus(d.status().name()); e.setDisplayOrder(d.displayOrder()); e.setVersion(d.version());
+        e.setStatus(d.status().name()); e.setDisplayOrder(d.displayOrder());
         if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
         return e;
     }

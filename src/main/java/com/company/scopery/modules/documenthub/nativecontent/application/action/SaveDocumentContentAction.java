@@ -154,12 +154,52 @@ public class SaveDocumentContentAction {
 
     private String extractPlainText(String ast) {
         if (ast == null || ast.isBlank()) return "";
-        // Strip JSON structure to extract readable text — remove all JSON keys/values except string values
-        return ast.replaceAll("\"[^\"]*\"\\s*:\\s*", "")
-                  .replaceAll("[\\[\\]{}]", " ")
-                  .replaceAll("\"([^\"]*)\"", "$1")
-                  .replaceAll("\\s+", " ")
-                  .trim();
+        try {
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            var root = mapper.readTree(ast);
+            var sb = new StringBuilder();
+            collectText(root, sb);
+            return sb.toString().replaceAll("\\s+", " ").trim();
+        } catch (Exception e) {
+            // fallback: strip JSON punctuation
+            return ast.replaceAll("\"[^\"]*\"\\s*:\\s*[^,}\\]]+", "")
+                      .replaceAll("[\"\\[\\]{}:,]", " ")
+                      .replaceAll("\\s+", " ")
+                      .trim();
+        }
+    }
+
+    private void collectText(com.fasterxml.jackson.databind.JsonNode node, StringBuilder sb) {
+        if (node.isTextual()) {
+            String val = node.asText().trim();
+            if (!val.isEmpty()) {
+                if (sb.length() > 0) sb.append(" ");
+                sb.append(val);
+            }
+            return;
+        }
+        if (node.isObject()) {
+            // Only collect value of "text" key — skip metadata keys like "type", "id", "attrs"
+            com.fasterxml.jackson.databind.JsonNode textNode = node.get("text");
+            if (textNode != null && textNode.isTextual()) {
+                String val = textNode.asText().trim();
+                if (!val.isEmpty()) {
+                    if (sb.length() > 0) sb.append(" ");
+                    sb.append(val);
+                }
+            } else {
+                com.fasterxml.jackson.databind.JsonNode content = node.get("content");
+                if (content != null) collectText(content, sb);
+                com.fasterxml.jackson.databind.JsonNode children = node.get("children");
+                if (children != null) collectText(children, sb);
+            }
+            return;
+        }
+        if (node.isArray()) {
+            for (com.fasterxml.jackson.databind.JsonNode child : node) {
+                collectText(child, sb);
+            }
+        }
     }
 
     private int countWords(String plainText) {

@@ -8,8 +8,11 @@ public record RegistryScreen(UUID id, UUID applicationId, UUID projectId, String
                               String routePath, RegistryScreenStatus status, int version,
                               Instant createdAt, Instant updatedAt) {
     public static RegistryScreen create(UUID applicationId, UUID projectId, String code, String name, String routePath) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() stays true on first persist.
         return new RegistryScreen(UUID.randomUUID(), applicationId, projectId, code, name, routePath,
-                RegistryScreenStatus.ACTIVE, 0, now, now);
+                RegistryScreenStatus.ACTIVE, 0, null, null);
+    }
+    public RegistryScreen withUpdated(String name, String routePath) {
+        return new RegistryScreen(id, applicationId, projectId, code, name, routePath, status, version, createdAt, Instant.now());
     }
 }

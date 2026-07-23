@@ -18,4 +18,5 @@ public class JpaRegistryAppComponentRepository implements RegistryAppComponentRe
     @Override public List<RegistryAppComponent> findByApplicationId(UUID applicationId) {
         return springData.findByApplicationIdOrderByCreatedAtDesc(applicationId).stream().map(mapper::toDomain).toList();
     }
+    @Override public void delete(UUID id, UUID workspaceId) { springData.deleteByIdAndWorkspaceId(id, workspaceId); }
 }

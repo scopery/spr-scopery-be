@@ -60,7 +60,9 @@ public class KnowledgeIndexDefinitionPersistenceMapper {
         entity.setDefinitionStatus(domain.definitionStatus().name());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
-            entity.setVersion(domain.version());
+            if (domain.version() > 0) {
+                entity.setVersion(domain.version());
+            }
         }
         return entity;
     }

@@ -59,7 +59,7 @@ public class MessageController {
                 conversationId,
                 actorId,
                 workspaceId,
-                null, // projectId not required at this layer
+                request.sourceProjectId(),
                 request.content(),
                 request.idempotencyKey(),
                 request.modelProvider(),

@@ -44,7 +44,7 @@ public class CreateRequirementFromNoteAction {
         String reqType = (c.requirementType() == null || c.requirementType().isBlank()) ? "FUNCTIONAL" : c.requirementType().trim();
         String prio = (c.priority() == null || c.priority().isBlank()) ? "MEDIUM" : c.priority().trim();
         var req = createRequirement.execute(new CreateRequirementCommand(
-                c.projectId(), c.applicationId(), c.code(), t, d, reqType, prio));
+                c.projectId(), c.applicationId(), c.code(), t, d, reqType, prio, null, null));
         if (links.existsActive(c.meetingId(), "REQUIREMENT", req.id())) throw CollaborationExceptions.linkDuplicate();
         var link = links.save(MeetingArtifactLink.create(
                 note.workspaceId(), note.projectId(), note.meetingId(), note.agendaItemId(), note.id(), null,

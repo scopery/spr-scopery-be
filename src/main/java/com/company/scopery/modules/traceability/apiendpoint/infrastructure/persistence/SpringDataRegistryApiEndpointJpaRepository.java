@@ -4,4 +4,5 @@ import java.util.*;
 public interface SpringDataRegistryApiEndpointJpaRepository extends JpaRepository<RegistryApiEndpointJpaEntity, UUID> {
     Optional<RegistryApiEndpointJpaEntity> findByIdAndApplicationId(UUID id, UUID applicationId);
     List<RegistryApiEndpointJpaEntity> findByApplicationIdOrderByCreatedAtDesc(UUID applicationId);
+    void deleteByIdAndApplicationId(UUID id, UUID applicationId);
 }

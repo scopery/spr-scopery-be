@@ -1,6 +1,7 @@
 package com.company.scopery.modules.knowledge.retrieval.application.service;
 
 import com.company.scopery.modules.knowledge.indexing.infrastructure.embedding.EmbeddingProvider;
+import com.company.scopery.modules.knowledge.queryrewriter.application.service.KnowledgeQueryRewriterService;
 import com.company.scopery.modules.knowledge.retrieval.application.query.SearchKnowledgeQuery;
 import com.company.scopery.modules.knowledge.retrieval.application.response.CitationResponse;
 import com.company.scopery.modules.knowledge.retrieval.application.response.RetrievalResponse;
@@ -18,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,15 +49,41 @@ public class HybridRetrievalService {
                 kc.source_type     AS source_type,
                 kc.source_id       AS source_id,
                 ks.source_ref_id   AS source_ref_id,
-                ts_rank_cd(kc.search_vector, plainto_tsquery('simple', :queryText)) AS score
+                ts_rank_cd(kc.search_vector, plainto_tsquery('english', :queryText)) AS score
             FROM knowledge_chunk kc
             JOIN knowledge_source ks ON ks.id = kc.source_id
-            WHERE kc.search_vector @@ plainto_tsquery('simple', :queryText)
+            WHERE kc.search_vector @@ plainto_tsquery('english', :queryText)
               AND kc.workspace_id = :workspaceId::uuid
               AND (:projectId IS NULL OR kc.project_id = :projectId::uuid)
               AND kc.is_current = true
               AND (:hasAcl = false OR kc.acl_tokens && :aclTokens::text[])
             ORDER BY score DESC
+            LIMIT :limit
+            """;
+
+    /**
+     * Full-context fallback: return all current project chunks when lexical/vector both miss.
+     * Activates when query language doesn't match document language (e.g. Vietnamese query, English doc)
+     * and vector embeddings are unavailable.
+     */
+    private static final String PROJECT_FULL_CONTEXT_SQL = """
+            SELECT
+                kc.id              AS chunk_id,
+                kc.plain_text      AS content,
+                kc.chunk_ordinal   AS chunk_ordinal,
+                kc.title           AS title,
+                kc.app_route       AS app_route,
+                kc.source_type     AS source_type,
+                kc.source_id       AS source_id,
+                ks.source_ref_id   AS source_ref_id,
+                0.1                AS score
+            FROM knowledge_chunk kc
+            JOIN knowledge_source ks ON ks.id = kc.source_id
+            WHERE kc.workspace_id = :workspaceId::uuid
+              AND kc.project_id = :projectId::uuid
+              AND kc.is_current = true
+              AND (:hasAcl = false OR kc.acl_tokens && :aclTokens::text[])
+            ORDER BY kc.chunk_ordinal ASC
             LIMIT :limit
             """;
 
@@ -90,16 +116,19 @@ public class HybridRetrievalService {
     private final NamedParameterJdbcTemplate namedJdbc;
     private final EmbeddingProvider embeddingProvider;
     private final RetrievalTraceRepository traceRepository;
+    private final KnowledgeQueryRewriterService queryRewriterService;
     private final String embeddingModel;
 
     public HybridRetrievalService(
             NamedParameterJdbcTemplate namedJdbc,
             EmbeddingProvider embeddingProvider,
             RetrievalTraceRepository traceRepository,
+            KnowledgeQueryRewriterService queryRewriterService,
             @Value("${scopery.embedding.model:text-embedding-3-small}") String embeddingModel) {
         this.namedJdbc = namedJdbc;
         this.embeddingProvider = embeddingProvider;
         this.traceRepository = traceRepository;
+        this.queryRewriterService = queryRewriterService;
         this.embeddingModel = embeddingModel;
     }
 
@@ -112,24 +141,52 @@ public class HybridRetrievalService {
             return RetrievalResponse.empty(query.workspaceId(), query.projectId());
         }
 
+        String searchQuery = queryRewriterService.rewrite(normalizedQuery, query.workspaceId());
+
+        List<ScoredChunk> lexicalHits;
         try {
-            List<ScoredChunk> lexicalHits = lexicalSearch(normalizedQuery, query);
-            float[] queryEmbedding = embeddingProvider.embed(List.of(normalizedQuery), embeddingModel).get(0);
-            List<ScoredChunk> vectorHits = vectorSearch(queryEmbedding, query);
-
-            List<ScoredChunk> merged = rrf(lexicalHits, vectorHits, topK);
-            List<RetrievalResultItem> items = merged.stream().map(HybridRetrievalService::toResultItem).toList();
-
-            int durationMs = (int) (System.currentTimeMillis() - startMs);
-            persistTrace(query, lexicalHits.size(), vectorHits.size(), 0, items.size(), durationMs, "OK");
-            return new RetrievalResponse(query.workspaceId(), query.projectId(), items, durationMs);
-
+            lexicalHits = lexicalSearch(searchQuery, query);
         } catch (Exception e) {
-            log.error("Hybrid retrieval failed for workspace={}: {}", query.workspaceId(), e.getMessage());
+            log.error("Lexical retrieval failed for workspace={}: {}", query.workspaceId(), e.getMessage());
             int durationMs = (int) (System.currentTimeMillis() - startMs);
-            persistTrace(query, 0, 0, 0, 0, durationMs, "ERROR");
+            persistTrace(query, "LEXICAL", 0, 0, 0, 0, durationMs, "FAILED");
             return RetrievalResponse.empty(query.workspaceId(), query.projectId());
         }
+
+        List<ScoredChunk> vectorHits = List.of();
+        try {
+            float[] queryEmbedding = embeddingProvider.embed(List.of(searchQuery), embeddingModel).get(0);
+            vectorHits = vectorSearch(queryEmbedding, query);
+        } catch (Exception e) {
+            log.warn("Vector search unavailable for workspace={}, falling back to lexical only: {}", query.workspaceId(), e.getMessage());
+        }
+
+        boolean hasVector = !vectorHits.isEmpty();
+        boolean hasLexical = !lexicalHits.isEmpty();
+
+        List<ScoredChunk> merged;
+        String mode;
+        if (hasVector) {
+            mode = "HYBRID_RRF";
+            merged = rrf(lexicalHits, vectorHits, topK);
+        } else if (hasLexical) {
+            mode = "LEXICAL";
+            merged = lexicalHits.stream().limit(topK).toList();
+        } else if (query.projectId() != null) {
+            // Language-mismatch fallback: return all project chunks so AI has context
+            mode = "PROJECT_FULL_CONTEXT";
+            merged = projectFullContextSearch(query, topK);
+        } else {
+            mode = "LEXICAL";
+            merged = List.of();
+        }
+
+        List<RetrievalResultItem> items = merged.stream().map(HybridRetrievalService::toResultItem).toList();
+
+        int durationMs = (int) (System.currentTimeMillis() - startMs);
+        String traceStatus = items.isEmpty() ? "INSUFFICIENT_RESULTS" : "SUCCEEDED";
+        persistTrace(query, mode, lexicalHits.size(), vectorHits.size(), 0, items.size(), durationMs, traceStatus);
+        return new RetrievalResponse(query.workspaceId(), query.projectId(), items, durationMs);
     }
 
     private List<ScoredChunk> lexicalSearch(String queryText, SearchKnowledgeQuery query) {
@@ -144,6 +201,12 @@ public class HybridRetrievalService {
                 .addValue("embedding", embeddingToString(embedding))
                 .addValue("limit", VECTOR_CANDIDATES);
         return namedJdbc.query(VECTOR_SQL, params, ROW_MAPPER);
+    }
+
+    private List<ScoredChunk> projectFullContextSearch(SearchKnowledgeQuery query, int topK) {
+        MapSqlParameterSource params = buildBaseParams(query)
+                .addValue("limit", topK);
+        return namedJdbc.query(PROJECT_FULL_CONTEXT_SQL, params, ROW_MAPPER);
     }
 
     private MapSqlParameterSource buildBaseParams(SearchKnowledgeQuery query) {
@@ -185,13 +248,13 @@ public class HybridRetrievalService {
         return new RetrievalResultItem(scored.chunkId(), scored.content(), scored.score(), citation);
     }
 
-    private void persistTrace(SearchKnowledgeQuery query, int lexical, int vector, int graph,
+    private void persistTrace(SearchKnowledgeQuery query, String mode, int lexical, int vector, int graph,
                                int returned, int durationMs, String status) {
         try {
             Instant now = Instant.now();
             traceRepository.save(new RetrievalTrace(UUID.randomUUID(),
                     query.workspaceId(), query.projectId(), query.actorId(),
-                    sha256(query.query()), "HYBRID", lexical, vector, graph,
+                    sha256(query.query()), mode, lexical, vector, graph,
                     returned, durationMs, status, null,
                     now, now.plusSeconds(7 * 24 * 3600)));
         } catch (Exception e) {

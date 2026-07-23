@@ -13,8 +13,13 @@ public class RegistryAppModulePersistenceMapper {
         RegistryAppModuleJpaEntity e = new RegistryAppModuleJpaEntity();
         e.setId(d.id()); e.setApplicationId(d.applicationId()); e.setWorkspaceId(d.workspaceId());
         e.setCode(d.code()); e.setName(d.name()); e.setDescription(d.description());
-        e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setStatus(d.status().name());
+        // New entities: leave version/createdAt null so Persistable.isNew() → persist().
+        // Setting version=0 with an assigned id makes Hibernate treat the entity as detached.
+        if (d.createdAt() != null) {
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

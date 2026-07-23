@@ -98,6 +98,7 @@ public class SendMessageAction {
         quotaService.reserveTurn(cmd.actorId(), cmd.workspaceId());
 
         // 8. Submit async turn execution
+        UUID resolvedProjectId = cmd.projectId() != null ? cmd.projectId() : conv.projectId();
         AiAssistantTurnOrchestrator.TurnRequest turnReq = new AiAssistantTurnOrchestrator.TurnRequest(
                 conv.id(),
                 savedAssistant.id(),
@@ -105,7 +106,7 @@ public class SendMessageAction {
                 turnId,
                 cmd.actorId(),
                 cmd.workspaceId(),
-                cmd.projectId(),
+                resolvedProjectId,
                 cmd.content(),
                 properties.getPromptProfileCode(),
                 null, // modelDeploymentId — resolved by orchestrator

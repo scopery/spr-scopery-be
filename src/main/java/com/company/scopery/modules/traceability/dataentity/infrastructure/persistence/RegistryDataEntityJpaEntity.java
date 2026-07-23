@@ -9,6 +9,7 @@ public class RegistryDataEntityJpaEntity extends AuditableJpaEntity {
     @Id private UUID id;
     @Column(name = "application_id", nullable = false) private UUID applicationId;
     @Column(name = "workspace_id", nullable = false) private UUID workspaceId;
+    @Column(name = "module_id") private UUID moduleId;
     @Column(nullable = false) private String code;
     @Column(nullable = false) private String name;
     @Column(columnDefinition = "text") private String description;

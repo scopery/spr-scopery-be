@@ -1,11 +1,13 @@
 package com.company.scopery.modules.knowledge.source.infrastructure.persistence;
 
+import com.company.scopery.modules.knowledge.source.domain.enums.KnowledgeSourceStatus;
 import com.company.scopery.modules.knowledge.source.domain.enums.KnowledgeSourceType;
 import com.company.scopery.modules.knowledge.source.domain.model.KnowledgeSource;
 import com.company.scopery.modules.knowledge.source.domain.model.KnowledgeSourceRepository;
 import com.company.scopery.modules.knowledge.source.infrastructure.mapper.KnowledgeSourcePersistenceMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +58,11 @@ public class JpaKnowledgeSourceRepository implements KnowledgeSourceRepository {
         return springData.findByProjectId(projectId).stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public int markIndexed(UUID id, KnowledgeSourceStatus status, Instant indexedAt) {
+        return springData.markIndexed(id, status.name(), indexedAt);
     }
 
     @Override

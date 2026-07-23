@@ -17,4 +17,5 @@ public class JpaRegistryScreenActionRepository implements RegistryScreenActionRe
     @Override public List<RegistryScreenAction> findByScreenId(UUID screenId) {
         return springData.findByScreenIdOrderByDisplayOrderAsc(screenId).stream().map(mapper::toDomain).toList();
     }
+    @Override public void delete(UUID id, UUID workspaceId) { springData.deleteByIdAndWorkspaceId(id, workspaceId); }
 }

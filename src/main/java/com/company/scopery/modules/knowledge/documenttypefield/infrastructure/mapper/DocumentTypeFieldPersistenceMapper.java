@@ -45,7 +45,7 @@ public class DocumentTypeFieldPersistenceMapper {
         entity.setDefaultValueJson(domain.defaultValueJson());
         entity.setDisplayOrder(domain.displayOrder());
         entity.setStatus(domain.status().name());
-        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); entity.setVersion(domain.version()); }
+        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); if (domain.version() > 0) { entity.setVersion(domain.version()); } }
         return entity;
     }
 }

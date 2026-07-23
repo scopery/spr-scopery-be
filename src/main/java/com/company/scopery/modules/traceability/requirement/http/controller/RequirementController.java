@@ -29,7 +29,7 @@ public class RequirementController {
     }
     @PostMapping @Operation(summary="Create requirement")
     public ApiResponse<RequirementResponse> create(@PathVariable UUID projectId, @Valid @RequestBody CreateRequirementRequest r) {
-        return ApiResponse.success(create.execute(new CreateRequirementCommand(projectId, r.applicationId(), r.code(), r.title(), r.description(), r.requirementType(), r.priority())));
+        return ApiResponse.success(create.execute(new CreateRequirementCommand(projectId, r.applicationId(), r.code(), r.title(), r.description(), r.requirementType(), r.priority(), r.functionalItemId(), r.nonFunctionalItemId())));
     }
     @GetMapping @Operation(summary="List requirements")
     public ApiResponse<List<RequirementResponse>> list(@PathVariable UUID projectId){return ApiResponse.success(query.list(projectId));}
@@ -37,7 +37,7 @@ public class RequirementController {
     public ApiResponse<RequirementResponse> get(@PathVariable UUID projectId, @PathVariable UUID requirementId){return ApiResponse.success(query.get(projectId, requirementId));}
     @PatchMapping("/{requirementId}") @Operation(summary="Update requirement")
     public ApiResponse<RequirementResponse> update(@PathVariable UUID projectId, @PathVariable UUID requirementId, @RequestBody UpdateRequirementRequest r) {
-        return ApiResponse.success(update.execute(new UpdateRequirementCommand(requirementId, projectId, r.title(), r.description(), r.priority(), r.requirementType(), r.applicationId())));
+        return ApiResponse.success(update.execute(new UpdateRequirementCommand(requirementId, projectId, r.title(), r.description(), r.priority(), r.requirementType(), r.applicationId(), r.functionalItemId(), r.nonFunctionalItemId())));
     }
     @PostMapping("/{requirementId}/approve") @Operation(summary="Approve requirement")
     public ApiResponse<RequirementResponse> approve(@PathVariable UUID projectId, @PathVariable UUID requirementId){return ApiResponse.success(approve.execute(projectId, requirementId));}

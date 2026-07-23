@@ -9,5 +9,8 @@ public class RequirementJpaEntity extends AuditableJpaEntity {
     @Column(name="requirement_type", nullable=false) private String requirementType;
     @Column(nullable=false) private String priority; @Column(nullable=false) private String status;
     @Column(name="owner_user_id") private UUID ownerUserId; @Column(name="current_version_number", nullable=false) private int currentVersionNumber;
-    @Column(name="archived_at") private Instant archivedAt; @Column(name="archived_by") private UUID archivedBy; @Version private Integer version;
+    @Column(name="archived_at") private Instant archivedAt; @Column(name="archived_by") private UUID archivedBy;
+    @Column(name="functional_item_id") private UUID functionalItemId;
+    @Column(name="non_functional_item_id") private UUID nonFunctionalItemId;
+    @Version private Integer version;
 }

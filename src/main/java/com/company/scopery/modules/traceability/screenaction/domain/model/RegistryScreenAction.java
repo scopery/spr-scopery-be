@@ -7,8 +7,11 @@ public record RegistryScreenAction(UUID id, UUID screenId, UUID workspaceId, Str
                                    Instant createdAt, Instant updatedAt) {
     public static RegistryScreenAction create(UUID screenId, UUID workspaceId, String actionCode, String name,
                                               String actionType, String description, int displayOrder) {
-        Instant now = Instant.now();
+        // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() stays true on first persist.
         return new RegistryScreenAction(UUID.randomUUID(), screenId, workspaceId, actionCode, name, actionType,
-                description, displayOrder, RegistryScreenActionStatus.ACTIVE, 0, now, now);
+                description, displayOrder, RegistryScreenActionStatus.ACTIVE, 0, null, null);
+    }
+    public RegistryScreenAction withUpdated(String name, String actionType, String description, int displayOrder) {
+        return new RegistryScreenAction(id, screenId, workspaceId, actionCode, name, actionType, description, displayOrder, status, version, createdAt, Instant.now());
     }
 }

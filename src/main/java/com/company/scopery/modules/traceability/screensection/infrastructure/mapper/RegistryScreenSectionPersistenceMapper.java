@@ -14,8 +14,11 @@ public class RegistryScreenSectionPersistenceMapper {
         RegistryScreenSectionJpaEntity e = new RegistryScreenSectionJpaEntity();
         e.setId(d.id()); e.setScreenId(d.screenId()); e.setWorkspaceId(d.workspaceId());
         e.setName(d.name()); e.setDescription(d.description()); e.setDisplayOrder(d.displayOrder());
-        e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setStatus(d.status().name());
+        if (d.createdAt() != null) {
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

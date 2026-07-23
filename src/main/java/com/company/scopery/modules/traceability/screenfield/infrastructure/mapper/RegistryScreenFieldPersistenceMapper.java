@@ -16,8 +16,11 @@ public class RegistryScreenFieldPersistenceMapper {
         e.setId(d.id()); e.setScreenId(d.screenId()); e.setSectionId(d.sectionId());
         e.setWorkspaceId(d.workspaceId()); e.setFieldKey(d.fieldKey()); e.setLabel(d.label());
         e.setFieldType(d.fieldType()); e.setDescription(d.description()); e.setRequired(d.required());
-        e.setDisplayOrder(d.displayOrder()); e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setDisplayOrder(d.displayOrder()); e.setStatus(d.status().name());
+        if (d.createdAt() != null) {
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

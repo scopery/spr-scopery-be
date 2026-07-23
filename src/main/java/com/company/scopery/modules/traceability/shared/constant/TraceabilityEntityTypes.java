@@ -14,5 +14,15 @@ public final class TraceabilityEntityTypes {
     public static final String REQUIREMENT_SOURCE = "REQUIREMENT_SOURCE";
     public static final String REQUIREMENT_CRITERIA = "REQUIREMENT_CRITERIA";
     public static final String TRACE_LINK = "TRACE_LINK";
+    public static final String FUNCTIONAL_ITEM = "FUNCTIONAL_ITEM";
+    public static final String NON_FUNCTIONAL_ITEM = "NON_FUNCTIONAL_ITEM";
+    public static final String BUSINESS_RULE = "BUSINESS_RULE";
+    public static final String FUNCTIONAL_ITEM_CUSTOM_PROP = "FUNCTIONAL_ITEM_CUSTOM_PROP";
+    public static final String FUNCTIONAL_ITEM_ANCHOR = "FUNCTIONAL_ITEM_ANCHOR";
+    public static final String STRUCTURE_RELATION = "STRUCTURE_RELATION";
+    public static final String FUNCTION_SCREEN = "FUNCTION_SCREEN";
+    public static final String FUNCTION_API = "FUNCTION_API";
+    public static final String SCREEN_COMPONENT = "SCREEN_COMPONENT";
+    public static final String NFR_SCOPE_TARGET = "NFR_SCOPE_TARGET";
     private TraceabilityEntityTypes() {}
 }

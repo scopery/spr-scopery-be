@@ -177,6 +177,7 @@ public class KnowledgeChunkingService {
             case TASK -> taskTargetTokens;
             case DOCUMENT_VERSION, NATIVE_DOCUMENT_CONTENT -> documentTargetTokens;
             case MEETING_MINUTE -> meetingTargetTokens;
+            case FUNCTIONAL_ITEM, NON_FUNCTIONAL_ITEM, APP_MODULE, REQUIREMENT -> taskTargetTokens;
         };
     }
 
@@ -185,6 +186,7 @@ public class KnowledgeChunkingService {
             case TASK -> 800;
             case DOCUMENT_VERSION, NATIVE_DOCUMENT_CONTENT -> 1000;
             case MEETING_MINUTE -> 800;
+            case FUNCTIONAL_ITEM, NON_FUNCTIONAL_ITEM, APP_MODULE, REQUIREMENT -> 800;
         };
     }
 
@@ -193,6 +195,7 @@ public class KnowledgeChunkingService {
             case TASK -> 0;
             case DOCUMENT_VERSION, NATIVE_DOCUMENT_CONTENT -> 120;
             case MEETING_MINUTE -> 80;
+            case FUNCTIONAL_ITEM, NON_FUNCTIONAL_ITEM, APP_MODULE, REQUIREMENT -> 0;
         };
     }
 }

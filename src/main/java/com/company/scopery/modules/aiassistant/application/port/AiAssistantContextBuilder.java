@@ -52,9 +52,15 @@ public class AiAssistantContextBuilder {
 
         contextSnapshotRepository.save(snapshot);
 
+        List<String> aclTokens = new java.util.ArrayList<>();
+        aclTokens.add("workspace:" + workspaceId);
+        if (projectId != null) {
+            aclTokens.add("project:" + projectId);
+        }
+
         return new AiResolvedContext(
                 actorId, workspaceId, projectId,
-                List.of(),
+                aclTokens,
                 permissionSignature, contextHash,
                 snapshot);
     }

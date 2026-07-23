@@ -15,8 +15,8 @@ public class RegistryApplicationPersistenceMapper {
         e.setDescription(d.description()); e.setStatus(d.status().name()); e.setOwnerUserId(d.ownerUserId());
         // Only stamp audit/version on updates — null createdAt keeps Persistable.isNew() true for INSERT.
         if (d.createdAt() != null) {
-            e.setCreatedAt(d.createdAt());
             e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
         }
         return e;
     }

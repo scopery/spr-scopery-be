@@ -4,4 +4,5 @@ import java.util.*;
 public interface SpringDataRegistryScreenActionJpaRepository extends JpaRepository<RegistryScreenActionJpaEntity, UUID> {
     Optional<RegistryScreenActionJpaEntity> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryScreenActionJpaEntity> findByScreenIdOrderByDisplayOrderAsc(UUID screenId);
+    void deleteByIdAndWorkspaceId(UUID id, UUID workspaceId);
 }

@@ -4,4 +4,5 @@ public interface RegistryAppComponentRepository {
     RegistryAppComponent save(RegistryAppComponent e);
     Optional<RegistryAppComponent> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryAppComponent> findByApplicationId(UUID applicationId);
+    void delete(UUID id, UUID workspaceId);
 }

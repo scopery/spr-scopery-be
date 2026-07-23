@@ -59,7 +59,7 @@ public class DocumentTypePersistenceMapper {
         entity.setArchivedBy(domain.archivedBy());
         entity.setDeletedAt(domain.deletedAt());
         entity.setDeletedBy(domain.deletedBy());
-        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); entity.setVersion(domain.version()); }
+        if (domain.createdAt() != null) { entity.setCreatedAt(domain.createdAt()); if (domain.version() > 0) { entity.setVersion(domain.version()); } }
         return entity;
     }
 }

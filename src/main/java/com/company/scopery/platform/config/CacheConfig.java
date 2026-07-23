@@ -18,6 +18,7 @@ public class CacheConfig {
 
     public static final String IAM_RIGHTS = "iam-rights";
     public static final String IAM_AUTH_RESOURCES = "iam-auth-resources";
+    public static final String AI_KNOWLEDGE_REVISION = "ai-knowledge-revision";
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
@@ -32,8 +33,9 @@ public class CacheConfig {
                 .entryTtl(Duration.ofMinutes(5));
 
         Map<String, RedisCacheConfiguration> perCacheConfig = Map.of(
-                IAM_RIGHTS,          defaultConfig.entryTtl(Duration.ofMinutes(30)),
-                IAM_AUTH_RESOURCES,  defaultConfig.entryTtl(Duration.ofMinutes(10))
+                IAM_RIGHTS,               defaultConfig.entryTtl(Duration.ofMinutes(30)),
+                IAM_AUTH_RESOURCES,       defaultConfig.entryTtl(Duration.ofMinutes(10)),
+                AI_KNOWLEDGE_REVISION,    defaultConfig.entryTtl(Duration.ofSeconds(60))
         );
 
         return RedisCacheManager.builder(connectionFactory)

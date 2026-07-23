@@ -37,7 +37,9 @@ public class KnowledgeGraphEdgePersistenceMapper {
         entity.setEdgeStatus(domain.edgeStatus().name());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
-            entity.setVersion(domain.version());
+            if (domain.version() > 0) {
+                entity.setVersion(domain.version());
+            }
         }
         return entity;
     }

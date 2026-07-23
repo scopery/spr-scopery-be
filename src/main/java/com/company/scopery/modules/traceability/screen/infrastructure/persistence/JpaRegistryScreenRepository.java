@@ -17,4 +17,6 @@ public class JpaRegistryScreenRepository implements RegistryScreenRepository {
     @Override public List<RegistryScreen> findByApplicationId(UUID applicationId) {
         return springData.findByApplicationIdOrderByCreatedAtDesc(applicationId).stream().map(mapper::toDomain).toList();
     }
+    @Override public void delete(UUID id, UUID applicationId) { springData.deleteByIdAndApplicationId(id, applicationId); }
+    @Override public boolean existsById(UUID id) { return springData.existsById(id); }
 }

@@ -19,7 +19,7 @@ public class PostgresKnowledgeIndexService {
     private static final String UPDATE_SQL = """
             UPDATE knowledge_chunk SET
                 embedding      = CAST(? AS vector),
-                search_vector  = to_tsvector('simple', ?),
+                search_vector  = to_tsvector('english', ?),
                 title          = ?,
                 language       = ?,
                 workspace_id   = CAST(? AS uuid),

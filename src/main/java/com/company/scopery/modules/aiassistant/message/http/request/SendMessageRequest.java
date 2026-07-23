@@ -12,5 +12,6 @@ public record SendMessageRequest(
         String modelName,
         String pageCode,
         String entityType,
-        UUID entityId
+        UUID entityId,
+        UUID sourceProjectId
 ) {}

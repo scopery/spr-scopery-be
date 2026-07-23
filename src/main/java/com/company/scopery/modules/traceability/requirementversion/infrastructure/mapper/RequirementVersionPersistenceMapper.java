@@ -14,7 +14,7 @@ public class RequirementVersionPersistenceMapper {
         RequirementVersionJpaEntity e = new RequirementVersionJpaEntity();
         e.setId(d.id()); e.setRequirementId(d.requirementId()); e.setWorkspaceId(d.workspaceId());
         e.setVersionNumber(d.versionNumber()); e.setTitle(d.title()); e.setDescription(d.description());
-        e.setChangeSummary(d.changeSummary()); e.setCreatedByUserId(d.createdByUserId()); e.setVersion(d.version());
+        e.setChangeSummary(d.changeSummary()); e.setCreatedByUserId(d.createdByUserId());
         if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
         return e;
     }

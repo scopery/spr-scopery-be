@@ -27,6 +27,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -104,13 +105,19 @@ public class KnowledgeSourceIndexingService {
 
         List<String> texts = savedChunks.stream().map(KnowledgeChunk::plainText).toList();
         String modelCode = resolveModelCode();
-        List<float[]> embeddings = embeddingProvider.embed(texts, modelCode);
+        List<float[]> embeddings;
+        try {
+            embeddings = embeddingProvider.embed(texts, modelCode);
+        } catch (Exception e) {
+            log.warn("Embedding unavailable for source {}, indexing without vectors: {}", sourceId, e.getMessage());
+            embeddings = Collections.nCopies(texts.size(), new float[0]);
+        }
 
         List<KnowledgeChunkIndexRecord> indexRecords =
                 buildIndexRecords(source, savedChunks, embeddings, snapshot);
         postgresIndexService.bulkIndex(indexRecords);
 
-        source = sources.save(source.withStatus(KnowledgeSourceStatus.INDEXED, Instant.now()));
+        sources.markIndexed(sourceId, KnowledgeSourceStatus.INDEXED, Instant.now());
 
         upsertGraphNode(source, snapshot);
 
@@ -228,6 +235,7 @@ public class KnowledgeSourceIndexingService {
             case TASK -> GraphNodeType.TASK;
             case DOCUMENT_VERSION, NATIVE_DOCUMENT_CONTENT -> GraphNodeType.DOCUMENT_VERSION;
             case MEETING_MINUTE -> GraphNodeType.MEETING_MINUTE;
+            case FUNCTIONAL_ITEM, NON_FUNCTIONAL_ITEM, APP_MODULE, REQUIREMENT -> null;
         };
     }
 
