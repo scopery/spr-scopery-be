@@ -59,7 +59,7 @@ public class AdminAiAssistantWorkspaceConfigController {
     public ResponseEntity<ApiResponse<AiAssistantWorkspaceConfigResponse>> getWorkspaceConfig(
             @PathVariable UUID workspaceId) {
 
-        AiAssistantWorkspaceConfigResponse response = queryService.getByWorkspaceId(workspaceId);
+        AiAssistantWorkspaceConfigResponse response = queryService.findByWorkspaceId(workspaceId).orElse(null);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

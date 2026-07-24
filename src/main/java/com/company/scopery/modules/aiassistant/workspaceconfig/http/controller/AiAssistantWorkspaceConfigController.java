@@ -30,7 +30,7 @@ public class AiAssistantWorkspaceConfigController {
     public ResponseEntity<ApiResponse<AiAssistantWorkspaceConfigResponse>> getWorkspaceConfig(
             @RequestHeader(value = "X-Workspace-Id", required = false) UUID workspaceId) {
 
-        AiAssistantWorkspaceConfigResponse response = queryService.getByWorkspaceId(workspaceId);
+        AiAssistantWorkspaceConfigResponse response = queryService.findByWorkspaceId(workspaceId).orElse(null);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

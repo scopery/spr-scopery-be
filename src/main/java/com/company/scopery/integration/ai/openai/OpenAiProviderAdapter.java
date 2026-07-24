@@ -16,10 +16,13 @@ public class OpenAiProviderAdapter implements AiProviderAdapter {
 
     private final OpenAiClient client;
     private final ProviderSecretResolver providerSecretResolver;
+    private final String envApiKey;
 
-    public OpenAiProviderAdapter(OpenAiClient client, ProviderSecretResolver providerSecretResolver) {
+    public OpenAiProviderAdapter(OpenAiClient client, ProviderSecretResolver providerSecretResolver,
+                                  OpenAiProperties properties) {
         this.client = client;
         this.providerSecretResolver = providerSecretResolver;
+        this.envApiKey = properties.apiKey();
     }
 
     @Override
@@ -29,7 +32,14 @@ public class OpenAiProviderAdapter implements AiProviderAdapter {
 
     @Override
     public AiProviderResponse call(AiProviderRequest request) {
-        String apiKey = providerSecretResolver.resolveApiKey(request.providerId());
+        String apiKey;
+        if (request.providerId() != null) {
+            apiKey = providerSecretResolver.resolveApiKey(request.providerId());
+        } else if (envApiKey != null && !envApiKey.isBlank()) {
+            apiKey = envApiKey;
+        } else {
+            apiKey = providerSecretResolver.resolveApiKeyByProviderCode(SUPPORTED_PROVIDER_CODE);
+        }
 
         OpenAiResponsesResponse response;
         try {

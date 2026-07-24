@@ -12,4 +12,10 @@ public interface AiGuideDefinitionRepository {
             String pageCode, String fieldCode, String actionCode, String locale, String status);
 
     List<AiGuideDefinition> findByPageCodeAndLocaleAndStatus(String pageCode, String locale, String status);
+
+    List<AiGuideDefinition> findAll();
+
+    AiGuideDefinition save(AiGuideDefinition guide);
+
+    void retireById(UUID id);
 }

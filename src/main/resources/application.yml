@@ -51,7 +51,7 @@ scopery:
     window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
 
   jwt:
-    secret: ${JWT_SECRET:}
+    secret: ${JWT_SECRET:scopery-dev-jwt-secret-key-32chars-minimum-length}
     expiration-ms: ${JWT_EXPIRATION_MS:900000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
     cookie-secure: ${JWT_COOKIE_SECURE:true}

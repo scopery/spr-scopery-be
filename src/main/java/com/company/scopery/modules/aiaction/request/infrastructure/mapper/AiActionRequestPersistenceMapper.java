@@ -26,6 +26,7 @@ public class AiActionRequestPersistenceMapper {
         entity.setIdempotencyKey(domain.idempotencyKey());
         entity.setRequestHash(domain.requestHash());
         entity.setLatestPlanId(domain.latestPlanId());
+        entity.setRequestedActionsJson(domain.requestedActionsJson());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
         }
@@ -49,6 +50,7 @@ public class AiActionRequestPersistenceMapper {
                 entity.getIdempotencyKey(),
                 entity.getRequestHash(),
                 entity.getLatestPlanId(),
+                entity.getRequestedActionsJson(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

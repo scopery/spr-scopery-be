@@ -64,9 +64,10 @@ public class AiConversation {
                                         ConversationType type, CapabilityLevel level,
                                         UUID assistantAgentId, String title) {
         Instant now = Instant.now();
+        String resolvedTitle = (title != null && !title.isBlank()) ? title : "New conversation";
         return new AiConversation(UUID.randomUUID(), workspaceId, projectId, ownerUserId,
                 type, level, assistantAgentId, ConversationStatus.ACTIVE,
-                title, TitleSource.AUTO, "AI_ASSISTANT_DEFAULT_180D",
+                resolvedTitle, TitleSource.AUTO, "AI_ASSISTANT_DEFAULT_180D",
                 null, null, null, null, now, null, now, null, 0L);
     }
 

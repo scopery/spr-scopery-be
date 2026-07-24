@@ -1,6 +1,7 @@
 package com.company.scopery.integration.ai.openai;
 
 import com.company.scopery.integration.ai.AiChatMessage;
+import com.company.scopery.integration.ai.AiLlmToolDefinition;
 import com.company.scopery.integration.ai.AiStreamingProviderPort;
 import com.company.scopery.integration.ai.AiStreamingRequest;
 import com.company.scopery.integration.ai.StreamDeltaCallback;
@@ -105,9 +106,11 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
     }
 
     private void processStream(BufferedReader reader, StreamDeltaCallback callback) {
-        StringBuilder accumulatedText = new StringBuilder();
         Integer inputTokens = null;
         Integer outputTokens = null;
+
+        // tool_calls accumulator: index → [id, name, arguments StringBuilder]
+        Map<Integer, String[]> toolCallAccumulator = new HashMap<>();
 
         try {
             String line;
@@ -129,15 +132,41 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
                     JsonNode choice = choices.get(0);
                     JsonNode delta = choice.path("delta");
                     String finishReason = choice.path("finish_reason").asText(null);
-                    boolean isDone = "stop".equals(finishReason) || "length".equals(finishReason)
+
+                    // Accumulate tool_call argument chunks
+                    JsonNode toolCallsNode = delta.path("tool_calls");
+                    if (toolCallsNode.isArray()) {
+                        for (JsonNode tcNode : toolCallsNode) {
+                            int idx = tcNode.path("index").asInt(0);
+                            String[] entry = toolCallAccumulator.computeIfAbsent(idx, k -> new String[]{"", "", ""});
+                            // index 0 = id, 1 = name, 2 = accumulated arguments
+                            String tcId = tcNode.path("id").asText(null);
+                            if (tcId != null && !tcId.isBlank()) entry[0] = tcId;
+                            JsonNode fn = tcNode.path("function");
+                            String fnName = fn.path("name").asText(null);
+                            if (fnName != null && !fnName.isBlank()) entry[1] = fnName;
+                            String argsDelta = fn.path("arguments").asText(null);
+                            if (argsDelta != null) entry[2] = entry[2] + argsDelta;
+                        }
+                    }
+
+                    boolean isToolCallsFinish = "tool_calls".equals(finishReason);
+                    boolean isTextDone = "stop".equals(finishReason) || "length".equals(finishReason)
                             || "content_filter".equals(finishReason);
 
-                    String content = delta.path("content").asText(null);
-                    if (content != null && !content.isEmpty()) {
-                        accumulatedText.append(content);
-                        callback.onDelta(content, isDone, finishReason, null, null);
-                    } else if (isDone) {
+                    if (isToolCallsFinish) {
+                        // Emit completed tool calls
+                        for (String[] entry : toolCallAccumulator.values()) {
+                            callback.onToolCall(entry[0], entry[1], entry[2]);
+                        }
                         callback.onDelta("", true, finishReason, inputTokens, outputTokens);
+                    } else {
+                        String content = delta.path("content").asText(null);
+                        if (content != null && !content.isEmpty()) {
+                            callback.onDelta(content, isTextDone, finishReason, null, null);
+                        } else if (isTextDone) {
+                            callback.onDelta("", true, finishReason, inputTokens, outputTokens);
+                        }
                     }
                 }
             }
@@ -170,6 +199,22 @@ public class OpenAiStreamingProviderAdapter implements AiStreamingProviderPort {
             messages.add(Map.of("role", msg.role(), "content", msg.content()));
         }
         body.put("messages", messages);
+
+        if (request.tools() != null && !request.tools().isEmpty()) {
+            List<Map<String, Object>> tools = new ArrayList<>();
+            for (AiLlmToolDefinition tool : request.tools()) {
+                tools.add(Map.of(
+                        "type", "function",
+                        "function", Map.of(
+                                "name", tool.name(),
+                                "description", tool.description(),
+                                "parameters", tool.parameters()
+                        )
+                ));
+            }
+            body.put("tools", tools);
+            body.put("tool_choice", "auto");
+        }
 
         return body;
     }

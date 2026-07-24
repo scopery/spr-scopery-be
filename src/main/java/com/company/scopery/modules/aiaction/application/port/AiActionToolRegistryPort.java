@@ -17,4 +17,7 @@ public interface AiActionToolRegistryPort {
     List<AiActionToolPolicy> listActivePolicies(AiActionInvocationScope scope);
 
     List<AiActionToolPolicy> listAllActivePolicies();
+
+    /** Returns all active policies callable by the LLM (LLM_CALLABLE + LLM_CALLABLE_READ_ONLY). */
+    List<AiActionToolPolicy> listLlmCallablePolicies();
 }

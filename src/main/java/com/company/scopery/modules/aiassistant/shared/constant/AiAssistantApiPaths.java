@@ -13,6 +13,8 @@ public final class AiAssistantApiPaths {
     public static final String WORKSPACE_CONFIG    = BASE + "/workspace-config";
     public static final String ADMIN_WORKSPACE_CONFIG         = "/api/v1/admin/ai-assistant/workspace-configs";
     public static final String ADMIN_WORKSPACE_CONFIG_BY_ID   = "/api/v1/admin/ai-assistant/workspace-configs/{workspaceId}";
+    public static final String ADMIN_GUIDES                   = "/api/v1/admin/ai-assistant/guides";
+    public static final String ADMIN_GUIDE_BY_ID              = "/api/v1/admin/ai-assistant/guides/{id}";
 
     private AiAssistantApiPaths() {}
 }

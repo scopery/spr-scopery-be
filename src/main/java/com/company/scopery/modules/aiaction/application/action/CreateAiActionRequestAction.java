@@ -3,8 +3,6 @@ package com.company.scopery.modules.aiaction.application.action;
 import com.company.scopery.modules.aiaction.application.command.CreateAiActionRequestCommand;
 import com.company.scopery.modules.aiaction.application.port.AiActionPhase21CompatibilityPort;
 import com.company.scopery.modules.aiaction.application.port.AiActionPhase43SuggestionPort;
-import com.company.scopery.modules.aiaction.application.port.AiActionRequestedAction;
-import com.company.scopery.modules.aiaction.application.port.AiActionSuggestionData;
 import com.company.scopery.modules.aiaction.application.response.AiActionRequestResponse;
 import com.company.scopery.modules.aiaction.request.domain.enums.AiActionOriginType;
 import com.company.scopery.modules.aiaction.request.domain.model.AiActionRequest;
@@ -16,29 +14,34 @@ import com.company.scopery.modules.aiaction.shared.error.AiActionExceptions;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Optional;
 
 @Component
 public class CreateAiActionRequestAction {
 
+
     private final AiActionRequestRepository requestRepository;
     private final AiActionPhase43SuggestionPort phase43SuggestionPort;
     private final AiActionPhase21CompatibilityPort phase21CompatibilityPort;
     private final AiActionActivityLogger activityLogger;
+    private final ObjectMapper objectMapper;
 
     public CreateAiActionRequestAction(AiActionRequestRepository requestRepository,
                                         AiActionPhase43SuggestionPort phase43SuggestionPort,
                                         AiActionPhase21CompatibilityPort phase21CompatibilityPort,
-                                        AiActionActivityLogger activityLogger) {
+                                        AiActionActivityLogger activityLogger,
+                                        ObjectMapper objectMapper) {
         this.requestRepository = requestRepository;
         this.phase43SuggestionPort = phase43SuggestionPort;
         this.phase21CompatibilityPort = phase21CompatibilityPort;
         this.activityLogger = activityLogger;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -62,6 +65,15 @@ public class CreateAiActionRequestAction {
         // Resolve actions if SUGGESTION or PHASE21_LEGACY origin
         resolveActionsIfNeeded(command);
 
+        String requestedActionsJson = null;
+        if (command.requestedActions() != null && !command.requestedActions().isEmpty()) {
+            try {
+                requestedActionsJson = objectMapper.writeValueAsString(command.requestedActions());
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to serialize requestedActions", e);
+            }
+        }
+
         AiActionRequest request = AiActionRequest.create(
                 command.workspaceId(), command.projectId(), command.actorId(),
                 command.originType(), command.originSuggestionRef(),
@@ -69,7 +81,7 @@ public class CreateAiActionRequestAction {
                 command.originMessageId() != null ? command.originMessageId().toString() : null,
                 command.originTurnId() != null ? command.originTurnId().toString() : null,
                 command.legacyPhase21SuggestionId(), command.intentSummary(),
-                command.idempotencyKey(), requestHash
+                command.idempotencyKey(), requestHash, requestedActionsJson
         );
 
         AiActionRequest saved = requestRepository.save(request);

@@ -50,4 +50,24 @@ public class JpaAiGuideDefinitionRepository implements AiGuideDefinitionReposito
                 )
         ).stream().map(mapper::toDomain).toList();
     }
+
+    @Override
+    public List<AiGuideDefinition> findAll() {
+        return springDataRepository.findAll().stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public AiGuideDefinition save(AiGuideDefinition guide) {
+        AiGuideDefinitionJpaEntity entity = mapper.toJpaEntity(guide);
+        AiGuideDefinitionJpaEntity saved = springDataRepository.saveAndFlush(entity);
+        return mapper.toDomain(saved);
+    }
+
+    @Override
+    public void retireById(UUID id) {
+        springDataRepository.findById(id).ifPresent(entity -> {
+            entity.setStatus("RETIRED");
+            springDataRepository.saveAndFlush(entity);
+        });
+    }
 }

@@ -1,8 +1,23 @@
 package com.company.scopery.modules.aiassistant.application.orchestrator;
 
 import com.company.scopery.integration.ai.AiChatMessage;
+import com.company.scopery.integration.ai.AiLlmToolDefinition;
 import com.company.scopery.integration.ai.AiStreamingProviderAdapterRegistry;
 import com.company.scopery.integration.ai.AiStreamingRequest;
+import com.company.scopery.integration.ai.StreamDeltaCallback;
+import com.company.scopery.modules.aiaction.application.action.BuildAiActionPlanAction;
+import com.company.scopery.modules.aiaction.application.action.CreateAiActionRequestAction;
+import com.company.scopery.modules.aiaction.application.command.BuildAiActionPlanCommand;
+import com.company.scopery.modules.aiaction.application.command.CreateAiActionRequestCommand;
+import com.company.scopery.modules.aiaction.application.port.AiActionRequestedAction;
+import com.company.scopery.modules.aiaction.application.port.AiActionToolAdapter;
+import com.company.scopery.modules.aiaction.application.port.AiActionToolRegistryPort;
+import com.company.scopery.modules.aiaction.application.response.AiActionPlanResponse;
+import com.company.scopery.modules.aiaction.application.response.AiActionRequestResponse;
+import com.company.scopery.modules.aiaction.request.domain.enums.AiActionOriginType;
+import com.company.scopery.modules.aiaction.tool.domain.model.AiActionToolPolicy;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.company.scopery.modules.aiagent.tool.application.port.AiToolExecutionContext;
 import com.company.scopery.modules.aiagent.tool.application.port.AiToolHandlerRegistry;
 import com.company.scopery.modules.aiagent.tool.application.port.AiToolResult;
@@ -91,6 +106,10 @@ public class AiAssistantTurnOrchestrator {
     private final KnowledgeRevisionService knowledgeRevisionService;
     private final RetrievalCacheService retrievalCacheService;
     private final ProjectContextSnapshotService projectContextSnapshotService;
+    private final AiActionToolRegistryPort aiActionToolRegistryPort;
+    private final CreateAiActionRequestAction createAiActionRequestAction;
+    private final BuildAiActionPlanAction buildAiActionPlanAction;
+    private final ObjectMapper objectMapper;
 
     public AiAssistantTurnOrchestrator(AiMessageRepository messageRepository,
                                        AiConversationRepository conversationRepository,
@@ -111,7 +130,11 @@ public class AiAssistantTurnOrchestrator {
                                        AiAssistantIntentClassificationService intentClassificationService,
                                        KnowledgeRevisionService knowledgeRevisionService,
                                        RetrievalCacheService retrievalCacheService,
-                                       ProjectContextSnapshotService projectContextSnapshotService) {
+                                       ProjectContextSnapshotService projectContextSnapshotService,
+                                       AiActionToolRegistryPort aiActionToolRegistryPort,
+                                       CreateAiActionRequestAction createAiActionRequestAction,
+                                       BuildAiActionPlanAction buildAiActionPlanAction,
+                                       ObjectMapper objectMapper) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.toolCallRepository = toolCallRepository;
@@ -132,6 +155,10 @@ public class AiAssistantTurnOrchestrator {
         this.knowledgeRevisionService = knowledgeRevisionService;
         this.retrievalCacheService = retrievalCacheService;
         this.projectContextSnapshotService = projectContextSnapshotService;
+        this.aiActionToolRegistryPort = aiActionToolRegistryPort;
+        this.createAiActionRequestAction = createAiActionRequestAction;
+        this.buildAiActionPlanAction = buildAiActionPlanAction;
+        this.objectMapper = objectMapper;
     }
 
     public record TurnRequest(
@@ -148,6 +175,8 @@ public class AiAssistantTurnOrchestrator {
             String modelProvider,
             String modelName
     ) {}
+
+    private record CollectedToolCall(String toolCallId, String functionName, String argumentsJson) {}
 
     // NOT @Transactional — see class-level Javadoc
     public void executeTurn(TurnRequest req) {
@@ -419,10 +448,18 @@ public class AiAssistantTurnOrchestrator {
                 return;
             }
 
+            // J2. Load LLM-callable action tools and append capability block to system prompt
+            List<AiActionToolPolicy> llmCallablePolicies = loadLlmCallablePolicies();
+            List<AiLlmToolDefinition> llmTools = buildLlmToolDefinitions(llmCallablePolicies);
+            if (!llmTools.isEmpty()) {
+                systemPrompt = systemPrompt + buildActionCapabilityBlock(project, req);
+                chatMessages.set(0, new AiChatMessage("system", systemPrompt));
+            }
+
             // K. Stream via provider
             AiStreamingRequest streamingRequest = new AiStreamingRequest(
                     null, resolvedModel, chatMessages,
-                    temperature, maxOutputTokens);
+                    temperature, maxOutputTokens, llmTools);
 
             StringBuilder contentBuilder = new StringBuilder();
             final int[] inputTokensHolder = {0};
@@ -430,37 +467,47 @@ public class AiAssistantTurnOrchestrator {
             final String[] finishReasonHolder = {null};
             final boolean[] streamLimitExceeded = {false};
             final boolean[] cancelledDuringStream = {false};
+            final List<CollectedToolCall> collectedToolCalls = new ArrayList<>();
 
             streamingProviderRegistry.getAdapter(resolvedProvider).streamChat(streamingRequest,
-                    (textDelta, isLast, finishReason, inputTokens, outputTokens) -> {
-                        if (isCancelRequested(req.assistantMessageId())) {
-                            cancelledDuringStream[0] = true;
-                            return;
-                        }
-                        if (cancelledDuringStream[0] || streamLimitExceeded[0]) {
-                            return;
+                    new StreamDeltaCallback() {
+                        @Override
+                        public void onDelta(String textDelta, boolean isLast, String finishReason,
+                                            Integer inputTokens, Integer outputTokens) {
+                            if (isCancelRequested(req.assistantMessageId())) {
+                                cancelledDuringStream[0] = true;
+                                return;
+                            }
+                            if (cancelledDuringStream[0] || streamLimitExceeded[0]) {
+                                return;
+                            }
+
+                            if (textDelta != null) {
+                                contentBuilder.append(textDelta);
+                            }
+                            seqHolder[0]++;
+
+                            if (seqHolder[0] > MAX_STREAM_SEQUENCE) {
+                                streamLimitExceeded[0] = true;
+                                return;
+                            }
+
+                            Instant expiry = Instant.now().plus(properties.getStreamEventRetention());
+                            sseStreamService.persistAndEmit(req.assistantMessageId(), seqHolder[0],
+                                    "answer.delta",
+                                    Map.of("delta", textDelta != null ? textDelta : ""),
+                                    expiry);
+
+                            if (isLast) {
+                                finishReasonHolder[0] = finishReason;
+                                if (inputTokens != null) inputTokensHolder[0] = inputTokens;
+                                if (outputTokens != null) outputTokensHolder[0] = outputTokens;
+                            }
                         }
 
-                        if (textDelta != null) {
-                            contentBuilder.append(textDelta);
-                        }
-                        seqHolder[0]++;
-
-                        if (seqHolder[0] > MAX_STREAM_SEQUENCE) {
-                            streamLimitExceeded[0] = true;
-                            return;
-                        }
-
-                        Instant expiry = Instant.now().plus(properties.getStreamEventRetention());
-                        sseStreamService.persistAndEmit(req.assistantMessageId(), seqHolder[0],
-                                "answer.delta",
-                                Map.of("delta", textDelta != null ? textDelta : ""),
-                                expiry);
-
-                        if (isLast) {
-                            finishReasonHolder[0] = finishReason;
-                            if (inputTokens != null) inputTokensHolder[0] = inputTokens;
-                            if (outputTokens != null) outputTokensHolder[0] = outputTokens;
+                        @Override
+                        public void onToolCall(String toolCallId, String functionName, String argumentsJson) {
+                            collectedToolCalls.add(new CollectedToolCall(toolCallId, functionName, argumentsJson));
                         }
                     });
 
@@ -477,6 +524,79 @@ public class AiAssistantTurnOrchestrator {
                 markCancelled(req.assistantMessageId());
                 persistAndEmit(req.assistantMessageId(), seqHolder[0] + 1, "answer.cancelled", Map.of());
                 return;
+            }
+
+            // K2. Intercept write tool calls → create AiActionRequest + Plan → emit action.plan_ready
+            if (!collectedToolCalls.isEmpty()) {
+                for (CollectedToolCall tc : collectedToolCalls) {
+                    try {
+                        Map<String, Object> inputArgs = objectMapper.readValue(
+                                tc.argumentsJson() != null ? tc.argumentsJson() : "{}",
+                                new TypeReference<Map<String, Object>>() {});
+
+                        String toolVersion = llmCallablePolicies.stream()
+                                .filter(p -> p.toolCode().equals(tc.functionName()))
+                                .map(AiActionToolPolicy::toolVersion)
+                                .findFirst().orElse("v1");
+
+                        AiActionRequestedAction requestedAction = new AiActionRequestedAction(
+                                tc.functionName(), toolVersion, null, null, inputArgs);
+
+                        String idempotencyKey = sha256(req.turnId() + ":" + tc.toolCallId());
+
+                        CreateAiActionRequestCommand createCmd = new CreateAiActionRequestCommand(
+                                req.workspaceId(), req.projectId(), req.actorId(),
+                                AiActionOriginType.DIRECT_CHAT,
+                                req.conversationId(), req.userMessageId(), req.turnId(),
+                                null, null,
+                                tc.functionName() + " via turn " + req.turnId(),
+                                List.of(requestedAction),
+                                idempotencyKey);
+
+                        AiActionRequestResponse actionRequest = createAiActionRequestAction.execute(createCmd);
+
+                        BuildAiActionPlanCommand planCmd = new BuildAiActionPlanCommand(
+                                actionRequest.requestId(), "DIRECT_CHAT", idempotencyKey, req.actorId());
+
+                        AiActionPlanResponse plan = buildAiActionPlanAction.execute(planCmd);
+
+                        // Resolve display hints via tool adapter (phase name, etc.)
+                        Map<String, String> displayHints;
+                        try {
+                            AiActionToolAdapter adapter = aiActionToolRegistryPort.requireAdapter(tc.functionName(), toolVersion);
+                            displayHints = adapter.resolveDisplayHints(inputArgs);
+                        } catch (Exception e) {
+                            displayHints = Map.of();
+                        }
+
+                        seqHolder[0]++;
+                        Map<String, Object> planPayload = new java.util.LinkedHashMap<>();
+                        planPayload.put("requestId", actionRequest.requestId().toString());
+                        planPayload.put("planId", plan.planId().toString());
+                        planPayload.put("planHash", plan.planHash() != null ? plan.planHash() : "");
+                        planPayload.put("summary", plan.summary() != null ? plan.summary() : tc.functionName());
+                        planPayload.put("riskLevel", plan.riskLevel() != null ? plan.riskLevel() : "LOW");
+                        planPayload.put("requiresConfirmation", plan.requiresConfirmation());
+                        planPayload.put("stepCount", plan.stepCount());
+                        planPayload.put("planVersion", plan.version());
+                        planPayload.put("toolCode", tc.functionName());
+                        planPayload.put("displayHints", displayHints);
+                        persistAndEmit(req.assistantMessageId(), seqHolder[0], "action.plan_ready", planPayload);
+
+                        log.info("[AiTurn] action.plan_ready emitted — requestId={} planId={} tool={}",
+                                actionRequest.requestId(), plan.planId(), tc.functionName());
+                    } catch (Exception e) {
+                        log.warn("[AiTurn] Failed to process tool call '{}': {}", tc.functionName(), e.getMessage(), e);
+                    }
+                }
+
+                if (contentBuilder.isEmpty()) {
+                    String bridgingText = "I've prepared an action plan based on your request. Please review and confirm the changes shown above.";
+                    contentBuilder.append(bridgingText);
+                    seqHolder[0]++;
+                    persistAndEmit(req.assistantMessageId(), seqHolder[0], "answer.delta",
+                            Map.of("delta", bridgingText));
+                }
             }
 
             // L. Validate citations
@@ -708,5 +828,51 @@ public class AiAssistantTurnOrchestrator {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+
+    private List<AiActionToolPolicy> loadLlmCallablePolicies() {
+        try {
+            return aiActionToolRegistryPort.listLlmCallablePolicies();
+        } catch (Exception e) {
+            log.warn("[AiTurn] Failed to load LLM-callable tool policies: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    private List<AiLlmToolDefinition> buildLlmToolDefinitions(List<AiActionToolPolicy> policies) {
+        List<AiLlmToolDefinition> definitions = new ArrayList<>();
+        for (AiActionToolPolicy policy : policies) {
+            try {
+                AiActionToolAdapter adapter = aiActionToolRegistryPort.requireAdapter(
+                        policy.toolCode(), policy.toolVersion());
+                Map<String, Object> parameters = objectMapper.readValue(
+                        adapter.parametersSchemaJson(), new TypeReference<Map<String, Object>>() {});
+                definitions.add(new AiLlmToolDefinition(
+                        policy.toolCode(), adapter.description(), parameters));
+            } catch (Exception e) {
+                log.warn("[AiTurn] Skipping tool '{}@{}' — adapter or schema unavailable: {}",
+                        policy.toolCode(), policy.toolVersion(), e.getMessage());
+            }
+        }
+        return definitions;
+    }
+
+    private static String buildActionCapabilityBlock(Project project, TurnRequest req) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\n## Action Capabilities");
+        sb.append("\n\nYou have access to tools that let you take actions in Scopery on the user's behalf.");
+        sb.append("\n\nIMPORTANT rules:");
+        sb.append("\n- When the user explicitly requests an action (create, update, delete), call the appropriate tool IMMEDIATELY. Do NOT ask for permission first — the system will show a confirmation UI to the user automatically.");
+        sb.append("\n- Do NOT describe what you are about to do and ask the user to confirm in chat. Just call the tool.");
+        sb.append("\n- Only ask a clarifying question if critical required information is genuinely missing (e.g. no title given for a task).");
+        sb.append("\n- Never invent entity IDs. Use IDs from context or provided by the user.");
+        sb.append("\n- BATCH LIMIT: Never call the same tool more than 3 times in one response. If the user wants to create many items (e.g. all tasks for a phase), create at most 3 representative ones and tell the user you created a sample — do not create all of them at once.");
+        sb.append("\n\nCurrent context:");
+        sb.append("\n- Workspace ID: ").append(req.workspaceId());
+        if (project != null) {
+            sb.append("\n- Project: ").append(project.name())
+              .append(" (ID: ").append(req.projectId()).append(")");
+        }
+        return sb.toString();
     }
 }

@@ -12,6 +12,24 @@ public interface AiActionToolAdapter {
 
     String toolVersion();
 
+    /** English description shown to the LLM when declaring this tool. */
+    default String description() {
+        return "Performs the " + toolCode() + " action.";
+    }
+
+    /** JSON Schema (draft-07) string for the tool's input parameters, used in LLM tool declarations. */
+    default String parametersSchemaJson() {
+        return "{\"type\":\"object\",\"properties\":{},\"required\":[]}";
+    }
+
+    /**
+     * Resolves human-readable display hints from raw input args for the confirmation UI.
+     * Override to provide tool-specific resolved values (e.g. phase name from phaseId).
+     */
+    default Map<String, String> resolveDisplayHints(Map<String, Object> inputArgs) {
+        return Map.of();
+    }
+
     AiActionDryRunResult dryRun(Map<String, Object> input, AiActionStep step);
 
     AiActionToolResult execute(Map<String, Object> input, AiActionStep step, AiActionExecution execution);

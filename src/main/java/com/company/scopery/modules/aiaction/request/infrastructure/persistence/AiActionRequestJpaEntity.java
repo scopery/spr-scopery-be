@@ -61,4 +61,7 @@ public class AiActionRequestJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "latest_plan_id")
     private UUID latestPlanId;
+
+    @Column(name = "requested_actions_json", columnDefinition = "TEXT")
+    private String requestedActionsJson;
 }

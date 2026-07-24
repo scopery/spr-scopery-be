@@ -5,13 +5,10 @@ import com.company.scopery.modules.aiaction.application.port.AiActionToolRegistr
 import com.company.scopery.modules.aiaction.shared.error.AiActionExceptions;
 import com.company.scopery.modules.aiaction.tool.domain.enums.AiActionInvocationScope;
 import com.company.scopery.modules.aiaction.tool.domain.model.AiActionToolPolicy;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 
-// Stub implementation — replaced in Step 13
-@Component
+// Stub implementation — replaced by JpaAiActionToolRegistryPort
 public class StubAiActionToolRegistryPort implements AiActionToolRegistryPort {
 
     @Override
@@ -36,6 +33,11 @@ public class StubAiActionToolRegistryPort implements AiActionToolRegistryPort {
 
     @Override
     public List<AiActionToolPolicy> listAllActivePolicies() {
+        return List.of();
+    }
+
+    @Override
+    public List<AiActionToolPolicy> listLlmCallablePolicies() {
         return List.of();
     }
 }

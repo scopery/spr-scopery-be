@@ -9,5 +9,11 @@ public record AiStreamingRequest(
         String model,
         List<AiChatMessage> messages,
         BigDecimal temperature,
-        Integer maxOutputTokens
-) {}
+        Integer maxOutputTokens,
+        List<AiLlmToolDefinition> tools
+) {
+    public AiStreamingRequest(UUID providerId, String model, List<AiChatMessage> messages,
+                               BigDecimal temperature, Integer maxOutputTokens) {
+        this(providerId, model, messages, temperature, maxOutputTokens, List.of());
+    }
+}

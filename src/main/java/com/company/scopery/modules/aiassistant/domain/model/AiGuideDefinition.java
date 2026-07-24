@@ -53,6 +53,23 @@ public class AiGuideDefinition {
                 bodyMarkdown, metadataVersion, sourceKind, status, createdAt, createdBy, updatedAt, updatedBy, version);
     }
 
+    public static AiGuideDefinition create(UUID id, String code, String pageCode, String fieldCode,
+                                            String actionCode, String locale, String title,
+                                            String bodyMarkdown, String sourceKind) {
+        return new AiGuideDefinition(id, code, pageCode, fieldCode, actionCode, locale, title,
+                bodyMarkdown, 1, sourceKind, "ACTIVE", null, null, null, null, 0L);
+    }
+
+    public void update(String title, String bodyMarkdown, String status) {
+        if (title != null) this.title = title;
+        if (bodyMarkdown != null) this.bodyMarkdown = bodyMarkdown;
+        if (status != null) this.status = status;
+    }
+
+    public void retire() {
+        this.status = "RETIRED";
+    }
+
     public UUID id() { return id; }
     public String code() { return code; }
     public String pageCode() { return pageCode; }

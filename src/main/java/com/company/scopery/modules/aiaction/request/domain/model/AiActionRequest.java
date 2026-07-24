@@ -23,6 +23,7 @@ public class AiActionRequest {
     private final String idempotencyKey;
     private String requestHash;
     private UUID latestPlanId;
+    private String requestedActionsJson;
     private final Instant createdAt;
     private Instant updatedAt;
 
@@ -32,7 +33,7 @@ public class AiActionRequest {
                              String originSuggestionRef, String legacyPhase21SuggestionId,
                              String intentSummary, AiActionRequestStatus status,
                              String idempotencyKey, String requestHash, UUID latestPlanId,
-                             Instant createdAt, Instant updatedAt) {
+                             String requestedActionsJson, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.workspaceId = workspaceId;
         this.projectId = projectId;
@@ -48,6 +49,7 @@ public class AiActionRequest {
         this.idempotencyKey = idempotencyKey;
         this.requestHash = requestHash;
         this.latestPlanId = latestPlanId;
+        this.requestedActionsJson = requestedActionsJson;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -56,13 +58,14 @@ public class AiActionRequest {
                                           AiActionOriginType originType, String originSuggestionRef,
                                           String originConversationId, String originMessageId,
                                           String originTurnId, String legacyPhase21SuggestionId,
-                                          String intentSummary, String idempotencyKey, String requestHash) {
+                                          String intentSummary, String idempotencyKey, String requestHash,
+                                          String requestedActionsJson) {
         Instant now = Instant.now();
         return new AiActionRequest(UUID.randomUUID(), workspaceId, projectId, initiatedByUserId,
                 originType, originConversationId, originMessageId, originTurnId,
                 originSuggestionRef, legacyPhase21SuggestionId,
                 intentSummary, AiActionRequestStatus.RECEIVED,
-                idempotencyKey, requestHash, null, now, now);
+                idempotencyKey, requestHash, null, requestedActionsJson, now, now);
     }
 
     public static AiActionRequest reconstitute(UUID id, UUID workspaceId, UUID projectId,
@@ -72,11 +75,12 @@ public class AiActionRequest {
                                                 String legacyPhase21SuggestionId, String intentSummary,
                                                 AiActionRequestStatus status, String idempotencyKey,
                                                 String requestHash, UUID latestPlanId,
+                                                String requestedActionsJson,
                                                 Instant createdAt, Instant updatedAt) {
         return new AiActionRequest(id, workspaceId, projectId, initiatedByUserId, originType,
                 originConversationId, originMessageId, originTurnId, originSuggestionRef,
                 legacyPhase21SuggestionId, intentSummary, status, idempotencyKey,
-                requestHash, latestPlanId, createdAt, updatedAt);
+                requestHash, latestPlanId, requestedActionsJson, createdAt, updatedAt);
     }
 
     public void markPlanning() {
@@ -115,6 +119,7 @@ public class AiActionRequest {
     public String idempotencyKey()          { return idempotencyKey; }
     public String requestHash()             { return requestHash; }
     public UUID latestPlanId()              { return latestPlanId; }
+    public String requestedActionsJson()    { return requestedActionsJson; }
     public Instant createdAt()              { return createdAt; }
     public Instant updatedAt()              { return updatedAt; }
 }

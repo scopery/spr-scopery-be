@@ -3,6 +3,7 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.documenthub.generatedjob.application.action.*;
 import com.company.scopery.modules.documenthub.generatedjob.application.command.CreateGeneratedDocumentJobCommand;
 import com.company.scopery.modules.documenthub.generatedjob.application.response.GeneratedDocumentJobResponse;
+import com.company.scopery.modules.documenthub.generatedjob.application.response.ProjectBriefPreviewResponse;
 import com.company.scopery.modules.documenthub.generatedjob.application.service.GeneratedDocumentJobQueryService;
 import com.company.scopery.modules.documenthub.generatedjob.http.request.*;
 import com.company.scopery.modules.documenthub.shared.constant.DocumentHubApiPaths;
@@ -19,9 +20,17 @@ public class GeneratedDocumentJobController {
     private final CompleteGeneratedDocumentJobAction complete;
     private final ProcessGeneratedDocumentJobAction process;
     private final GeneratedDocumentJobQueryService query;
+    private final GenerateProjectBriefAction generateBrief;
     public GeneratedDocumentJobController(CreateGeneratedDocumentJobAction create, CompleteGeneratedDocumentJobAction complete,
-                                          ProcessGeneratedDocumentJobAction process, GeneratedDocumentJobQueryService query) {
+                                          ProcessGeneratedDocumentJobAction process, GeneratedDocumentJobQueryService query,
+                                          GenerateProjectBriefAction generateBrief) {
         this.create=create; this.complete=complete; this.process=process; this.query=query;
+        this.generateBrief=generateBrief;
+    }
+    @PostMapping("/project-brief") @Operation(summary = "Generate AI project brief preview")
+    public ApiResponse<ProjectBriefPreviewResponse> projectBrief(@PathVariable UUID projectId,
+            @RequestBody(required = false) GenerateProjectBriefRequest r) {
+        return ApiResponse.success(generateBrief.execute(projectId));
     }
     @PostMapping @Operation(summary = "Queue generation job")
     public ApiResponse<GeneratedDocumentJobResponse> create(@PathVariable UUID projectId, @Valid @RequestBody CreateGeneratedDocumentJobRequest r) {

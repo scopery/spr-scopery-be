@@ -1,6 +1,6 @@
 -- Extend knowledge_source.source_type to accept traceability entity types.
 ALTER TABLE knowledge_source
-    DROP CONSTRAINT ck_knowledge_source_type;
+    DROP CONSTRAINT IF EXISTS ck_knowledge_source_type;
 
 ALTER TABLE knowledge_source
     ADD CONSTRAINT ck_knowledge_source_type CHECK (
