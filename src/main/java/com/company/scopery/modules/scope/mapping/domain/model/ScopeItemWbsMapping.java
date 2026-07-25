@@ -5,7 +5,7 @@ public record ScopeItemWbsMapping(UUID id, UUID scopeItemId, UUID projectId, UUI
         Instant archivedAt, UUID archivedBy, int version, Instant createdAt) {
     public static ScopeItemWbsMapping create(UUID scopeItemId, UUID projectId, UUID wbsNodeId, MappingType mappingType) {
         return new ScopeItemWbsMapping(UUID.randomUUID(), scopeItemId, projectId, wbsNodeId, mappingType,
-                null, null, 0, Instant.now());
+                null, null, 0, null);
     }
     public ScopeItemWbsMapping archive(UUID actorId) {
         if (archivedAt != null) throw new IllegalStateException("Mapping already archived");

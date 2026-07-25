@@ -862,11 +862,19 @@ public class AiAssistantTurnOrchestrator {
         sb.append("\n\n## Action Capabilities");
         sb.append("\n\nYou have access to tools that let you take actions in Scopery on the user's behalf.");
         sb.append("\n\nIMPORTANT rules:");
-        sb.append("\n- When the user explicitly requests an action (create, update, delete), call the appropriate tool IMMEDIATELY. Do NOT ask for permission first — the system will show a confirmation UI to the user automatically.");
-        sb.append("\n- Do NOT describe what you are about to do and ask the user to confirm in chat. Just call the tool.");
-        sb.append("\n- Only ask a clarifying question if critical required information is genuinely missing (e.g. no title given for a task).");
+        sb.append("\n- ONLY call a write tool when the user has explicitly and unambiguously requested the action in their current message (e.g. \"create a requirement for X\", \"add a property to Y\"). Discussing, analyzing, or mentioning an entity is NOT a request to create it.");
+        sb.append("\n- Do NOT call write tools proactively. Never use a tool just because it might be helpful — wait to be asked.");
+        sb.append("\n- If the user's request is ambiguous or missing key details (title, type, scope), ask the user to clarify BEFORE calling any tool. Do not guess and create something the user did not intend.");
+        sb.append("\n- Once called, do NOT describe what you are about to do and ask to confirm in chat — the system shows a confirmation UI automatically.");
         sb.append("\n- Never invent entity IDs. Use IDs from context or provided by the user.");
-        sb.append("\n- BATCH LIMIT: Never call the same tool more than 3 times in one response. If the user wants to create many items (e.g. all tasks for a phase), create at most 3 representative ones and tell the user you created a sample — do not create all of them at once.");
+        sb.append("\n- BATCH LIMIT: Never call the same tool more than 10 times in one response. If the user wants to create many items, create at most 10 in this turn and let the user know they can ask for more.");
+        sb.append("\n\n## Field Completeness Policy");
+        sb.append("\nWhen creating any item (functional requirement, NFR, task, module, etc.), always populate every available optional field you can derive from the user's request or the retrieved project context:");
+        sb.append("\n- description: Write a clear business requirement description — what the feature does, why it exists, who benefits. Never leave blank if context allows.");
+        sb.append("\n- acceptanceCriteria (for functional items): Always include at least 2–4 concrete, testable acceptance criteria derived from the user's description. Use 'Given/When/Then' or plain sentences. Never omit.");
+        sb.append("\n- priority: Infer from language ('critical', 'must have', 'nice to have') or default to MEDIUM.");
+        sb.append("\n- targetMetric (for NFRs): Include measurable targets (e.g. 'response time < 200ms', '99.9% uptime') whenever the context provides them.");
+        sb.append("\n- customProperties: If the user mentions any custom attributes, metadata, or fields (e.g. complexity, screen, actor, business impact, owner), always include them.");
         sb.append("\n\nCurrent context:");
         sb.append("\n- Workspace ID: ").append(req.workspaceId());
         if (project != null) {

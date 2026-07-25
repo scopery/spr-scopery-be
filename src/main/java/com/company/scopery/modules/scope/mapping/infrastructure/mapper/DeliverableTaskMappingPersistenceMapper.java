@@ -14,8 +14,8 @@ public class DeliverableTaskMappingPersistenceMapper {
         DeliverableTaskMappingJpaEntity e = new DeliverableTaskMappingJpaEntity();
         e.setId(d.id()); e.setDeliverableId(d.deliverableId()); e.setProjectId(d.projectId());
         e.setTaskId(d.taskId()); e.setMappingType(d.mappingType().name());
-        e.setArchivedAt(d.archivedAt()); e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

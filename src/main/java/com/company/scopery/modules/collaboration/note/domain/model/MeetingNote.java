@@ -8,9 +8,8 @@ public record MeetingNote(
 ) {
     public static MeetingNote create(UUID workspaceId, UUID projectId, UUID meetingId, UUID agendaItemId,
                                      NoteType type, String body, boolean clientVisible) {
-        Instant now = Instant.now();
         return new MeetingNote(UUID.randomUUID(), workspaceId, projectId, meetingId, agendaItemId, type, body,
-                !clientVisible, clientVisible, null, null, null, 0, now, now);
+                !clientVisible, clientVisible, null, null, null, 0, null, null);
     }
     public MeetingNote update(NoteType type, String body, boolean clientVisible) {
         return new MeetingNote(id, workspaceId, projectId, meetingId, agendaItemId, type, body, !clientVisible,

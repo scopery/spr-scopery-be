@@ -32,4 +32,34 @@ public interface TaskRepository {
 
     /** Phase 20: tasks overdue before the given date, excluding terminal statuses. */
     List<Task> findOverdueReminderCandidates(LocalDate beforeDate, Collection<TaskStatus> excludedStatuses, int limit);
+
+    /**
+     * My Work: paginated search for tasks assigned to a specific user across a set of projects.
+     *
+     * @param projectIds     projects to search within (workspace scope)
+     * @param userId         assignee to filter on
+     * @param statuses       specific statuses to include; null/empty = no status filter
+     * @param excludeTerminal true = exclude DONE/CANCELLED/ARCHIVED regardless of statuses param
+     * @param dateFrom       inclusive window start; null = no lower bound
+     * @param dateTo         inclusive window end; null = no upper bound
+     * @param dueDateOnly    true = only match dueDate (used for OVERDUE); false = use full overlap logic
+     * @param includeUndated true = include tasks with no dueDate and no plannedStartDate (ALL_OPEN)
+     * @param pageQuery      pagination
+     */
+    PageResult<Task> searchForUser(Collection<UUID> projectIds, UUID userId,
+                                   List<String> statuses, boolean excludeTerminal,
+                                   LocalDate dateFrom, LocalDate dateTo,
+                                   boolean dueDateOnly, boolean includeUndated,
+                                   PageQuery pageQuery);
+
+    /**
+     * My Work: count tasks matching the same criteria as {@link #searchForUser} — used for summary metrics.
+     */
+    long countForUser(Collection<UUID> projectIds, UUID userId,
+                      List<String> statuses, boolean excludeTerminal,
+                      LocalDate dateFrom, LocalDate dateTo,
+                      boolean dueDateOnly, boolean includeUndated);
+
+    /** My Work: count tasks with no dueDate and no plannedStartDate assigned to the user. */
+    long countUndatedForUser(Collection<UUID> projectIds, UUID userId, boolean excludeTerminal);
 }

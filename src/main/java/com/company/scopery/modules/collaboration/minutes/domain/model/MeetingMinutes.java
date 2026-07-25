@@ -11,10 +11,9 @@ public record MeetingMinutes(
 ) {
     public static MeetingMinutes create(UUID workspaceId, UUID projectId, UUID meetingId, String summary,
                                         String decisionsSummary, String actionsSummary, String clientVisibleSummary) {
-        Instant now = Instant.now();
         return new MeetingMinutes(UUID.randomUUID(), workspaceId, projectId, meetingId, MinutesStatus.DRAFT,
                 summary, decisionsSummary, actionsSummary, clientVisibleSummary, null, null,
-                null, null, null, null, null, null, null, null, 0, now, now);
+                null, null, null, null, null, null, null, null, 0, null, null);
     }
     public MeetingMinutes update(String summary, String decisionsSummary, String actionsSummary, String clientVisibleSummary) {
         if (status == MinutesStatus.APPROVED)

@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,6 +71,14 @@ public class JpaProjectPhaseRepository implements ProjectPhaseRepository {
     @Override
     public List<ProjectPhase> findAllByProjectId(UUID projectId) {
         return springDataRepository.findAllByProjectId(projectId).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<ProjectPhase> findAllByIdIn(Collection<UUID> ids) {
+        if (ids.isEmpty()) return List.of();
+        return springDataRepository.findAllByIdIn(ids).stream()
                 .map(mapper::toDomain)
                 .toList();
     }

@@ -7,5 +7,5 @@ public record CreateTaskDependencyCommand(
         UUID predecessorTaskId,
         UUID successorTaskId,
         String dependencyType,
-        int lagDays
+        Integer lagDays
 ) {}

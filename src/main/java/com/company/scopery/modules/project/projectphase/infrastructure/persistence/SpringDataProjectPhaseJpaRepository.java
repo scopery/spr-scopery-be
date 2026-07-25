@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +17,8 @@ public interface SpringDataProjectPhaseJpaRepository
     boolean existsByProjectIdAndDisplayOrder(UUID projectId, int displayOrder);
 
     List<ProjectPhaseJpaEntity> findAllByProjectId(UUID projectId);
+
+    List<ProjectPhaseJpaEntity> findAllByIdIn(Collection<UUID> ids);
 
     @Query("SELECT COUNT(w) > 0 FROM com.company.scopery.modules.project.wbs.infrastructure.persistence.WbsNodeJpaEntity w WHERE w.projectPhaseId = :id AND w.status != 'ARCHIVED'")
     boolean hasActiveWbsNodes(@Param("id") UUID id);

@@ -8,11 +8,16 @@ import com.company.scopery.modules.project.projectphase.application.command.*;
 import com.company.scopery.modules.project.projectphase.application.query.SearchProjectPhaseQuery;
 import com.company.scopery.modules.project.projectphase.application.response.ProjectPhaseResponse;
 import com.company.scopery.modules.project.projectphase.application.service.ProjectPhaseQueryService;
+import com.company.scopery.modules.project.projectphase.http.request.BulkCreateProjectPhaseRequest;
 import com.company.scopery.modules.project.projectphase.http.request.CreateProjectPhaseFromDefinitionRequest;
 import com.company.scopery.modules.project.projectphase.http.request.CreateProjectPhaseRequest;
 import com.company.scopery.modules.project.projectphase.http.request.UpdateProjectPhaseRequest;
 import com.company.scopery.modules.project.shared.constant.ProjectApiPaths;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +36,8 @@ public class ProjectPhaseController {
     private final ActivateProjectPhaseAction activateAction;
     private final CompleteProjectPhaseAction completeAction;
     private final ArchiveProjectPhaseAction archiveAction;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public ProjectPhaseController(ProjectPhaseQueryService queryService,
                                    CreateProjectPhaseAction createAction,
@@ -38,7 +45,9 @@ public class ProjectPhaseController {
                                    UpdateProjectPhaseAction updateAction,
                                    ActivateProjectPhaseAction activateAction,
                                    CompleteProjectPhaseAction completeAction,
-                                   ArchiveProjectPhaseAction archiveAction) {
+                                   ArchiveProjectPhaseAction archiveAction,
+                                   BulkJobService bulkJobService,
+                                   ObjectMapper objectMapper) {
         this.queryService = queryService;
         this.createAction = createAction;
         this.createFromDefinitionAction = createFromDefinitionAction;
@@ -46,6 +55,8 @@ public class ProjectPhaseController {
         this.activateAction = activateAction;
         this.completeAction = completeAction;
         this.archiveAction = archiveAction;
+        this.bulkJobService = bulkJobService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping
@@ -63,6 +74,26 @@ public class ProjectPhaseController {
                 request.plannedEndDate()
         );
         return ApiResponse.success(createAction.execute(cmd));
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk create project phases (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> bulkCreate(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody BulkCreateProjectPhaseRequest request) {
+        var items = request.items().stream()
+                .map(r -> new CreateProjectPhaseCommand(
+                        projectId, r.code(), r.name(), r.description(),
+                        r.displayOrder(), r.plannedStartDate(), r.plannedEndDate()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new BulkCreateProjectPhaseCommand(projectId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateProjectPhaseJobHandler.JOB_TYPE, request.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @PostMapping("/from-definition")

@@ -16,8 +16,11 @@ public class ChangeRequestPersistenceMapper {
                 e.getSubmittedAt(), e.getSubmittedBy(), e.getApprovedAt(), e.getApprovedBy(),
                 e.getRejectedAt(), e.getRejectedBy(), e.getRejectionReason(), e.getCancelledAt(), e.getCancelledBy(),
                 e.getAppliedAt(), e.getAppliedBy(), e.getArchivedAt(), e.getArchivedBy(), e.getTraceId(),
-                e.getVersion() == null ? 0 : e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getVersion() == null ? 0 : e.getVersion(), e.getCreatedAt(), e.getUpdatedAt(),
+                e.getSourceType() == null ? null : ChangeRequestSourceType.valueOf(e.getSourceType()),
+                e.getSourceId(), e.getSourceSubtype(), e.getSourceCode(), e.getSourceTitle());
     }
+
     public ChangeRequestJpaEntity toJpaEntity(ChangeRequest d) {
         ChangeRequestJpaEntity e = new ChangeRequestJpaEntity();
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setWorkspaceId(d.workspaceId());
@@ -32,8 +35,11 @@ public class ChangeRequestPersistenceMapper {
         e.setRejectionReason(d.rejectionReason()); e.setCancelledAt(d.cancelledAt()); e.setCancelledBy(d.cancelledBy());
         e.setAppliedAt(d.appliedAt()); e.setAppliedBy(d.appliedBy());
         e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
-        e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        e.setTraceId(d.traceId());
+        e.setSourceType(d.sourceType() == null ? null : d.sourceType().name());
+        e.setSourceId(d.sourceId()); e.setSourceSubtype(d.sourceSubtype());
+        e.setSourceCode(d.sourceCode()); e.setSourceTitle(d.sourceTitle());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

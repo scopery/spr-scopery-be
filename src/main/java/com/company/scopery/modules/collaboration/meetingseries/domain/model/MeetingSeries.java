@@ -9,9 +9,8 @@ public record MeetingSeries(
 ) {
     public static MeetingSeries create(UUID workspaceId, UUID projectId, String code, String title, String description,
                                        MeetingSeriesCadence cadence, UUID ownerUserId, boolean clientVisible) {
-        Instant now = Instant.now();
         return new MeetingSeries(UUID.randomUUID(), workspaceId, projectId, code, title, description, cadence,
-                ownerUserId, MeetingSeriesStatus.ACTIVE, clientVisible, null, null, 0, now, now);
+                ownerUserId, MeetingSeriesStatus.ACTIVE, clientVisible, null, null, 0, null, null);
     }
     public MeetingSeries update(String title, String description, MeetingSeriesCadence cadence, UUID ownerUserId, boolean clientVisible) {
         return new MeetingSeries(id, workspaceId, projectId, code, title, description, cadence, ownerUserId, status,

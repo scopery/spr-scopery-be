@@ -14,8 +14,8 @@ public class DeliverableReviewPersistenceMapper {
         DeliverableReviewJpaEntity e = new DeliverableReviewJpaEntity();
         e.setId(d.id()); e.setDeliverableId(d.deliverableId()); e.setProjectId(d.projectId());
         e.setStatus(d.status().name()); e.setDecision(d.decision()); e.setReviewerUserId(d.reviewerUserId());
-        e.setReason(d.reason()); e.setDecidedAt(d.decidedAt()); e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        e.setReason(d.reason()); e.setDecidedAt(d.decidedAt());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

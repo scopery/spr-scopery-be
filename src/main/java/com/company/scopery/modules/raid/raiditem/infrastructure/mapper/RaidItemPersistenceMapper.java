@@ -35,8 +35,8 @@ public class RaidItemPersistenceMapper {
         e.setResolvedAt(d.resolvedAt()); e.setResolvedBy(d.resolvedBy()); e.setDependencyType(d.dependencyType());
         e.setEscalationLevel(d.escalationLevel()==null?null:d.escalationLevel().name());
         e.setEscalationReason(d.escalationReason()); e.setEscalatedAt(d.escalatedAt()); e.setEscalatedBy(d.escalatedBy());
-        e.setLinkedChangeRequestId(d.linkedChangeRequestId()); e.setOutcomeNote(d.outcomeNote()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setLinkedChangeRequestId(d.linkedChangeRequestId()); e.setOutcomeNote(d.outcomeNote());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

@@ -89,6 +89,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
     public ResponseEntity<ErrorResponse> handleOptimisticLock(Exception ex, HttpServletRequest request) {
+        if (ex instanceof ObjectOptimisticLockingFailureException ofe) {
+            log.warn("Optimistic lock conflict: entity={} id={} cause={}",
+                    ofe.getPersistentClassName(), ofe.getIdentifier(),
+                    ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+        } else {
+            log.warn("Optimistic lock conflict: {}", ex.getMessage());
+        }
         return build(HttpStatus.CONFLICT, ErrorCode.RESOURCE_CONFLICT,
                 "The resource was changed by another request; reload and retry", List.of(),
                 request.getRequestURI());

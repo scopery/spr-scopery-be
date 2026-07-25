@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -107,17 +108,36 @@ public class ScheduleEngineService {
             if(!resolution.allocationPresent()) resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.ALLOCATION_MISSING,SchedulingIssueSeverity.ERROR,"No active project allocation; capacity is zero"));
 
             LocalDate earliest=max(run.planningStartDate(),task.plannedStartDate());
+            LocalDate minFinishDate=null;
             boolean blocked=false;
             for(TaskDependency dep:incoming.getOrDefault(task.id(),List.of())) {
-                if(dep.dependencyType()!=TaskDependencyType.FINISH_TO_START) {
-                    resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.UNSUPPORTED_DEPENDENCY_TYPE,SchedulingIssueSeverity.WARNING,"Unsupported dependency type: "+dep.dependencyType()));
-                    continue;
-                }
                 TaskSchedule pred=scheduleByTask.get(dep.predecessorTaskId());
-                if(pred==null||pred.estimatedFinishDate()==null||pred.unscheduledHours().signum()>0) {
-                    blocked=true;
-                    resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.TASK_DEPENDENCY_UNSCHEDULED,SchedulingIssueSeverity.ERROR,"Predecessor is unscheduled"));
-                } else earliest=max(earliest,pred.estimatedFinishDate().plusDays(dep.lagDays()));
+                switch(dep.dependencyType()) {
+                    case FINISH_TO_START -> {
+                        if(pred==null||pred.estimatedFinishDate()==null||pred.unscheduledHours().signum()>0) {
+                            blocked=true;
+                            resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.TASK_DEPENDENCY_UNSCHEDULED,SchedulingIssueSeverity.ERROR,"Predecessor is unscheduled (FS)"));
+                        } else earliest=max(earliest,pred.estimatedFinishDate().plusDays(dep.lagDays()));
+                    }
+                    case START_TO_START -> {
+                        if(pred==null||pred.estimatedStartDate()==null||pred.unscheduledHours().signum()>0) {
+                            blocked=true;
+                            resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.TASK_DEPENDENCY_UNSCHEDULED,SchedulingIssueSeverity.ERROR,"Predecessor is unscheduled (SS)"));
+                        } else earliest=max(earliest,pred.estimatedStartDate().plusDays(dep.lagDays()));
+                    }
+                    case FINISH_TO_FINISH -> {
+                        if(pred==null||pred.estimatedFinishDate()==null||pred.unscheduledHours().signum()>0) {
+                            blocked=true;
+                            resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.TASK_DEPENDENCY_UNSCHEDULED,SchedulingIssueSeverity.ERROR,"Predecessor is unscheduled (FF)"));
+                        } else { LocalDate req=pred.estimatedFinishDate().plusDays(dep.lagDays()); minFinishDate=minFinishDate==null?req:max(minFinishDate,req); }
+                    }
+                    case START_TO_FINISH -> {
+                        if(pred==null||pred.estimatedStartDate()==null||pred.unscheduledHours().signum()>0) {
+                            blocked=true;
+                            resultIssues.add(issue(run,task,userId,resolution.workspaceMemberId(),SchedulingIssueType.TASK_DEPENDENCY_UNSCHEDULED,SchedulingIssueSeverity.ERROR,"Predecessor is unscheduled (SF)"));
+                        } else { LocalDate req=pred.estimatedStartDate().plusDays(dep.lagDays()); minFinishDate=minFinishDate==null?req:max(minFinishDate,req); }
+                    }
+                }
             }
             // Hard PIN: earliest = max(depEarliest, max(planningStart, manualStartDate))
             if(override!=null && override.manualStartDate()!=null
@@ -143,6 +163,13 @@ public class ScheduleEngineService {
                 resolution.days().forEach((date,day)->map.put(date,day.projectAllocatedHours()));
                 return map;
             });
+            // FF/SF: push earliest so the task finishes no earlier than minFinishDate
+            if(minFinishDate!=null) {
+                LocalDate naturalFinish=estimateFinish(earliest,estimate,remaining,planningEnd);
+                if(naturalFinish!=null&&naturalFinish.isBefore(minFinishDate)) {
+                    earliest=earliest.plusDays(ChronoUnit.DAYS.between(naturalFinish,minFinishDate));
+                }
+            }
             BigDecimal availableBeforeDue=BigDecimal.ZERO;
             if(effectiveDue!=null) for(LocalDate d=earliest;!d.isAfter(effectiveDue)&&!d.isAfter(planningEnd);d=d.plusDays(1))
                 availableBeforeDue=availableBeforeDue.add(remaining.getOrDefault(d,BigDecimal.ZERO));
@@ -228,4 +255,16 @@ public class ScheduleEngineService {
     private LocalDate max(LocalDate a,LocalDate b){return b!=null&&b.isAfter(a)?b:a;}
     private LocalDate min(LocalDate a,LocalDate b){return b!=null&&b.isBefore(a)?b:a;}
     private TaskScheduleRiskStatus deriveRisk(LocalDate due,LocalDate finish,BigDecimal gap,BigDecimal remaining){if(remaining.signum()>0)return TaskScheduleRiskStatus.NO_CAPACITY;if(due!=null&&LocalDate.now().isAfter(due))return TaskScheduleRiskStatus.OVERDUE;if(due!=null&&((finish!=null&&finish.isAfter(due))||gap.signum()>0))return TaskScheduleRiskStatus.AT_RISK;return TaskScheduleRiskStatus.ON_TRACK;}
+
+    // Read-only estimate of finish date without consuming capacity — used for FF/SF constraint adjustment.
+    private LocalDate estimateFinish(LocalDate from,BigDecimal hours,Map<LocalDate,BigDecimal> remaining,LocalDate planningEnd){
+        BigDecimal needed=hours;
+        for(LocalDate d=from;!d.isAfter(planningEnd)&&needed.signum()>0;d=d.plusDays(1)){
+            BigDecimal cap=remaining.getOrDefault(d,BigDecimal.ZERO);
+            if(cap.signum()<=0)continue;
+            needed=needed.subtract(cap.min(needed));
+            if(needed.signum()==0)return d;
+        }
+        return null;
+    }
 }

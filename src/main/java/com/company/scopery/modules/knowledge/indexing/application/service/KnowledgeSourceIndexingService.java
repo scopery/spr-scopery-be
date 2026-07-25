@@ -83,8 +83,9 @@ public class KnowledgeSourceIndexingService {
 
         if (existing.isPresent() && existing.get().contentHash().equals(contentHash)
                 && existing.get().permissionSignature().equals(permSig)
-                && existing.get().status() == KnowledgeSourceStatus.INDEXED) {
-            log.debug("Source unchanged, skipping index: {}", existing.get().id());
+                && existing.get().status() == KnowledgeSourceStatus.INDEXED
+                && !chunks.findCurrentBySourceId(existing.get().id()).isEmpty()) {
+            log.debug("Source unchanged and has chunks, skipping index: {}", existing.get().id());
             return existing.get().id();
         }
 
@@ -92,7 +93,8 @@ public class KnowledgeSourceIndexingService {
         source = sources.save(source);
         UUID sourceId = source.id();
 
-        KnowledgeProjection projection = buildProjection(sourceId, snapshot);
+        int nextVersion = projections.nextProjectionVersion(sourceId);
+        KnowledgeProjection projection = buildProjection(sourceId, nextVersion, snapshot);
         projection = projections.save(projection);
 
         chunks.markSupersededBySourceId(sourceId);
@@ -146,7 +148,7 @@ public class KnowledgeSourceIndexingService {
                     snapshot.title(), snapshot.language(), snapshot.classification(),
                     contentHash, permSig, snapshot.aclTokens(),
                     KnowledgeSourceStatus.INDEXING, now, null,
-                    s.createdAt(), s.createdBy(), now, null, s.version() + 1);
+                    s.createdAt(), s.createdBy(), now, null, s.version());
         }
         return new KnowledgeSource(UUID.randomUUID(), snapshot.workspaceId(), snapshot.projectId(),
                 snapshot.sourceType(), snapshot.sourceRefId(), snapshot.sourceVersionRefId(),
@@ -156,10 +158,10 @@ public class KnowledgeSourceIndexingService {
                 now, null, now, null, 0L);
     }
 
-    private KnowledgeProjection buildProjection(UUID sourceId, KnowledgeSourceSnapshot snapshot) {
+    private KnowledgeProjection buildProjection(UUID sourceId, int version, KnowledgeSourceSnapshot snapshot) {
         String contentHash = sha256(snapshot.normalizedText());
         Instant now = Instant.now();
-        return new KnowledgeProjection(UUID.randomUUID(), sourceId, 1,
+        return new KnowledgeProjection(UUID.randomUUID(), sourceId, version,
                 "SNAPSHOT", "1", "chunk-v1",
                 snapshot.normalizedText(), snapshot.structuredMetadata(),
                 contentHash, "READY", null, null,
@@ -220,7 +222,7 @@ public class KnowledgeSourceIndexingService {
             node = new KnowledgeGraphNode(existing.id(), source.workspaceId(), source.projectId(),
                     nodeType, source.sourceRefId(), source.sourceVersionRefId(),
                     source.title(), source.permissionSignature(), source.aclTokens(),
-                    GraphNodeStatus.ACTIVE, existing.createdAt(), now, existing.version() + 1);
+                    GraphNodeStatus.ACTIVE, existing.createdAt(), now, existing.version());
         } else {
             node = new KnowledgeGraphNode(UUID.randomUUID(), source.workspaceId(), source.projectId(),
                     nodeType, source.sourceRefId(), source.sourceVersionRefId(),

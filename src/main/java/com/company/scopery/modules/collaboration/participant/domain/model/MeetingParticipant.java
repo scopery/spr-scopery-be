@@ -8,9 +8,8 @@ public record MeetingParticipant(
 ) {
     public static MeetingParticipant create(UUID workspaceId, UUID projectId, UUID meetingId, ParticipantTargetType targetType,
                                             UUID targetId, String displayName, String email, ParticipantRole role, boolean clientVisible) {
-        Instant now = Instant.now();
         return new MeetingParticipant(UUID.randomUUID(), workspaceId, projectId, meetingId, targetType, targetId,
-                displayName, email, role, AttendanceStatus.INVITED, clientVisible, 0, now, now);
+                displayName, email, role, AttendanceStatus.INVITED, clientVisible, 0, null, null);
     }
     public MeetingParticipant update(ParticipantRole role, AttendanceStatus attendance, boolean clientVisible) {
         return new MeetingParticipant(id, workspaceId, projectId, meetingId, targetType, targetId, displayNameSnapshot,

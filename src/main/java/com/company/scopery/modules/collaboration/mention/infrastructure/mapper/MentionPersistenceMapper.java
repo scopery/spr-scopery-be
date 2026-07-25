@@ -12,8 +12,8 @@ public class MentionPersistenceMapper {
     public MentionJpaEntity toJpaEntity(Mention d) {
         MentionJpaEntity e = new MentionJpaEntity();
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId()); e.setSourceType(d.sourceType().name());
-        e.setSourceId(d.sourceId()); e.setTargetType(d.targetType().name()); e.setTargetId(d.targetId()); e.setNotificationSent(d.notificationSent()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setSourceId(d.sourceId()); e.setTargetType(d.targetType().name()); e.setTargetId(d.targetId()); e.setNotificationSent(d.notificationSent());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

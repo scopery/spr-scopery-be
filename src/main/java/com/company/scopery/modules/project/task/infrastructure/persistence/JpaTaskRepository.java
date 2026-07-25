@@ -87,6 +87,101 @@ public class JpaTaskRepository implements TaskRepository {
                 .stream().map(mapper::toDomain).toList();
     }
 
+    @Override
+    public PageResult<Task> searchForUser(Collection<UUID> projectIds, UUID userId,
+                                          List<String> statuses, boolean excludeTerminal,
+                                          LocalDate dateFrom, LocalDate dateTo,
+                                          boolean dueDateOnly, boolean includeUndated,
+                                          PageQuery pageQuery) {
+        if (projectIds.isEmpty()) return PageResult.fromSpringPage(org.springframework.data.domain.Page.empty());
+        Specification<TaskJpaEntity> spec = buildUserSpec(projectIds, userId, statuses, excludeTerminal,
+                dateFrom, dateTo, dueDateOnly, includeUndated);
+        Pageable pageable = toMyWorkPageable(pageQuery);
+        Page<Task> page = springDataRepository.findAll(spec, pageable).map(mapper::toDomain);
+        return PageResult.fromSpringPage(page);
+    }
+
+    @Override
+    public long countForUser(Collection<UUID> projectIds, UUID userId,
+                             List<String> statuses, boolean excludeTerminal,
+                             LocalDate dateFrom, LocalDate dateTo,
+                             boolean dueDateOnly, boolean includeUndated) {
+        if (projectIds.isEmpty()) return 0L;
+        Specification<TaskJpaEntity> spec = buildUserSpec(projectIds, userId, statuses, excludeTerminal,
+                dateFrom, dateTo, dueDateOnly, includeUndated);
+        return springDataRepository.count(spec);
+    }
+
+    @Override
+    public long countUndatedForUser(Collection<UUID> projectIds, UUID userId, boolean excludeTerminal) {
+        if (projectIds.isEmpty()) return 0L;
+        Specification<TaskJpaEntity> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(root.get("projectId").in(projectIds));
+            predicates.add(cb.equal(root.get("inChargeUserId"), userId));
+            predicates.add(cb.isNull(root.get("dueDate")));
+            predicates.add(cb.isNull(root.get("plannedStartDate")));
+            if (excludeTerminal) predicates.add(root.get("status").in(TERMINAL_STATUSES).not());
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return springDataRepository.count(spec);
+    }
+
+    private Pageable toMyWorkPageable(PageQuery pageQuery) {
+        // nullsLast() is not supported by JPA Criteria API; PostgreSQL ASC already sorts NULLs last
+        Sort sort = Sort.by(
+                Sort.Order.asc("dueDate"),
+                Sort.Order.desc("updatedAt")
+        );
+        return PageRequest.of(pageQuery.page(), pageQuery.size(), sort);
+    }
+
+    private static final List<String> TERMINAL_STATUSES = List.of("DONE", "CANCELLED", "ARCHIVED");
+
+    private Specification<TaskJpaEntity> buildUserSpec(Collection<UUID> projectIds, UUID userId,
+                                                        List<String> statuses, boolean excludeTerminal,
+                                                        LocalDate dateFrom, LocalDate dateTo,
+                                                        boolean dueDateOnly, boolean includeUndated) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(root.get("projectId").in(projectIds));
+            predicates.add(cb.equal(root.get("inChargeUserId"), userId));
+
+            if (statuses != null && !statuses.isEmpty()) {
+                predicates.add(root.get("status").in(statuses));
+            }
+            if (excludeTerminal) {
+                predicates.add(root.get("status").in(TERMINAL_STATUSES).not());
+            }
+
+            if (!includeUndated) {
+                if (dueDateOnly) {
+                    // OVERDUE: dueDate IS NOT NULL AND dueDate <= dateTo
+                    predicates.add(cb.isNotNull(root.get("dueDate")));
+                    if (dateTo != null) {
+                        predicates.add(cb.lessThanOrEqualTo(root.get("dueDate"), dateTo));
+                    }
+                } else if (dateFrom != null && dateTo != null) {
+                    // Overlap: (dueDate in window) OR (startDate in window) OR (startDate..dueDate overlaps window)
+                    Predicate dueDateInWindow = cb.and(
+                            cb.isNotNull(root.get("dueDate")),
+                            cb.between(root.get("dueDate"), dateFrom, dateTo));
+                    Predicate startDateInWindow = cb.and(
+                            cb.isNotNull(root.get("plannedStartDate")),
+                            cb.between(root.get("plannedStartDate"), dateFrom, dateTo));
+                    Predicate spanOverlaps = cb.and(
+                            cb.isNotNull(root.get("plannedStartDate")),
+                            cb.isNotNull(root.get("dueDate")),
+                            cb.lessThanOrEqualTo(root.get("plannedStartDate"), dateTo),
+                            cb.greaterThanOrEqualTo(root.get("dueDate"), dateFrom));
+                    predicates.add(cb.or(dueDateInWindow, startDateInWindow, spanOverlaps));
+                }
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
     private Pageable toPageable(PageQuery pageQuery) {
         Sort sort = pageQuery.sortBy() != null
                 ? Sort.by(pageQuery.ascending() ? Sort.Direction.ASC : Sort.Direction.DESC, pageQuery.sortBy())

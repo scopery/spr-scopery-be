@@ -17,8 +17,8 @@ public class CommentPersistenceMapper {
         e.setParentCommentId(d.parentCommentId()); e.setAuthorType(d.authorType().name()); e.setAuthorId(d.authorId());
         e.setAuthorDisplayNameSnapshot(d.authorDisplayNameSnapshot()); e.setBody(d.body()); e.setStatus(d.status().name());
         e.setInternalOnly(d.internalOnly()); e.setClientVisible(d.clientVisible()); e.setEditedAt(d.editedAt()); e.setEditedBy(d.editedBy());
-        e.setDeletedAt(d.deletedAt()); e.setDeletedBy(d.deletedBy()); e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setDeletedAt(d.deletedAt()); e.setDeletedBy(d.deletedBy()); e.setTraceId(d.traceId());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

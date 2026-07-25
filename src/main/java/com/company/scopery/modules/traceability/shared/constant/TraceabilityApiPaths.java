@@ -29,6 +29,8 @@ public final class TraceabilityApiPaths {
     public static final String REQUIREMENT_CRITERIA = REQUIREMENTS + "/{requirementId}/acceptance-criteria";
     public static final String PROJECT_FUNCTIONAL_ITEM_ANCHORS = BASE + "/functional-item-anchors";
     public static final String REPORTS = BASE + "/reports";
+    public static final String REQUIREMENT_TC_LINKS = REQUIREMENTS + "/{requirementId}/test-case-links";
+    public static final String REQUIREMENT_LINKABLE_TCS = REQUIREMENTS + "/{requirementId}/linkable-test-cases";
     public static final String STRUCTURE_RELATIONS = APPLICATIONS + "/{applicationId}/structure-relations";
     public static final String FUNCTION_SCREENS = FUNCTIONAL_ITEMS + "/{functionalItemId}/screens";
     public static final String FUNCTION_APIS = FUNCTIONAL_ITEMS + "/{functionalItemId}/api-endpoints";

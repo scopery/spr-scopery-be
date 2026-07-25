@@ -8,6 +8,6 @@ public record AcceptanceEvidence(UUID id, UUID deliverableId, UUID acceptanceCri
                                             EvidenceType evidenceType, String title, String contentText,
                                             String linkUrl, String referenceId) {
         return new AcceptanceEvidence(UUID.randomUUID(), deliverableId, acceptanceCriteriaId, projectId, evidenceType,
-                title, contentText, linkUrl, referenceId, 0, Instant.now());
+                title, contentText, linkUrl, referenceId, 0, null);
     }
 }

@@ -17,8 +17,8 @@ public class MeetingSeriesPersistenceMapper {
         e.setTitle(d.title()); e.setDescription(d.description());
         e.setCadence(d.cadence()==null?null:d.cadence().name()); e.setOwnerUserId(d.ownerUserId());
         e.setStatus(d.status().name()); e.setClientVisible(d.clientVisible());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

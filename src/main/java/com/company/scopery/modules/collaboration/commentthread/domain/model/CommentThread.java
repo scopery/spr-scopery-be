@@ -9,9 +9,8 @@ public record CommentThread(
 ) {
     public static CommentThread create(UUID workspaceId, UUID projectId, String targetType, UUID targetId,
                                        String title, boolean clientVisible) {
-        Instant now = Instant.now();
         return new CommentThread(UUID.randomUUID(), workspaceId, projectId, targetType, targetId, title,
-                CommentThreadStatus.OPEN, !clientVisible, clientVisible, null, null, null, null, null, 0, now, now);
+                CommentThreadStatus.OPEN, !clientVisible, clientVisible, null, null, null, null, null, 0, null, null);
     }
     public CommentThread resolve(UUID actorId) {
         Instant now = Instant.now();

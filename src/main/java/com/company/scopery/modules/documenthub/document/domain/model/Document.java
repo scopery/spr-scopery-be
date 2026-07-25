@@ -106,6 +106,15 @@ public record Document(
                 templateVersionId, pageIcon, pageCoverObjectKey, contentWidth, visible);
     }
 
+    public Document withTitle(String newTitle) {
+        return new Document(id, workspaceId, projectId, folderId, documentTypeCode, code, newTitle, description,
+                status, classification, currentVersionId, locked, approvedAt, approvedBy, archivedAt, archivedBy,
+                traceId, version, createdAt, Instant.now(),
+                contentMode, parentDocumentId, currentContentRevisionId, currentContentRevisionNo,
+                editorSchemaVersion, contentChecksum, contentUpdatedAt, contentUpdatedBy,
+                templateVersionId, pageIcon, pageCoverObjectKey, contentWidth, clientVisible);
+    }
+
     public boolean isNativeEditable() {
         return contentMode == ContentMode.NATIVE || contentMode == ContentMode.HYBRID;
     }

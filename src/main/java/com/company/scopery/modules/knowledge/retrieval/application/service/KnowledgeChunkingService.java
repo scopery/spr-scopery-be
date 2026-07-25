@@ -89,6 +89,28 @@ public class KnowledgeChunkingService {
                 bufferStart = codePointOffset;
             }
 
+            // Section alone exceeds hardMax — split at word boundaries and emit directly
+            if (sectionTokens > hardMax) {
+                if (buffer.length() > 0 && !buffer.toString().isBlank()) {
+                    String chunkText = buffer.toString().strip();
+                    int start = bufferStart;
+                    int end = start + chunkText.codePointCount(0, chunkText.length());
+                    chunks.add(buildChunk(sourceVersionRefId, ordinal++, chunkText, currentHeading,
+                            ChunkType.SECTION, start, end, estimateTokens(chunkText)));
+                    buffer = new StringBuilder();
+                }
+                bufferStart = codePointOffset;
+                for (String sub : splitAtWordBoundaries(trimmed, hardMax)) {
+                    int start = bufferStart;
+                    int end = start + sub.codePointCount(0, sub.length());
+                    chunks.add(buildChunk(sourceVersionRefId, ordinal++, sub, currentHeading,
+                            ChunkType.SECTION, start, end, estimateTokens(sub)));
+                    bufferStart = end;
+                }
+                codePointOffset += section.codePointCount(0, section.length()) + 2;
+                continue;
+            }
+
             if (buffer.length() > 0) buffer.append("\n\n");
             buffer.append(trimmed);
 
@@ -160,6 +182,27 @@ public class KnowledgeChunkingService {
         int chars = overlapTokens * 4;
         if (text.length() <= chars) return text;
         return text.substring(text.length() - chars);
+    }
+
+    private List<String> splitAtWordBoundaries(String text, int hardMax) {
+        int maxChars = hardMax * 4;
+        List<String> parts = new ArrayList<>();
+        String[] words = text.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String word : words) {
+            if (sb.length() > 0 && sb.length() + 1 + word.length() > maxChars) {
+                parts.add(sb.toString());
+                sb = new StringBuilder();
+            }
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(word);
+            if (sb.length() >= maxChars) {
+                parts.add(sb.toString());
+                sb = new StringBuilder();
+            }
+        }
+        if (!sb.isEmpty()) parts.add(sb.toString());
+        return parts.isEmpty() ? List.of(text) : parts;
     }
 
     private boolean isHeadingLine(String line) {

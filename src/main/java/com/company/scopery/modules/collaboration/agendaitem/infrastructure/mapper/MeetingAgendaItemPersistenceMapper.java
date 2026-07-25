@@ -15,8 +15,8 @@ public class MeetingAgendaItemPersistenceMapper {
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId()); e.setMeetingId(d.meetingId());
         e.setTitle(d.title()); e.setDescription(d.description()); e.setOwnerUserId(d.ownerUserId()); e.setStatus(d.status().name());
         e.setSortOrder(d.sortOrder()); e.setTimeboxMinutes(d.timeboxMinutes()); e.setClientVisible(d.clientVisible());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

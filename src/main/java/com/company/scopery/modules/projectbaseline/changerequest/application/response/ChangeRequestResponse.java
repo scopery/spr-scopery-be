@@ -10,14 +10,20 @@ public record ChangeRequestResponse(
         String changeType, String priority, String status, String reason,
         Instant submittedAt, UUID submittedBy, Instant approvedAt, UUID approvedBy,
         Instant rejectedAt, UUID rejectedBy, String rejectionReason,
-        Instant appliedAt, UUID appliedBy, Instant createdAt, Instant updatedAt
+        Instant appliedAt, UUID appliedBy, Instant createdAt, Instant updatedAt,
+        SourceDto source
 ) {
+    public record SourceDto(String type, UUID id, String subtype, String code, String title) {}
+
     public static ChangeRequestResponse from(ChangeRequest cr) {
+        SourceDto source = cr.sourceType() == null ? null
+                : new SourceDto(cr.sourceType().name(), cr.sourceId(), cr.sourceSubtype(),
+                                cr.sourceCode(), cr.sourceTitle());
         return new ChangeRequestResponse(
                 cr.id(), cr.projectId(), cr.workspaceId(), cr.baselineId(), cr.code(), cr.title(), cr.description(),
                 cr.changeType().name(), cr.priority() == null ? null : cr.priority().name(), cr.status().name(),
                 cr.reason(), cr.submittedAt(), cr.submittedBy(), cr.approvedAt(), cr.approvedBy(),
                 cr.rejectedAt(), cr.rejectedBy(), cr.rejectionReason(), cr.appliedAt(), cr.appliedBy(),
-                cr.createdAt(), cr.updatedAt());
+                cr.createdAt(), cr.updatedAt(), source);
     }
 }

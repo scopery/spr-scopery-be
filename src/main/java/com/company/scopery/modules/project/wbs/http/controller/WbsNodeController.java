@@ -5,16 +5,22 @@ import com.company.scopery.common.pagination.PageResult;
 import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.project.shared.constant.ProjectApiPaths;
 import com.company.scopery.modules.project.wbs.application.action.ArchiveWbsNodeAction;
+import com.company.scopery.modules.project.wbs.application.action.BulkCreateWbsNodeJobHandler;
 import com.company.scopery.modules.project.wbs.application.action.CreateWbsNodeAction;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.company.scopery.modules.project.wbs.application.action.MoveWbsNodeAction;
 import com.company.scopery.modules.project.wbs.application.action.UpdateWbsNodeAction;
 import com.company.scopery.modules.project.wbs.application.command.ArchiveWbsNodeCommand;
+import com.company.scopery.modules.project.wbs.application.command.BulkCreateWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.command.CreateWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.command.MoveWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.command.UpdateWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.query.SearchWbsNodeQuery;
 import com.company.scopery.modules.project.wbs.application.response.WbsNodeResponse;
 import com.company.scopery.modules.project.wbs.application.service.WbsNodeQueryService;
+import com.company.scopery.modules.project.wbs.http.request.BulkCreateWbsNodeRequest;
 import com.company.scopery.modules.project.wbs.http.request.CreateWbsNodeRequest;
 import com.company.scopery.modules.project.wbs.http.request.MoveWbsNodeRequest;
 import com.company.scopery.modules.project.wbs.http.request.UpdateWbsNodeRequest;
@@ -38,17 +44,23 @@ public class WbsNodeController {
     private final UpdateWbsNodeAction updateAction;
     private final MoveWbsNodeAction moveAction;
     private final ArchiveWbsNodeAction archiveAction;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public WbsNodeController(WbsNodeQueryService queryService,
                               CreateWbsNodeAction createAction,
                               UpdateWbsNodeAction updateAction,
                               MoveWbsNodeAction moveAction,
-                              ArchiveWbsNodeAction archiveAction) {
+                              ArchiveWbsNodeAction archiveAction,
+                              BulkJobService bulkJobService,
+                              ObjectMapper objectMapper) {
         this.queryService = queryService;
         this.createAction = createAction;
         this.updateAction = updateAction;
         this.moveAction = moveAction;
         this.archiveAction = archiveAction;
+        this.bulkJobService = bulkJobService;
+        this.objectMapper = objectMapper;
     }
 
     @Operation(summary = "Create a new WBS node")
@@ -70,6 +82,26 @@ public class WbsNodeController {
 
         WbsNodeResponse response = createAction.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "Bulk create WBS nodes (async — poll GET /api/bulk-jobs/{id} for status)")
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ApiResponse<BulkJobResponse> bulkCreateWbsNodes(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody BulkCreateWbsNodeRequest request) {
+
+        var items = request.items().stream()
+                .map(r -> new CreateWbsNodeCommand(
+                        projectId, r.phaseId(), r.parentId(), r.code(), r.title(), r.description(), r.nodeType(), r.sortOrder()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new BulkCreateWbsNodeCommand(projectId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateWbsNodeJobHandler.JOB_TYPE, request.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @Operation(summary = "Get a WBS node by ID")

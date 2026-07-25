@@ -4,6 +4,7 @@ import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
 import com.company.scopery.modules.project.projectphase.domain.enums.ProjectPhaseStatus;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,4 +24,6 @@ public interface ProjectPhaseRepository {
     PageResult<ProjectPhase> search(UUID projectId, ProjectPhaseStatus status, PageQuery pageQuery);
 
     List<ProjectPhase> findAllByProjectId(UUID projectId);
+
+    List<ProjectPhase> findAllByIdIn(Collection<UUID> ids);
 }

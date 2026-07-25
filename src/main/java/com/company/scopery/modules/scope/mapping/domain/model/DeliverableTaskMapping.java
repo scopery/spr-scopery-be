@@ -5,7 +5,7 @@ public record DeliverableTaskMapping(UUID id, UUID deliverableId, UUID projectId
         Instant archivedAt, int version, Instant createdAt) {
     public static DeliverableTaskMapping create(UUID deliverableId, UUID projectId, UUID taskId, MappingType mappingType) {
         MappingType type = mappingType == null ? MappingType.SUPPORTING : mappingType;
-        return new DeliverableTaskMapping(UUID.randomUUID(), deliverableId, projectId, taskId, type, null, 0, Instant.now());
+        return new DeliverableTaskMapping(UUID.randomUUID(), deliverableId, projectId, taskId, type, null, 0, null);
     }
     public DeliverableTaskMapping archive() {
         if (archivedAt != null) throw new IllegalStateException("Mapping already archived");

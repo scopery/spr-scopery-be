@@ -16,8 +16,8 @@ public class MeetingParticipantPersistenceMapper {
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId()); e.setMeetingId(d.meetingId());
         e.setTargetType(d.targetType().name()); e.setTargetId(d.targetId()); e.setDisplayNameSnapshot(d.displayNameSnapshot());
         e.setEmailSnapshot(d.emailSnapshot()); e.setParticipantRole(d.participantRole().name());
-        e.setAttendanceStatus(d.attendanceStatus().name()); e.setClientVisible(d.clientVisible()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setAttendanceStatus(d.attendanceStatus().name()); e.setClientVisible(d.clientVisible());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

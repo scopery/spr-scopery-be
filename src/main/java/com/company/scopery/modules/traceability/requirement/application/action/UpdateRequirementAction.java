@@ -45,7 +45,7 @@ public class UpdateRequirementAction {
         RequirementType type = c.requirementType() != null
                 ? TraceabilityEnumParser.parseRequired(RequirementType.class, c.requirementType(), "requirementType") : null;
         var saved = repo.save(req.update(c.title(), c.description(), priority, type,
-                c.applicationId(), c.functionalItemId(), c.nonFunctionalItemId()));
+                c.applicationId(), c.functionalItemId(), c.nonFunctionalItemId(), c.scopeItemId()));
         activityLogger.logSuccess(TraceabilityEntityTypes.REQUIREMENT, saved.id(),
                 TraceabilityActivityActions.REQUIREMENT_UPDATED, "Requirement updated");
         publisher.publishEvent(Map.of(

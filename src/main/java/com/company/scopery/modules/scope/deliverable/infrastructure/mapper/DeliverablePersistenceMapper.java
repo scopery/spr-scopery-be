@@ -20,8 +20,8 @@ public class DeliverablePersistenceMapper {
         e.setDescription(d.description()); e.setAcceptanceRequired(d.acceptanceRequired()); e.setStatus(d.status().name());
         e.setAcceptedAt(d.acceptedAt()); e.setAcceptedBy(d.acceptedBy()); e.setRejectedAt(d.rejectedAt()); e.setRejectedBy(d.rejectedBy());
         e.setRejectionReason(d.rejectionReason()); e.setReopenedAt(d.reopenedAt()); e.setReopenedBy(d.reopenedBy());
-        e.setReopenReason(d.reopenReason()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setReopenReason(d.reopenReason()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

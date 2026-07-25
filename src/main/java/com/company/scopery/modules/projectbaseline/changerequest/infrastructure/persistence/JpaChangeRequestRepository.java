@@ -2,6 +2,8 @@ package com.company.scopery.modules.projectbaseline.changerequest.infrastructure
 
 import com.company.scopery.modules.projectbaseline.changerequest.domain.model.*;
 import com.company.scopery.modules.projectbaseline.changerequest.infrastructure.mapper.ChangeRequestPersistenceMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import java.util.*;
 
@@ -9,11 +11,15 @@ import java.util.*;
 public class JpaChangeRequestRepository implements ChangeRequestRepository {
     private final SpringDataChangeRequestJpaRepository springData;
     private final ChangeRequestPersistenceMapper mapper;
+    @PersistenceContext private EntityManager em;
     public JpaChangeRequestRepository(SpringDataChangeRequestJpaRepository springData, ChangeRequestPersistenceMapper mapper) {
         this.springData = springData; this.mapper = mapper;
     }
     @Override public ChangeRequest save(ChangeRequest cr) {
-        return mapper.toDomain(springData.saveAndFlush(mapper.toJpaEntity(cr)));
+        var entity = mapper.toJpaEntity(cr);
+        var merged = em.merge(entity);
+        em.flush();
+        return mapper.toDomain(merged);
     }
     @Override public Optional<ChangeRequest> findById(UUID id) { return springData.findById(id).map(mapper::toDomain); }
     @Override public Optional<ChangeRequest> findByIdAndProjectId(UUID id, UUID projectId) {

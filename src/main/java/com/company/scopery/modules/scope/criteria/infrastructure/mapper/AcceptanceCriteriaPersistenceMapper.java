@@ -14,8 +14,8 @@ public class AcceptanceCriteriaPersistenceMapper {
         AcceptanceCriteriaJpaEntity e = new AcceptanceCriteriaJpaEntity();
         e.setId(d.id()); e.setDeliverableId(d.deliverableId()); e.setProjectId(d.projectId()); e.setType(d.type());
         e.setTitle(d.title()); e.setDescription(d.description()); e.setMandatory(d.mandatory()); e.setStatus(d.status().name());
-        e.setWaiveReason(d.waiveReason()); e.setWaivedBy(d.waivedBy()); e.setWaivedAt(d.waivedAt()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setWaiveReason(d.waiveReason()); e.setWaivedBy(d.waivedBy()); e.setWaivedAt(d.waivedAt());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

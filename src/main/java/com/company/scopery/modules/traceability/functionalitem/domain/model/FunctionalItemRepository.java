@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface FunctionalItemRepository {
     FunctionalItem save(FunctionalItem item);
     Optional<FunctionalItem> findByIdAndProjectId(UUID id, UUID projectId);
+    List<FunctionalItem> searchByProjectId(UUID projectId, String q, int limit);
     List<FunctionalItem> findByProjectId(UUID projectId);
     List<FunctionalItem> findByProjectIdAndModuleId(UUID projectId, UUID moduleId);
     List<FunctionalItem> findByModuleIdIn(Collection<UUID> moduleIds);

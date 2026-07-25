@@ -9,7 +9,6 @@ public record Mention(
 ) {
     public static Mention create(UUID workspaceId, UUID projectId, MentionSourceType sourceType, UUID sourceId,
                                  MentionTargetType targetType, UUID targetId) {
-        Instant now = Instant.now();
-        return new Mention(UUID.randomUUID(), workspaceId, projectId, sourceType, sourceId, targetType, targetId, false, 0, now, now);
+        return new Mention(UUID.randomUUID(), workspaceId, projectId, sourceType, sourceId, targetType, targetId, false, 0, null, null);
     }
 }

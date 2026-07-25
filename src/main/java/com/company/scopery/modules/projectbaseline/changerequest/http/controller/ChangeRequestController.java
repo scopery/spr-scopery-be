@@ -149,7 +149,8 @@ public class ChangeRequestController {
                                                              @Valid @RequestBody CreateChangeRequestItemRequest request) {
         return ApiResponse.success(createItemAction.execute(new CreateChangeRequestItemCommand(
                 projectId, changeRequestId, request.targetType(), request.targetId(), request.operation(),
-                request.summary(), request.beforeSnapshotJson(), request.afterSnapshotJson(), request.applyPayloadJson())));
+                request.summary(), request.beforeSnapshotJson(), request.afterSnapshotJson(), request.applyPayloadJson(),
+                request.affectedAreas())));
     }
 
     @GetMapping(ProjectBaselineApiPaths.CHANGE_REQUEST_ITEMS)
@@ -172,7 +173,8 @@ public class ChangeRequestController {
                                                              @Valid @RequestBody UpdateChangeRequestItemRequest request) {
         return ApiResponse.success(updateItemAction.execute(new UpdateChangeRequestItemCommand(
                 projectId, changeRequestId, itemId, request.targetType(), request.targetId(), request.operation(),
-                request.summary(), request.beforeSnapshotJson(), request.afterSnapshotJson(), request.applyPayloadJson())));
+                request.summary(), request.beforeSnapshotJson(), request.afterSnapshotJson(), request.applyPayloadJson(),
+                request.affectedAreas())));
     }
 
     @DeleteMapping(ProjectBaselineApiPaths.CHANGE_REQUEST_ITEMS + "/{itemId}")

@@ -132,9 +132,10 @@ public class RaidItemController {
     @PostMapping("/{raidItemId}/resolve")
     @Operation(summary = "Resolve RAID item")
     public ApiResponse<RaidItemResponse> resolve(@PathVariable UUID projectId, @PathVariable UUID raidItemId,
-                                                 @Valid @RequestBody ResolveRaidItemRequest request) {
-        return ApiResponse.success(resolve.execute(
-                new ResolveRaidItemCommand(projectId, raidItemId, request.outcomeNote())));
+                                                 @RequestBody(required = false) ResolveRaidItemRequest request) {
+        String note = request != null && request.outcomeNote() != null && !request.outcomeNote().isBlank()
+                ? request.outcomeNote() : "Resolved";
+        return ApiResponse.success(resolve.execute(new ResolveRaidItemCommand(projectId, raidItemId, note)));
     }
 
     @PostMapping("/{raidItemId}/close")
@@ -152,9 +153,10 @@ public class RaidItemController {
     @PostMapping("/{raidItemId}/escalate")
     @Operation(summary = "Escalate RAID item")
     public ApiResponse<RaidItemResponse> escalate(@PathVariable UUID projectId, @PathVariable UUID raidItemId,
-                                                  @Valid @RequestBody EscalateRaidItemRequest request) {
-        return ApiResponse.success(escalate.execute(new EscalateRaidItemCommand(
-                projectId, raidItemId, request.escalationLevel(), request.reason())));
+                                                  @RequestBody(required = false) EscalateRaidItemRequest request) {
+        String level = request != null && request.escalationLevel() != null ? request.escalationLevel() : "PROJECT_MANAGER";
+        String reason = request != null && request.reason() != null ? request.reason() : "Escalated";
+        return ApiResponse.success(escalate.execute(new EscalateRaidItemCommand(projectId, raidItemId, level, reason)));
     }
 
     @PatchMapping("/{raidItemId}/archive")

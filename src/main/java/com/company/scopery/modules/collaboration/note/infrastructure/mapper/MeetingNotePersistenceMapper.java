@@ -15,8 +15,8 @@ public class MeetingNotePersistenceMapper {
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId()); e.setMeetingId(d.meetingId());
         e.setAgendaItemId(d.agendaItemId()); e.setNoteType(d.noteType().name()); e.setBody(d.body());
         e.setInternalOnly(d.internalOnly()); e.setClientVisible(d.clientVisible()); e.setSourceAiSuggestionId(d.sourceAiSuggestionId());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

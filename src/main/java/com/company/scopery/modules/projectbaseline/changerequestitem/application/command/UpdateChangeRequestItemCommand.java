@@ -1,4 +1,6 @@
 package com.company.scopery.modules.projectbaseline.changerequestitem.application.command;
+import java.util.List;
 import java.util.UUID;
 public record UpdateChangeRequestItemCommand(UUID projectId, UUID changeRequestId, UUID itemId, String targetType,
-        UUID targetId, String operation, String summary, String beforeSnapshotJson, String afterSnapshotJson, String applyPayloadJson) {}
+        UUID targetId, String operation, String summary, String beforeSnapshotJson, String afterSnapshotJson, String applyPayloadJson,
+        List<String> affectedAreas) {}

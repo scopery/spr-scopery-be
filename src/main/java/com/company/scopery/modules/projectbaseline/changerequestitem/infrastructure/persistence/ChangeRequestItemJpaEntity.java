@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import java.util.List;
 import java.util.UUID;
 
 @Entity @Table(name = ProjectBaselineTableNames.CHANGE_REQUEST_ITEM)
@@ -21,5 +22,6 @@ public class ChangeRequestItemJpaEntity extends AuditableJpaEntity {
     @JdbcTypeCode(SqlTypes.JSON) @Column(name="after_snapshot_json", columnDefinition="jsonb") private String afterSnapshotJson;
     @JdbcTypeCode(SqlTypes.JSON) @Column(name="apply_payload_json", columnDefinition="jsonb") private String applyPayloadJson;
     @Column(nullable=false) private String status;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name="affected_areas", columnDefinition="jsonb") private List<String> affectedAreas;
     @Version private Integer version;
 }

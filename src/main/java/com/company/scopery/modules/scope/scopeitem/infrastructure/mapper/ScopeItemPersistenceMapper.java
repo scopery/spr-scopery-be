@@ -20,8 +20,8 @@ public class ScopeItemPersistenceMapper {
         e.setParentScopeItemId(d.parentScopeItemId()); e.setType(d.type().name()); e.setCode(d.code()); e.setTitle(d.title());
         e.setDescription(d.description()); e.setInScope(d.inScope()); e.setOutOfScope(d.outOfScope()); e.setPriority(d.priority());
         e.setAcceptanceRequired(d.acceptanceRequired()); e.setStatus(d.status().name()); e.setSortOrder(d.sortOrder());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

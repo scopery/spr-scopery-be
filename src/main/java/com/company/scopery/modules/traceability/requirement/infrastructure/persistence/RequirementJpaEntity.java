@@ -12,5 +12,6 @@ public class RequirementJpaEntity extends AuditableJpaEntity {
     @Column(name="archived_at") private Instant archivedAt; @Column(name="archived_by") private UUID archivedBy;
     @Column(name="functional_item_id") private UUID functionalItemId;
     @Column(name="non_functional_item_id") private UUID nonFunctionalItemId;
+    @Column(name="scope_item_id") private UUID scopeItemId;
     @Version private Integer version;
 }

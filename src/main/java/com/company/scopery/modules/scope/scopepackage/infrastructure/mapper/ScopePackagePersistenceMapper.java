@@ -17,8 +17,8 @@ public class ScopePackagePersistenceMapper {
         e.setSourceQuoteVersionId(d.sourceQuoteVersionId()); e.setSourceBaselineId(d.sourceBaselineId());
         e.setCode(d.code()); e.setName(d.name()); e.setDescription(d.description()); e.setStatus(d.status().name());
         e.setCurrentFlag(d.currentFlag()); e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

@@ -8,6 +8,7 @@ import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.projectbaseline.changerequest.application.command.CreateChangeRequestCommand;
 import com.company.scopery.modules.projectbaseline.changerequest.application.response.ChangeRequestResponse;
 import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangePriority;
+import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangeRequestSourceType;
 import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangeType;
 import com.company.scopery.modules.projectbaseline.changerequest.domain.model.ChangeRequest;
 import com.company.scopery.modules.projectbaseline.changerequest.domain.model.ChangeRequestRepository;
@@ -55,9 +56,13 @@ public class CreateChangeRequestAction {
         ChangePriority priority = ProjectBaselineEnumParser.parseOptional(ChangePriority.class, cmd.priority(),
                 "CHANGE_PRIORITY_INVALID", "priority");
         java.util.UUID actorId = currentUser.resolveCurrentUser().id();
+        ChangeRequestSourceType sourceType = cmd.sourceType() == null ? ChangeRequestSourceType.MANUAL
+                : ProjectBaselineEnumParser.parseRequired(ChangeRequestSourceType.class, cmd.sourceType(),
+                        "CHANGE_SOURCE_TYPE_INVALID", "sourceType");
         ChangeRequest cr = ChangeRequest.create(project.id(), project.workspaceId(),
                 cmd.baselineId() != null ? cmd.baselineId() : project.currentBaselineId(),
-                cmd.code(), cmd.title(), cmd.description(), type, priority, cmd.reason(), actorId, MDC.get("traceId"));
+                cmd.code(), cmd.title(), cmd.description(), type, priority, cmd.reason(), actorId, MDC.get("traceId"),
+                sourceType, cmd.sourceId(), cmd.sourceSubtype(), cmd.sourceCode(), cmd.sourceTitle());
         cr = changeRequests.save(cr);
         publisher.enqueueChangeRequest(cr, ProjectBaselineEventCodes.CHANGE_REQUEST_CREATED);
         activityLogger.logSuccess(ProjectBaselineEntityTypes.CHANGE_REQUEST, cr.id(),

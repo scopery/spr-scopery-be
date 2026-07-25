@@ -14,8 +14,8 @@ public class DeliverableAcceptancePersistenceMapper {
         DeliverableAcceptanceJpaEntity e = new DeliverableAcceptanceJpaEntity();
         e.setId(d.id()); e.setDeliverableId(d.deliverableId()); e.setProjectId(d.projectId());
         e.setOutcome(d.outcome().name()); e.setNotes(d.notes()); e.setAcceptedBy(d.acceptedBy());
-        e.setAcceptedAt(d.acceptedAt()); e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        e.setAcceptedAt(d.acceptedAt());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

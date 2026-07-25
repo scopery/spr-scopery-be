@@ -1,19 +1,26 @@
 package com.company.scopery.modules.traceability.nonfunctionalitem.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.modules.traceability.nonfunctionalitem.application.action.BulkCreateNonFunctionalItemJobHandler;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.action.CreateNonFunctionalItemAction;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.action.DeleteNonFunctionalItemAction;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.action.UpdateNonFunctionalItemAction;
+import com.company.scopery.modules.traceability.nonfunctionalitem.application.command.BulkCreateNonFunctionalItemCommand;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.command.CreateNonFunctionalItemCommand;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.command.UpdateNonFunctionalItemCommand;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.response.NonFunctionalItemResponse;
 import com.company.scopery.modules.traceability.nonfunctionalitem.application.service.NonFunctionalItemQueryService;
+import com.company.scopery.modules.traceability.nonfunctionalitem.http.request.BulkCreateNonFunctionalItemRequest;
 import com.company.scopery.modules.traceability.nonfunctionalitem.http.request.CreateNonFunctionalItemRequest;
 import com.company.scopery.modules.traceability.nonfunctionalitem.http.request.UpdateNonFunctionalItemRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -36,17 +44,23 @@ public class NonFunctionalItemController {
     private final CreateNonFunctionalItemAction createAction;
     private final UpdateNonFunctionalItemAction updateAction;
     private final DeleteNonFunctionalItemAction deleteAction;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public NonFunctionalItemController(
             NonFunctionalItemQueryService queryService,
             CreateNonFunctionalItemAction createAction,
             UpdateNonFunctionalItemAction updateAction,
-            DeleteNonFunctionalItemAction deleteAction
+            DeleteNonFunctionalItemAction deleteAction,
+            BulkJobService bulkJobService,
+            ObjectMapper objectMapper
     ) {
         this.queryService = queryService;
         this.createAction = createAction;
         this.updateAction = updateAction;
         this.deleteAction = deleteAction;
+        this.bulkJobService = bulkJobService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping
@@ -68,6 +82,27 @@ public class NonFunctionalItemController {
                 request.scopeRefId()
         );
         return ApiResponse.success(createAction.execute(command));
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk create non-functional items (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> bulkCreate(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody BulkCreateNonFunctionalItemRequest request
+    ) {
+        var items = request.items().stream()
+                .map(r -> new CreateNonFunctionalItemCommand(
+                        projectId, r.workspaceId(), r.code(), r.title(), r.description(),
+                        r.category(), r.priority(), r.targetMetric(), r.scopeType(), r.scopeRefId()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new BulkCreateNonFunctionalItemCommand(projectId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateNonFunctionalItemJobHandler.JOB_TYPE, request.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @GetMapping

@@ -14,8 +14,8 @@ public class ScopeItemWbsMappingPersistenceMapper {
         ScopeItemWbsMappingJpaEntity e = new ScopeItemWbsMappingJpaEntity();
         e.setId(d.id()); e.setScopeItemId(d.scopeItemId()); e.setProjectId(d.projectId());
         e.setWbsNodeId(d.wbsNodeId()); e.setMappingType(d.mappingType().name());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

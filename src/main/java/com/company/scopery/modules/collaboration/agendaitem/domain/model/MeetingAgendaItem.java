@@ -8,9 +8,8 @@ public record MeetingAgendaItem(
 ) {
     public static MeetingAgendaItem create(UUID workspaceId, UUID projectId, UUID meetingId, String title, String description,
                                            UUID ownerUserId, int sortOrder, Integer timebox, boolean clientVisible) {
-        Instant now = Instant.now();
         return new MeetingAgendaItem(UUID.randomUUID(), workspaceId, projectId, meetingId, title, description,
-                ownerUserId, AgendaItemStatus.OPEN, sortOrder, timebox, clientVisible, null, null, 0, now, now);
+                ownerUserId, AgendaItemStatus.OPEN, sortOrder, timebox, clientVisible, null, null, 0, null, null);
     }
     public MeetingAgendaItem update(String title, String description, UUID ownerUserId, AgendaItemStatus status,
                                     int sortOrder, Integer timebox, boolean clientVisible) {

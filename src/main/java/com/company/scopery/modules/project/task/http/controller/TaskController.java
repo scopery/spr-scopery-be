@@ -31,6 +31,7 @@ public class TaskController {
     private final CompleteTaskAction completeTaskAction;
     private final CancelTaskAction cancelTaskAction;
     private final ArchiveTaskAction archiveTaskAction;
+    private final ReopenTaskAction reopenTaskAction;
 
     public TaskController(TaskQueryService taskQueryService,
                           CreateTaskAction createTaskAction,
@@ -39,7 +40,8 @@ public class TaskController {
                           BlockTaskAction blockTaskAction,
                           CompleteTaskAction completeTaskAction,
                           CancelTaskAction cancelTaskAction,
-                          ArchiveTaskAction archiveTaskAction) {
+                          ArchiveTaskAction archiveTaskAction,
+                          ReopenTaskAction reopenTaskAction) {
         this.taskQueryService = taskQueryService;
         this.createTaskAction = createTaskAction;
         this.updateTaskAction = updateTaskAction;
@@ -48,6 +50,7 @@ public class TaskController {
         this.completeTaskAction = completeTaskAction;
         this.cancelTaskAction = cancelTaskAction;
         this.archiveTaskAction = archiveTaskAction;
+        this.reopenTaskAction = reopenTaskAction;
     }
 
     @PostMapping
@@ -90,10 +93,12 @@ public class TaskController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        String effectiveKeyword = (keyword != null) ? keyword : q;
         SearchTaskQuery query = new SearchTaskQuery(
-                projectId, projectPhaseId, wbsNodeId, status, priority, keyword, page, size);
+                projectId, projectPhaseId, wbsNodeId, status, priority, effectiveKeyword, page, size);
         PageResult<TaskResponse> result = taskQueryService.searchTasks(query);
         return ApiResponse.success(PageResponse.fromDomain(result));
     }
@@ -160,5 +165,13 @@ public class TaskController {
             @PathVariable UUID projectId,
             @PathVariable UUID id) {
         return ApiResponse.success(archiveTaskAction.execute(new ArchiveTaskCommand(id, projectId)));
+    }
+
+    @PatchMapping("/{id}/reopen")
+    @Operation(summary = "Reopen a completed or cancelled task")
+    public ApiResponse<TaskResponse> reopenTask(
+            @PathVariable UUID projectId,
+            @PathVariable UUID id) {
+        return ApiResponse.success(reopenTaskAction.execute(new ReopenTaskCommand(id, projectId)));
     }
 }

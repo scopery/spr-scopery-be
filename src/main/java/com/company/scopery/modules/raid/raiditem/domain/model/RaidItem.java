@@ -14,11 +14,10 @@ public record RaidItem(
 ) {
     public static RaidItem create(UUID projectId, UUID workspaceId, RaidItemType type, String code, String title,
                                   String description, UUID ownerUserId) {
-        Instant now = Instant.now();
         return new RaidItem(UUID.randomUUID(), projectId, workspaceId, type, code, title, description,
                 RaidItemStatus.OPEN, ownerUserId, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, 0, now, now);
+                null, null, null, null, null, null, 0, null, null);
     }
     public RaidItem withRiskFields(RaidProbability probability, RaidImpact impact, RiskResponseStrategy strategy, String trigger) {
         Integer score = RiskScoreCalculator.score(probability, impact);

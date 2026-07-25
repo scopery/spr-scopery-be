@@ -3,6 +3,7 @@ package com.company.scopery.modules.traceability.functionalitem.infrastructure.p
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItem;
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
 import com.company.scopery.modules.traceability.functionalitem.infrastructure.mapper.FunctionalItemPersistenceMapper;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -54,6 +55,12 @@ public class JpaFunctionalItemRepository implements FunctionalItemRepository {
     @Override
     public boolean existsByProjectIdAndCode(UUID projectId, String code) {
         return springData.existsByProjectIdAndCode(projectId, code);
+    }
+
+    @Override
+    public List<FunctionalItem> searchByProjectId(UUID projectId, String q, int limit) {
+        return springData.searchByProjectIdAndQ(projectId, q, PageRequest.of(0, limit))
+                .stream().map(mapper::toDomain).toList();
     }
 
     @Override

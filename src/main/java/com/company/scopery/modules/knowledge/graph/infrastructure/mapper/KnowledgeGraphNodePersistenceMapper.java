@@ -55,9 +55,7 @@ public class KnowledgeGraphNodePersistenceMapper {
         entity.setNodeStatus(domain.nodeStatus().name());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
-            if (domain.version() > 0) {
-                entity.setVersion(domain.version());
-            }
+            entity.setVersion(domain.version());
         }
         return entity;
     }

@@ -75,7 +75,8 @@ public class AiAssistantSseStreamService {
                                 .data(payloadJson)
                 );
             } catch (IOException e) {
-                log.debug("SSE emitter error for messageId={}, removing emitter", messageId);
+                log.warn("SSE emitter send failed for messageId={} seq={} event={}: {}",
+                        messageId, sequence, eventType, e.getMessage());
                 removeEmitter(messageId, emitter);
             }
         }
@@ -94,7 +95,8 @@ public class AiAssistantSseStreamService {
                                 .data(event.payloadJson())
                 );
             } catch (IOException e) {
-                log.debug("SSE replay error for messageId={}, stopping replay", messageId);
+                log.warn("SSE replay send failed for messageId={} seq={}: {}",
+                        messageId, event.sequence(), e.getMessage());
                 removeEmitter(messageId, emitter);
                 return;
             }
@@ -118,7 +120,7 @@ public class AiAssistantSseStreamService {
                 try {
                     emitter.send(SseEmitter.event().comment("heartbeat"));
                 } catch (IOException e) {
-                    log.debug("SSE heartbeat failed for messageId={}, removing emitter", messageId);
+                    log.warn("SSE heartbeat failed for messageId={}: {}", messageId, e.getMessage());
                     removeEmitter(messageId, emitter);
                 }
             }

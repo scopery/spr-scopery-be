@@ -9,5 +9,5 @@ public record CreateTaskDependencyRequest(
         @NotNull UUID predecessorTaskId,
         @NotNull UUID successorTaskId,
         @NotBlank String dependencyType,
-        int lagDays
+        Integer lagDays
 ) {}

@@ -5,6 +5,7 @@ import com.company.scopery.modules.aiaction.application.action.BuildAiActionPlan
 import com.company.scopery.modules.aiaction.application.action.CancelAiActionPlanAction;
 import com.company.scopery.modules.aiaction.application.action.ConfirmAiActionPlanAction;
 import com.company.scopery.modules.aiaction.application.action.ExecuteAiActionPlanAction;
+import com.company.scopery.modules.aiaction.application.action.RunAiActionPlanSyncAction;
 import com.company.scopery.modules.aiaction.application.command.BuildAiActionPlanCommand;
 import com.company.scopery.modules.aiaction.application.command.CancelAiActionPlanCommand;
 import com.company.scopery.modules.aiaction.application.command.ConfirmAiActionPlanCommand;
@@ -14,10 +15,11 @@ import com.company.scopery.modules.aiaction.application.response.AiActionExecuti
 import com.company.scopery.modules.aiaction.application.response.AiActionPlanResponse;
 import com.company.scopery.modules.aiaction.application.service.AiActionPlanQueryService;
 import com.company.scopery.modules.aiaction.shared.constant.AiActionApiPaths;
+import com.company.scopery.platform.security.JwtAuthFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,17 +40,20 @@ public class AiActionPlanController {
     private final ConfirmAiActionPlanAction confirmPlanAction;
     private final CancelAiActionPlanAction cancelPlanAction;
     private final ExecuteAiActionPlanAction executeAiActionPlanAction;
+    private final RunAiActionPlanSyncAction runAiActionPlanSyncAction;
 
     public AiActionPlanController(BuildAiActionPlanAction buildPlanAction,
                                   AiActionPlanQueryService planQueryService,
                                   ConfirmAiActionPlanAction confirmPlanAction,
                                   CancelAiActionPlanAction cancelPlanAction,
-                                  ExecuteAiActionPlanAction executeAiActionPlanAction) {
+                                  ExecuteAiActionPlanAction executeAiActionPlanAction,
+                                  RunAiActionPlanSyncAction runAiActionPlanSyncAction) {
         this.buildPlanAction = buildPlanAction;
         this.planQueryService = planQueryService;
         this.confirmPlanAction = confirmPlanAction;
         this.cancelPlanAction = cancelPlanAction;
         this.executeAiActionPlanAction = executeAiActionPlanAction;
+        this.runAiActionPlanSyncAction = runAiActionPlanSyncAction;
     }
 
     @PostMapping("/requests/{requestId}/plan")
@@ -63,9 +68,7 @@ public class AiActionPlanController {
         String idempotencyKey = body.containsKey("idempotencyKey")
                 ? String.valueOf(body.get("idempotencyKey"))
                 : UUID.randomUUID().toString();
-        UUID actorId = body.containsKey("actorId")
-                ? UUID.fromString(String.valueOf(body.get("actorId")))
-                : null;
+        UUID actorId = currentActorId();
 
         BuildAiActionPlanCommand command = new BuildAiActionPlanCommand(requestId, policyCode, idempotencyKey, actorId);
         AiActionPlanResponse response = buildPlanAction.execute(command);
@@ -95,9 +98,7 @@ public class AiActionPlanController {
         String idempotencyKey = body.containsKey("idempotencyKey")
                 ? String.valueOf(body.get("idempotencyKey"))
                 : UUID.randomUUID().toString();
-        UUID actorId = body.containsKey("actorId")
-                ? UUID.fromString(String.valueOf(body.get("actorId")))
-                : null;
+        UUID actorId = currentActorId();
 
         ConfirmAiActionPlanCommand command = new ConfirmAiActionPlanCommand(
                 planId, planHash, expectedPlanVersion, decision, channel, comment, idempotencyKey, actorId);
@@ -118,9 +119,7 @@ public class AiActionPlanController {
         String idempotencyKey = body.containsKey("idempotencyKey")
                 ? String.valueOf(body.get("idempotencyKey"))
                 : UUID.randomUUID().toString();
-        UUID actorId = body.containsKey("actorId")
-                ? UUID.fromString(String.valueOf(body.get("actorId")))
-                : null;
+        UUID actorId = currentActorId();
 
         CancelAiActionPlanCommand command = new CancelAiActionPlanCommand(
                 planId, expectedPlanVersion, reasonCode, idempotencyKey, actorId);
@@ -138,19 +137,26 @@ public class AiActionPlanController {
         int expectedPlanVersion = body.containsKey("expectedPlanVersion")
                 ? Integer.parseInt(String.valueOf(body.get("expectedPlanVersion")))
                 : 0;
-        UUID confirmationId = body.containsKey("confirmationId")
+        UUID confirmationId = body.containsKey("confirmationId") && body.get("confirmationId") != null
                 ? UUID.fromString(String.valueOf(body.get("confirmationId")))
                 : null;
         String idempotencyKey = body.containsKey("idempotencyKey")
                 ? String.valueOf(body.get("idempotencyKey"))
                 : UUID.randomUUID().toString();
-        UUID actorId = body.containsKey("actorId")
-                ? UUID.fromString(String.valueOf(body.get("actorId")))
-                : null;
+        UUID actorId = currentActorId();
 
         ExecuteAiActionPlanCommand command = new ExecuteAiActionPlanCommand(
                 planId, planHash, expectedPlanVersion, confirmationId, idempotencyKey, actorId);
         AiActionExecutionResponse response = executeAiActionPlanAction.execute(command);
-        return ResponseEntity.status(202).body(ApiResponse.success(response));
+        runAiActionPlanSyncAction.runAndThrowIfFailed(response.executionId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    private UUID currentActorId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getDetails() instanceof JwtAuthFilter.MapTokenDetails details) {
+            return details.subjectId();
+        }
+        return null;
     }
 }

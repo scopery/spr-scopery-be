@@ -191,4 +191,19 @@ public record Task(
                 this.version, this.createdAt, this.updatedAt
         );
     }
+
+    public Task reopen() {
+        return new Task(
+                this.id, this.projectId, this.projectPhaseId, this.wbsNodeId,
+                this.code, this.title, this.description, this.inChargeUserId,
+                this.plannedRoleCode, this.plannedRoleName, this.estimateHours,
+                this.plannedStartDate, this.dueDate, this.priority,
+                TaskStatus.TODO,
+                this.startedAt, this.startedBy, this.blockedAt,
+                null, null,
+                null, null,
+                this.archivedAt, this.archivedBy,
+                this.version, this.createdAt, this.updatedAt
+        );
+    }
 }

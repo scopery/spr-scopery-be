@@ -38,7 +38,8 @@ public class CreateChangeRequestFromRaidAction {
         String code = "RAID-CR-" + item.id().toString().substring(0, 8).toUpperCase();
         var cr = createChangeRequestAction.execute(new CreateChangeRequestCommand(
                 project.id(), code, "RAID: " + item.title(), item.description(), "RISK_RESPONSE", "MEDIUM",
-                project.currentBaselineId(), "Created from RAID item " + item.id()));
+                project.currentBaselineId(), "Created from RAID item " + item.id(),
+                "RAID_ITEM", item.id(), item.type().name(), item.code(), item.title()));
         item = items.save(item.withLinkedChangeRequest(cr.id()));
         return new CreateChangeRequestFromRaidResponse(RaidItemResponse.from(item), cr.id());
     }

@@ -12,10 +12,9 @@ public record Meeting(
     public static Meeting create(UUID workspaceId, UUID projectId, UUID seriesId, String title, String description,
                                  MeetingType type, Instant startAt, Instant endAt, String timezone, String location,
                                  String meetingUrl, UUID organizerUserId, boolean clientVisible) {
-        Instant now = Instant.now();
         return new Meeting(UUID.randomUUID(), workspaceId, projectId, seriesId, title, description, type,
                 MeetingStatus.SCHEDULED, startAt, endAt, timezone, location, meetingUrl, organizerUserId,
-                clientVisible, !clientVisible, null, null, null, null, null, null, 0, now, now);
+                clientVisible, !clientVisible, null, null, null, null, null, null, 0, null, null);
     }
     public Meeting update(String title, String description, MeetingType type, Instant startAt, Instant endAt,
                           String timezone, String location, String meetingUrl, boolean clientVisible) {

@@ -11,7 +11,8 @@ public class TaskResourceAssignmentPersistenceMapper {
         e.setResourceProfileId(d.resourceProfileId()); e.setAssignmentType(d.assignmentType().name());
         e.setPlannedEffortHours(d.plannedEffortHours()); e.setStartDate(d.startDate()); e.setEndDate(d.endDate());
         e.setStatus(d.status().name()); e.setNotes(d.notes()); e.setRemovedAt(d.removedAt()); e.setRemovedBy(d.removedBy());
-        e.setVersion(d.version()); e.setCreatedAt(d.createdAt()); return e;
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
+        return e;
     }
     public TaskResourceAssignment toDomain(TaskResourceAssignmentJpaEntity e) {
         return new TaskResourceAssignment(e.getId(), e.getWorkspaceId(), e.getProjectId(), e.getTaskId(), e.getResourceProfileId(),

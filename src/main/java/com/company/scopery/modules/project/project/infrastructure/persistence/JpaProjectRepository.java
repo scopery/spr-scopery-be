@@ -49,6 +49,12 @@ public class JpaProjectRepository implements ProjectRepository {
     }
 
     @Override
+    public List<Project> findAllByWorkspaceId(UUID workspaceId) {
+        return springDataRepository.findAllByWorkspaceId(workspaceId)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public PageResult<Project> search(UUID workspaceId, String keyword, ProjectStatus status, PageQuery pageQuery) {
         Specification<ProjectJpaEntity> spec = buildSearchSpec(workspaceId, keyword, status);
         Pageable pageable = toPageable(pageQuery);

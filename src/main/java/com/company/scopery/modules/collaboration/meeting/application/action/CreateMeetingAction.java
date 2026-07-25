@@ -38,7 +38,8 @@ public class CreateMeetingAction {
                 .orElseThrow(() -> ProjectExceptions.projectNotFound(command.projectId()));
         if (project.status() == ProjectStatus.ARCHIVED) throw CollaborationExceptions.projectArchived(command.projectId());
         if (command.title() == null || command.title().isBlank()) throw CollaborationExceptions.titleRequired();
-        MeetingType type = CollaborationEnumParser.parseRequired(MeetingType.class, command.meetingType(), "meetingType");
+        String meetingTypeStr = (command.meetingType() == null || command.meetingType().isBlank()) ? "GENERAL" : command.meetingType();
+        MeetingType type = CollaborationEnumParser.parseRequired(MeetingType.class, meetingTypeStr, "meetingType");
         var actor = currentUser.resolveCurrentUser();
         boolean clientVisible = Boolean.TRUE.equals(command.clientVisible());
         Meeting meeting = Meeting.create(project.workspaceId(), project.id(), command.meetingSeriesId(),

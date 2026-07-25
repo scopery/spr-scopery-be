@@ -22,8 +22,8 @@ public class MeetingPersistenceMapper {
         e.setEndAt(d.endAt()); e.setTimezone(d.timezone()); e.setLocation(d.location()); e.setMeetingUrl(d.meetingUrl());
         e.setOrganizerUserId(d.organizerUserId()); e.setClientVisible(d.clientVisible()); e.setInternalOnly(d.internalOnly());
         e.setCancelledAt(d.cancelledAt()); e.setCancelledBy(d.cancelledBy()); e.setCancelReason(d.cancelReason());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

@@ -19,8 +19,8 @@ public class MeetingActionItemPersistenceMapper {
         e.setStatus(d.status().name()); e.setLinkedTaskId(d.linkedTaskId()); e.setLinkedRaidActionId(d.linkedRaidActionId());
         e.setCompletedAt(d.completedAt()); e.setCompletedBy(d.completedBy()); e.setCompletionNote(d.completionNote());
         e.setClientVisible(d.clientVisible()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
-        e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setTraceId(d.traceId());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

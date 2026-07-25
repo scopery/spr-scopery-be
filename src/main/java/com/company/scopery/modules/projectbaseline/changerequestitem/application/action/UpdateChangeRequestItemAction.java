@@ -40,7 +40,8 @@ public class UpdateChangeRequestItemAction {
         ChangeItemTargetType targetType = ProjectBaselineEnumParser.parseRequired(ChangeItemTargetType.class, cmd.targetType(), "TARGET_TYPE_INVALID", "targetType");
         ChangeItemOperation operation = ProjectBaselineEnumParser.parseRequired(ChangeItemOperation.class, cmd.operation(), "OPERATION_INVALID", "operation");
         item = items.save(item.update(targetType, cmd.targetId(), operation, cmd.summary(),
-                cmd.beforeSnapshotJson(), cmd.afterSnapshotJson(), cmd.applyPayloadJson()));
+                cmd.beforeSnapshotJson(), cmd.afterSnapshotJson(), cmd.applyPayloadJson(),
+                cmd.affectedAreas()));
         publisher.enqueueChangeRequest(cr, ProjectBaselineEventCodes.CHANGE_REQUEST_ITEM_UPDATED);
         return ChangeRequestItemResponse.from(item);
     }

@@ -69,7 +69,10 @@ public final class ScheduledJobRegistry {
                         "Poll QUEUED ai-action executions, claim via lease, and run the execution orchestrator"),
                 new JobInfo("AiActionEventReplayJob", "aiaction/redis",
                         "${ai-action.redis.replay-delay-ms:30000}ms fixed delay",
-                        "Republish unpublished ai-action execution events to Redis (redis_published_at IS NULL)")
+                        "Republish unpublished ai-action execution events to Redis (redis_published_at IS NULL)"),
+                new JobInfo("BulkJobWorker", "platform/bulkjob",
+                        "${scopery.bulk-job.poll-interval-ms:3000}ms fixed delay",
+                        "Poll QUEUED bulk jobs and dispatch to registered handlers (bulk create traceability/project items)")
         );
     }
 

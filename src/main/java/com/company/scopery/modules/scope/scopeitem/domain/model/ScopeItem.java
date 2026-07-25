@@ -11,17 +11,15 @@ public record ScopeItem(UUID id, UUID scopePackageId, UUID projectId, UUID works
                                    String code, String title, String description, boolean inScope, boolean outOfScope,
                                    String priority, boolean acceptanceRequired, Integer sortOrder) {
         if (inScope && outOfScope) throw new IllegalArgumentException("Cannot be both in-scope and out-of-scope");
-        Instant now = Instant.now();
         return new ScopeItem(UUID.randomUUID(), scopePackageId, projectId, workspaceId, null, null, null, type, code,
                 title, description, inScope, outOfScope, priority, acceptanceRequired, ScopeItemStatus.DRAFT, sortOrder,
-                null, null, 0, now, now);
+                null, null, 0, null, null);
     }
     public static ScopeItem fromQuoteLine(UUID scopePackageId, UUID projectId, UUID workspaceId, UUID quoteLineId,
                                           String title, String description, int sortOrder) {
-        Instant now = Instant.now();
         return new ScopeItem(UUID.randomUUID(), scopePackageId, projectId, workspaceId, quoteLineId, null, null,
                 ScopeItemType.FEATURE, null, title, description, true, false, null, true,
-                ScopeItemStatus.DRAFT, sortOrder, null, null, 0, now, now);
+                ScopeItemStatus.DRAFT, sortOrder, null, null, 0, null, null);
     }
     public ScopeItem update(String title, String description, boolean inScope, boolean outOfScope, String priority,
                             boolean acceptanceRequired, Integer sortOrder) {

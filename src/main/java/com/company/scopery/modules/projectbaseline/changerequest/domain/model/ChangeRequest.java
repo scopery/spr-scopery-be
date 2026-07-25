@@ -1,6 +1,7 @@
 package com.company.scopery.modules.projectbaseline.changerequest.domain.model;
 
 import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangePriority;
+import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangeRequestSourceType;
 import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangeRequestStatus;
 import com.company.scopery.modules.projectbaseline.changerequest.domain.enums.ChangeType;
 
@@ -37,18 +38,36 @@ public record ChangeRequest(
         String traceId,
         int version,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        // Source provenance — immutable after creation
+        ChangeRequestSourceType sourceType,
+        UUID sourceId,
+        String sourceSubtype,
+        String sourceCode,
+        String sourceTitle
 ) {
     public static ChangeRequest create(
             UUID projectId, UUID workspaceId, UUID baselineId, String code, String title,
             String description, ChangeType changeType, ChangePriority priority, String reason,
             UUID requestedBy, String traceId) {
+        return create(projectId, workspaceId, baselineId, code, title, description, changeType,
+                priority, reason, requestedBy, traceId,
+                ChangeRequestSourceType.MANUAL, null, null, null, null);
+    }
+
+    public static ChangeRequest create(
+            UUID projectId, UUID workspaceId, UUID baselineId, String code, String title,
+            String description, ChangeType changeType, ChangePriority priority, String reason,
+            UUID requestedBy, String traceId,
+            ChangeRequestSourceType sourceType, UUID sourceId, String sourceSubtype,
+            String sourceCode, String sourceTitle) {
         Instant now = Instant.now();
         return new ChangeRequest(
                 UUID.randomUUID(), projectId, workspaceId, baselineId, code, title, description,
                 changeType, priority, ChangeRequestStatus.DRAFT, reason, requestedBy, now,
                 null, null, null, null, null, null, null, null, null, null, null, null, null,
-                traceId, 0, null, null);
+                traceId, 0, null, null,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public boolean isDraft() { return status == ChangeRequestStatus.DRAFT; }
@@ -59,7 +78,8 @@ public record ChangeRequest(
         return new ChangeRequest(id, projectId, workspaceId, baselineId, code, title, description,
                 changeType, priority, status, reason, requestedBy, requestedAt, submittedAt, submittedBy,
                 approvedAt, approvedBy, rejectedAt, rejectedBy, rejectionReason, cancelledAt, cancelledBy,
-                appliedAt, appliedBy, archivedAt, archivedBy, traceId, version, createdAt, updatedAt);
+                appliedAt, appliedBy, archivedAt, archivedBy, traceId, version, createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public ChangeRequest submit(UUID actorId) {
@@ -67,7 +87,8 @@ public record ChangeRequest(
                 changeType, priority, ChangeRequestStatus.SUBMITTED, reason, requestedBy, requestedAt,
                 Instant.now(), actorId, approvedAt, approvedBy, rejectedAt, rejectedBy, rejectionReason,
                 cancelledAt, cancelledBy, appliedAt, appliedBy, archivedAt, archivedBy, traceId, version,
-                createdAt, updatedAt);
+                createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public ChangeRequest approve(UUID actorId) {
@@ -75,7 +96,8 @@ public record ChangeRequest(
                 changeType, priority, ChangeRequestStatus.APPROVED, reason, requestedBy, requestedAt,
                 submittedAt, submittedBy, Instant.now(), actorId, rejectedAt, rejectedBy, rejectionReason,
                 cancelledAt, cancelledBy, appliedAt, appliedBy, archivedAt, archivedBy, traceId, version,
-                createdAt, updatedAt);
+                createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public ChangeRequest reject(UUID actorId, String rejectionReason) {
@@ -83,7 +105,8 @@ public record ChangeRequest(
                 changeType, priority, ChangeRequestStatus.REJECTED, reason, requestedBy, requestedAt,
                 submittedAt, submittedBy, approvedAt, approvedBy, Instant.now(), actorId, rejectionReason,
                 cancelledAt, cancelledBy, appliedAt, appliedBy, archivedAt, archivedBy, traceId, version,
-                createdAt, updatedAt);
+                createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public ChangeRequest cancel(UUID actorId) {
@@ -91,7 +114,8 @@ public record ChangeRequest(
                 changeType, priority, ChangeRequestStatus.CANCELLED, reason, requestedBy, requestedAt,
                 submittedAt, submittedBy, approvedAt, approvedBy, rejectedAt, rejectedBy, rejectionReason,
                 Instant.now(), actorId, appliedAt, appliedBy, archivedAt, archivedBy, traceId, version,
-                createdAt, updatedAt);
+                createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public ChangeRequest apply(UUID actorId) {
@@ -99,7 +123,8 @@ public record ChangeRequest(
                 changeType, priority, ChangeRequestStatus.APPLIED, reason, requestedBy, requestedAt,
                 submittedAt, submittedBy, approvedAt, approvedBy, rejectedAt, rejectedBy, rejectionReason,
                 cancelledAt, cancelledBy, Instant.now(), actorId, archivedAt, archivedBy, traceId, version,
-                createdAt, updatedAt);
+                createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 
     public ChangeRequest archive(UUID actorId) {
@@ -107,6 +132,7 @@ public record ChangeRequest(
                 changeType, priority, ChangeRequestStatus.ARCHIVED, reason, requestedBy, requestedAt,
                 submittedAt, submittedBy, approvedAt, approvedBy, rejectedAt, rejectedBy, rejectionReason,
                 cancelledAt, cancelledBy, appliedAt, appliedBy, Instant.now(), actorId, traceId, version,
-                createdAt, updatedAt);
+                createdAt, updatedAt,
+                sourceType, sourceId, sourceSubtype, sourceCode, sourceTitle);
     }
 }

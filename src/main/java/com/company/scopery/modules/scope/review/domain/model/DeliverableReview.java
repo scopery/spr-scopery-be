@@ -5,7 +5,7 @@ public record DeliverableReview(UUID id, UUID deliverableId, UUID projectId, Rev
         UUID reviewerUserId, String reason, Instant decidedAt, int version, Instant createdAt) {
     public static DeliverableReview submit(UUID deliverableId, UUID projectId) {
         return new DeliverableReview(UUID.randomUUID(), deliverableId, projectId, ReviewStatus.OPEN,
-                null, null, null, null, 0, Instant.now());
+                null, null, null, null, 0, null);
     }
     public DeliverableReview approve(UUID reviewerId, String decision) {
         if (status != ReviewStatus.OPEN) throw new IllegalStateException("Only open reviews can be approved");

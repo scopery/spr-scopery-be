@@ -19,8 +19,8 @@ public class MeetingMinutesPersistenceMapper {
         e.setDocumentId(d.documentId()); e.setDocumentVersionId(d.documentVersionId());
         e.setSubmittedAt(d.submittedAt()); e.setSubmittedBy(d.submittedBy()); e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy());
         e.setRejectedAt(d.rejectedAt()); e.setRejectedBy(d.rejectedBy()); e.setRejectionReason(d.rejectionReason());
-        e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setTraceId(d.traceId());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

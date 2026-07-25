@@ -11,8 +11,8 @@ public class ChangeRequestItemPersistenceMapper {
                 ChangeItemTargetType.valueOf(e.getTargetType()), e.getTargetId(),
                 ChangeItemOperation.valueOf(e.getOperation()), e.getSummary(),
                 e.getBeforeSnapshotJson(), e.getAfterSnapshotJson(), e.getApplyPayloadJson(),
-                ChangeItemStatus.valueOf(e.getStatus()), e.getVersion()==null?0:e.getVersion(),
-                e.getCreatedAt(), e.getUpdatedAt());
+                ChangeItemStatus.valueOf(e.getStatus()), e.getAffectedAreas(),
+                e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public ChangeRequestItemJpaEntity toJpaEntity(ChangeRequestItem d) {
         ChangeRequestItemJpaEntity e = new ChangeRequestItemJpaEntity();
@@ -20,8 +20,9 @@ public class ChangeRequestItemPersistenceMapper {
         e.setTargetType(d.targetType().name()); e.setTargetId(d.targetId());
         e.setOperation(d.operation().name()); e.setSummary(d.summary());
         e.setBeforeSnapshotJson(d.beforeSnapshotJson()); e.setAfterSnapshotJson(d.afterSnapshotJson());
-        e.setApplyPayloadJson(d.applyPayloadJson()); e.setStatus(d.status().name()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setApplyPayloadJson(d.applyPayloadJson()); e.setStatus(d.status().name());
+        e.setAffectedAreas(d.affectedAreas());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

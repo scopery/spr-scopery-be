@@ -217,9 +217,11 @@ public class CreateTaskToolAdapter implements AiActionToolAdapter {
         if (phaseIdStr != null) {
             try {
                 UUID phaseId = UUID.fromString(phaseIdStr);
-                return projectPhaseRepository.findById(phaseId).orElse(null);
+                java.util.Optional<ProjectPhase> found = projectPhaseRepository.findById(phaseId);
+                if (found.isPresent()) return found.get();
+                log.warn("[CreateTaskTool] Specified projectPhaseId {} not found, falling back to active/planned phase", phaseIdStr);
             } catch (IllegalArgumentException e) {
-                return null;
+                log.warn("[CreateTaskTool] Invalid projectPhaseId format: {}, falling back", phaseIdStr);
             }
         }
         List<ProjectPhase> phases = projectPhaseRepository.findAllByProjectId(projectId);

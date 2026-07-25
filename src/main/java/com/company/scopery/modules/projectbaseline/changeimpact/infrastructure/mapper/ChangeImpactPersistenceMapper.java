@@ -21,8 +21,8 @@ public class ChangeImpactPersistenceMapper {
         e.setOverheadImpact(d.overheadImpact()); e.setRevenueImpact(d.revenueImpact());
         e.setGrossMarginImpact(d.grossMarginImpact()); e.setPbtImpact(d.pbtImpact());
         e.setQuoteAmountImpact(d.quoteAmountImpact()); e.setRiskImpact(d.riskImpact());
-        e.setImpactSummaryJson(d.impactSummaryJson()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setImpactSummaryJson(d.impactSummaryJson());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

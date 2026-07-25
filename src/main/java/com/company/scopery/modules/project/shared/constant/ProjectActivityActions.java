@@ -47,6 +47,7 @@ public final class ProjectActivityActions {
     public static final String COMPLETE_TASK = "COMPLETE_TASK";
     public static final String CANCEL_TASK   = "CANCEL_TASK";
     public static final String ARCHIVE_TASK  = "ARCHIVE_TASK";
+    public static final String REOPEN_TASK   = "REOPEN_TASK";
 
     // Task Dependency
     public static final String CREATE_TASK_DEPENDENCY = "CREATE_TASK_DEPENDENCY";

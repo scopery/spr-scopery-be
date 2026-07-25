@@ -11,9 +11,8 @@ public record Comment(
 ) {
     public static Comment create(UUID workspaceId, UUID projectId, UUID threadId, UUID parentId,
                                  CommentAuthorType authorType, UUID authorId, String displayName, String body, boolean clientVisible) {
-        Instant now = Instant.now();
         return new Comment(UUID.randomUUID(), workspaceId, projectId, threadId, parentId, authorType, authorId,
-                displayName, body, CommentStatus.ACTIVE, !clientVisible, clientVisible, null, null, null, null, null, 0, now, now);
+                displayName, body, CommentStatus.ACTIVE, !clientVisible, clientVisible, null, null, null, null, null, 0, null, null);
     }
     public Comment update(String body, UUID actorId) {
         Instant now = Instant.now();

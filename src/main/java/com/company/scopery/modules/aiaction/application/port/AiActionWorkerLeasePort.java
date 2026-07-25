@@ -9,6 +9,8 @@ public interface AiActionWorkerLeasePort {
 
     List<AiActionExecution> claimClaimable(String workerId, int leaseSeconds, int limit);
 
+    boolean claimById(UUID executionId, String workerId, int leaseSeconds);
+
     boolean renewLease(UUID executionId, String workerId, int leaseSeconds);
 
     void releaseLease(UUID executionId, String workerId);

@@ -4,4 +4,5 @@ public interface RequirementRepository {
     Requirement save(Requirement e);
     Optional<Requirement> findByIdAndProjectId(UUID id, UUID projectId);
     List<Requirement> findByProjectId(UUID projectId);
+    boolean existsByProjectIdAndCode(UUID projectId, String code);
 }

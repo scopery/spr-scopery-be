@@ -57,6 +57,140 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
             alreadyExisted++;
         }
 
+        // --- Traceability tools (LLM-callable — AI can propose these, user confirms before execution) ---
+
+        if (seedPolicy("create_functional_item", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("add_functional_item_properties", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.LOW,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_non_functional_item", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_app_module", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_project_phase", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_task", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("update_task_status", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.LOW,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_screen", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_data_entity", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_app_component", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_api_endpoint", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_wbs_node", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                1, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
         // --- Plan-execution-only policies (start INACTIVE until domain adapters are registered) ---
 
         if (seedPolicy("task.assign", "1",

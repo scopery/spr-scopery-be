@@ -15,8 +15,8 @@ public class CommentThreadPersistenceMapper {
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId()); e.setTargetType(d.targetType()); e.setTargetId(d.targetId());
         e.setTitle(d.title()); e.setStatus(d.status().name()); e.setInternalOnly(d.internalOnly()); e.setClientVisible(d.clientVisible());
         e.setResolvedAt(d.resolvedAt()); e.setResolvedBy(d.resolvedBy()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
-        e.setTraceId(d.traceId()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setTraceId(d.traceId());
+        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

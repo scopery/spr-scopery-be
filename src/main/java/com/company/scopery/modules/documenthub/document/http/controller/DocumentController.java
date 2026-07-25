@@ -3,23 +3,30 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.documenthub.document.application.action.*;
 import com.company.scopery.modules.documenthub.document.application.command.ApproveDocumentCommand;
 import com.company.scopery.modules.documenthub.document.application.command.CreateDocumentCommand;
+import com.company.scopery.modules.documenthub.document.application.command.UpdateDocumentCommand;
 import com.company.scopery.modules.documenthub.document.application.response.DocumentDetailResponse;
 import com.company.scopery.modules.documenthub.document.application.response.DocumentResponse;
 import com.company.scopery.modules.documenthub.document.application.response.DocumentSearchHitResponse;
 import com.company.scopery.modules.documenthub.document.application.service.DocumentQueryService;
-import com.company.scopery.modules.documenthub.document.http.request.CreateDocumentRequest; import com.company.scopery.modules.documenthub.shared.constant.DocumentHubApiPaths;
+import com.company.scopery.modules.documenthub.document.http.request.CreateDocumentRequest;
+import com.company.scopery.modules.documenthub.document.http.request.UpdateDocumentRequest;
+import com.company.scopery.modules.documenthub.shared.constant.DocumentHubApiPaths;
 import io.swagger.v3.oas.annotations.Operation; import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid; import org.springframework.web.bind.annotation.*;
 import java.util.List; import java.util.UUID;
 @RestController @RequestMapping(DocumentHubApiPaths.DOCUMENTS) @Tag(name="Document Hub - Documents")
 public class DocumentController {
-    private final CreateDocumentAction create; private final ApproveDocumentAction approve; private final DocumentQueryService query;
+    private final CreateDocumentAction create;
+    private final UpdateDocumentAction updateAction;
+    private final ApproveDocumentAction approve;
+    private final DocumentQueryService query;
     private final ToggleClientVisibilityAction toggleClientVisibility;
     private final ValidateClientVisibilityAction validateClientVisibility;
-    public DocumentController(CreateDocumentAction create, ApproveDocumentAction approve, DocumentQueryService query,
+    public DocumentController(CreateDocumentAction create, UpdateDocumentAction updateAction, ApproveDocumentAction approve,
+                               DocumentQueryService query,
                                ToggleClientVisibilityAction toggleClientVisibility,
                                ValidateClientVisibilityAction validateClientVisibility) {
-        this.create=create; this.approve=approve; this.query=query;
+        this.create=create; this.updateAction=updateAction; this.approve=approve; this.query=query;
         this.toggleClientVisibility=toggleClientVisibility;
         this.validateClientVisibility=validateClientVisibility;
     }
@@ -36,6 +43,11 @@ public class DocumentController {
     }
     @GetMapping("/{documentId}") @Operation(summary="Get document")
     public ApiResponse<DocumentResponse> get(@PathVariable UUID projectId, @PathVariable UUID documentId) { return ApiResponse.success(query.get(projectId, documentId)); }
+    @PatchMapping("/{documentId}") @Operation(summary="Update document metadata (title)")
+    public ApiResponse<DocumentResponse> update(@PathVariable UUID projectId, @PathVariable UUID documentId,
+                                                @Valid @RequestBody UpdateDocumentRequest r) {
+        return ApiResponse.success(updateAction.execute(new UpdateDocumentCommand(projectId, documentId, r.title())));
+    }
     @GetMapping("/{documentId}/masked") @Operation(summary="Get document with Phase 38 masked sensitive fields")
     public ApiResponse<DocumentDetailResponse> getMasked(@PathVariable UUID projectId, @PathVariable UUID documentId) {
         return ApiResponse.success(query.getWithMaskedFields(projectId, documentId));

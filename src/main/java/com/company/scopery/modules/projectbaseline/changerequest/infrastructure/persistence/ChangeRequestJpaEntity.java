@@ -36,5 +36,10 @@ public class ChangeRequestJpaEntity extends AuditableJpaEntity {
     @Column(name="archived_at") private Instant archivedAt;
     @Column(name="archived_by") private UUID archivedBy;
     @Column(name="trace_id") private String traceId;
+    @Column(name="source_type") private String sourceType;
+    @Column(name="source_id") private java.util.UUID sourceId;
+    @Column(name="source_subtype") private String sourceSubtype;
+    @Column(name="source_code") private String sourceCode;
+    @Column(name="source_title") private String sourceTitle;
     @Version private Integer version;
 }

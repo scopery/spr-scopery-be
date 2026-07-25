@@ -31,6 +31,7 @@ public final class WorkspaceApiPaths {
     public static final String ME_WORKSPACES              = ApiPaths.BASE_PATH + "/me/workspaces";
     public static final String WORKSPACE_ACCESS           = BASE_WORKSPACES + "/{workspaceId}/access";
     public static final String WORKSPACE_ACCESS_EXPLAIN   = WORKSPACE_ACCESS + "/{subjectType}/{subjectId}/explain";
+    public static final String MY_WORK                    = BASE_WORKSPACES + "/{workspaceId}/my-work";
 
     private WorkspaceApiPaths() {}
 }

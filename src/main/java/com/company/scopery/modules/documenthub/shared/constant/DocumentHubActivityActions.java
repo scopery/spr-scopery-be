@@ -2,6 +2,7 @@ package com.company.scopery.modules.documenthub.shared.constant;
 public final class DocumentHubActivityActions {
     public static final String FOLDER_CREATED = "DOCUMENT_FOLDER_CREATED";
     public static final String DOCUMENT_CREATED = "DOCUMENT_CREATED";
+    public static final String DOCUMENT_UPDATED = "DOCUMENT_UPDATED";
     public static final String VERSION_UPLOADED = "DOCUMENT_VERSION_UPLOADED";
     public static final String DOCUMENT_APPROVED = "DOCUMENT_APPROVED";
     public static final String TEMPLATE_CREATED = "DOCUMENT_TEMPLATE_CREATED";

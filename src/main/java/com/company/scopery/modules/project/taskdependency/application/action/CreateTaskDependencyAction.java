@@ -89,7 +89,7 @@ public class CreateTaskDependencyAction {
                 cmd.predecessorTaskId(),
                 cmd.successorTaskId(),
                 type,
-                cmd.lagDays());
+                cmd.lagDays() != null ? cmd.lagDays() : 0);
 
         TaskDependency saved = taskDependencyRepository.save(dep);
 

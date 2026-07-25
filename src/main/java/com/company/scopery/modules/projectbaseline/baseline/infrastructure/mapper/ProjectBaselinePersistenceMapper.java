@@ -40,8 +40,7 @@ public class ProjectBaselinePersistenceMapper {
         e.setArchivedAt(d.archivedAt());
         e.setArchivedBy(d.archivedBy());
         e.setTraceId(d.traceId());
-        e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

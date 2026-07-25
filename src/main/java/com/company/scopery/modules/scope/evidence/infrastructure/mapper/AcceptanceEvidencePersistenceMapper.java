@@ -15,8 +15,7 @@ public class AcceptanceEvidencePersistenceMapper {
         e.setId(d.id()); e.setDeliverableId(d.deliverableId()); e.setAcceptanceCriteriaId(d.acceptanceCriteriaId());
         e.setProjectId(d.projectId()); e.setEvidenceType(d.evidenceType().name()); e.setTitle(d.title());
         e.setContentText(d.contentText()); e.setLinkUrl(d.linkUrl()); e.setReferenceId(d.referenceId());
-        e.setVersion(d.version());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        if (d.createdAt() != null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
         return e;
     }
 }

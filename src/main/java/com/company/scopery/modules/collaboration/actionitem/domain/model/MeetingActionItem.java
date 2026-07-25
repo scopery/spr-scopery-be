@@ -11,10 +11,9 @@ public record MeetingActionItem(
     public static MeetingActionItem create(UUID workspaceId, UUID projectId, UUID meetingId, UUID agendaItemId,
                                            String title, String description, String ownerTargetType, UUID ownerTargetId,
                                            LocalDate dueDate, boolean clientVisible) {
-        Instant now = Instant.now();
         return new MeetingActionItem(UUID.randomUUID(), workspaceId, projectId, meetingId, agendaItemId, title, description,
                 ownerTargetType, ownerTargetId, dueDate, ActionItemStatus.OPEN, null, null, null, null, null,
-                clientVisible, null, null, null, 0, now, now);
+                clientVisible, null, null, null, 0, null, null);
     }
     public MeetingActionItem update(String title, String description, String ownerTargetType, UUID ownerTargetId,
                                     LocalDate dueDate, ActionItemStatus status, boolean clientVisible) {

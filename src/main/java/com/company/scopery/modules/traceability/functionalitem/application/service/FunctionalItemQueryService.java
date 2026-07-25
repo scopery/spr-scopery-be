@@ -39,6 +39,15 @@ public class FunctionalItemQueryService {
     }
 
     @Transactional(readOnly = true)
+    public List<FunctionalItemResponse> search(UUID projectId, String q, int limit) {
+        authorization.requireView(projectId);
+        if (q == null || q.isBlank()) return listByProject(projectId);
+        return repo.searchByProjectId(projectId, q.trim(), limit > 0 ? limit : 50).stream()
+                .map(FunctionalItemResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public FunctionalItemResponse get(UUID id, UUID projectId) {
         authorization.requireView(projectId);
         return FunctionalItemResponse.from(
