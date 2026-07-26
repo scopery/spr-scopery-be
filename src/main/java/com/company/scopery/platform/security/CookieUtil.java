@@ -14,7 +14,7 @@ public final class CookieUtil {
         return ResponseCookie.from(ACCESS_TOKEN_COOKIE, token)
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("None")
                 .path("/")
                 .maxAge(expirationMs / 1000)
                 .build();
@@ -24,7 +24,7 @@ public final class CookieUtil {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE, token)
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("None")
                 .path(ApiPaths.IAM_AUTH)
                 .maxAge(expirationMs / 1000)
                 .build();
@@ -34,7 +34,7 @@ public final class CookieUtil {
         return ResponseCookie.from(ACCESS_TOKEN_COOKIE, "")
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("None")
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -44,7 +44,7 @@ public final class CookieUtil {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE, "")
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("None")
                 .path(ApiPaths.IAM_AUTH)
                 .maxAge(0)
                 .build();
