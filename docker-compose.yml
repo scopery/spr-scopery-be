@@ -5,10 +5,8 @@ services:
     container_name: scopery-postgres
     environment:
       POSTGRES_DB: scopery
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "12345678"
-    ports:
-      - "5434:5432"
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-12345678}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,8 +19,6 @@ services:
     image: redis:7-alpine
     container_name: scopery-redis
     command: redis-server --requirepass ""
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -38,9 +34,6 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-scopery}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-scopery-local-secret}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
       - minio-data:/data
 
@@ -62,12 +55,12 @@ services:
     build: .
     container_name: scopery-backend
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     env_file:
       - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://scopery-postgres:5432/scopery
-      REDIS_HOST: scopery-redis
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scopery
+      REDIS_HOST: redis
       REDIS_PORT: "6379"
     depends_on:
       postgres:
