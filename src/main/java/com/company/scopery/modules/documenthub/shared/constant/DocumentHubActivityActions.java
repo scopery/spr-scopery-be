@@ -31,5 +31,6 @@ public final class DocumentHubActivityActions {
     public static final String SYNCED_BLOCK_UPDATED = "SYNCED_BLOCK_UPDATED";
     public static final String SYNCED_BLOCK_ARCHIVED = "SYNCED_BLOCK_ARCHIVED";
     public static final String CLIENT_VISIBILITY_VALIDATED = "DOCUMENT_CLIENT_VISIBILITY_VALIDATED";
+    public static final String DOCUMENT_LINK_BULK_CREATED = "DOCUMENT_LINK_BULK_CREATED";
     private DocumentHubActivityActions() {}
 }

@@ -49,12 +49,14 @@ public class CreateFunctionalItemToolAdapter implements AiActionToolAdapter {
 
     @Override
     public String description() {
-        return "Create a new functional requirement item (FR / user story / use case). "
+        return "Create a new functional catalog item — a feature specification, user story, or use case in the Functional Catalog module. "
+                + "USE THIS TOOL when the user explicitly says: 'functional item', 'chức năng', 'feature spec', 'user story', 'use case', or refers to the Functional Catalog. "
+                + "DO NOT use this tool when the user says 'requirement', 'yêu cầu', 'tạo yêu cầu' — use create_requirement instead. "
                 + "Required: projectId, workspaceId, title, type (FUNCTIONAL/USER_STORY/USE_CASE). "
                 + "Optional: description, moduleId, priority (LOW/MEDIUM/HIGH/CRITICAL), acceptanceCriteria (array of strings), "
                 + "customProperties (array of {propKey, propValue, fieldType: TEXT|NUMBER|DATE|BOOLEAN|URL}). "
                 + "FIELD COMPLETENESS — always follow these rules: "
-                + "(1) description: always include a full business requirement description explaining what the feature does, why it is needed, and who benefits. Never leave empty. "
+                + "(1) description: always include a full description explaining what the feature does, why it is needed, and who benefits. Never leave empty. "
                 + "(2) acceptanceCriteria: always derive at least 2–4 concrete, testable criteria from the user's description or project context. Use plain sentences or Given/When/Then format. Never omit. "
                 + "(3) priority: infer from user language or default to MEDIUM. "
                 + "(4) customProperties: if the user mentions any attributes, fields, or metadata (e.g. complexity, screen, actor, owner, business impact), include them here. "

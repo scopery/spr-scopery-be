@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public interface KnowledgeGraphNodeRepository {
     KnowledgeGraphNode save(KnowledgeGraphNode node);
+    void upsertNode(KnowledgeGraphNode node);
     Optional<KnowledgeGraphNode> findById(UUID id);
     Optional<KnowledgeGraphNode> findByRef(UUID workspaceId, GraphNodeType nodeType, UUID sourceRefId, UUID sourceVersionRefId);
     List<KnowledgeGraphNode> findByWorkspaceId(UUID workspaceId);

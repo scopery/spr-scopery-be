@@ -18,6 +18,7 @@ public final class DocumentHubApiPaths {
     public static final String DOCUMENT_SUBPAGES = DOCUMENTS + "/{documentId}/subpages";
     public static final String DOCUMENT_VALIDATE_CLIENT_VISIBILITY = DOCUMENTS + "/{documentId}/validate-client-visibility";
     public static final String SYNCED_BLOCKS = ApiPaths.BASE_PATH + "/workspaces/{workspaceId}/synced-blocks";
+    public static final String DOCUMENT_LINKS = ApiPaths.BASE_PATH + "/workspaces/{workspaceId}/document-links";
     public static final String DOCUMENT_COMMENT_THREADS_BY_ID = ApiPaths.BASE_PATH + "/document-comment-threads";
     public static final String DOCUMENT_COMMENTS_BY_ID = ApiPaths.BASE_PATH + "/document-comments";
     public static final String DOCUMENT_SUGGESTIONS_BY_ID = ApiPaths.BASE_PATH + "/document-suggestions";

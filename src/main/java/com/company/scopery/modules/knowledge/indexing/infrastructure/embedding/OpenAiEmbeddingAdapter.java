@@ -67,7 +67,11 @@ public class OpenAiEmbeddingAdapter implements EmbeddingProvider {
                             for (int j = 0; j < vec.size(); j++) arr[j] = vec.get(j).floatValue();
                             result.add(arr);
                         });
+            } catch (org.springframework.web.client.HttpClientErrorException e) {
+                log.error("OpenAI embedding API error {} for model={}: {}", e.getStatusCode(), modelCode, e.getResponseBodyAsString());
+                throw KnowledgeExceptions.knowledgeRetrievalProviderUnavailable("OPENAI");
             } catch (Exception e) {
+                log.error("OpenAI embedding call failed for model={}: {}", modelCode, e.getMessage());
                 throw KnowledgeExceptions.knowledgeRetrievalProviderUnavailable("OPENAI");
             }
         }

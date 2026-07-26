@@ -84,8 +84,9 @@ public class KnowledgeSourceIndexingService {
         if (existing.isPresent() && existing.get().contentHash().equals(contentHash)
                 && existing.get().permissionSignature().equals(permSig)
                 && existing.get().status() == KnowledgeSourceStatus.INDEXED
-                && !chunks.findCurrentBySourceId(existing.get().id()).isEmpty()) {
-            log.debug("Source unchanged and has chunks, skipping index: {}", existing.get().id());
+                && !chunks.findCurrentBySourceId(existing.get().id()).isEmpty()
+                && postgresIndexService.countEmbeddedChunksBySourceId(existing.get().id()) > 0) {
+            log.debug("Source unchanged, has chunks with embeddings, skipping index: {}", existing.get().id());
             return existing.get().id();
         }
 
@@ -212,24 +213,13 @@ public class KnowledgeSourceIndexingService {
         GraphNodeType nodeType = toGraphNodeType(source.sourceType());
         if (nodeType == null) return;
 
-        Optional<KnowledgeGraphNode> existingNode = graphNodes.findByRef(
-                source.workspaceId(), nodeType, source.sourceRefId(), source.sourceVersionRefId());
-
         Instant now = Instant.now();
-        KnowledgeGraphNode node;
-        if (existingNode.isPresent()) {
-            KnowledgeGraphNode existing = existingNode.get();
-            node = new KnowledgeGraphNode(existing.id(), source.workspaceId(), source.projectId(),
-                    nodeType, source.sourceRefId(), source.sourceVersionRefId(),
-                    source.title(), source.permissionSignature(), source.aclTokens(),
-                    GraphNodeStatus.ACTIVE, existing.createdAt(), now, existing.version());
-        } else {
-            node = new KnowledgeGraphNode(UUID.randomUUID(), source.workspaceId(), source.projectId(),
-                    nodeType, source.sourceRefId(), source.sourceVersionRefId(),
-                    source.title(), source.permissionSignature(), source.aclTokens(),
-                    GraphNodeStatus.ACTIVE, now, now, 0L);
-        }
-        graphNodes.save(node);
+        KnowledgeGraphNode node = new KnowledgeGraphNode(
+                UUID.randomUUID(), source.workspaceId(), source.projectId(),
+                nodeType, source.sourceRefId(), source.sourceVersionRefId(),
+                source.title(), source.permissionSignature(), source.aclTokens(),
+                GraphNodeStatus.ACTIVE, now, now, 0L);
+        graphNodes.upsertNode(node);
     }
 
     private GraphNodeType toGraphNodeType(com.company.scopery.modules.knowledge.source.domain.enums.KnowledgeSourceType sourceType) {

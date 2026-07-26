@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Types;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,6 +78,68 @@ public class PostgresKnowledgeIndexService {
     /** Deletion is handled upstream by KnowledgeChunkRepository.markSupersededBySourceId() */
     public void deleteBySourceId(String sourceId) {
         // no-op: superseded chunks are already cleared before bulkIndex is called
+    }
+
+    public int countEmbeddedChunksBySourceId(UUID sourceId) {
+        String sql = "SELECT COUNT(*) FROM knowledge_chunk WHERE source_id = ?::uuid AND is_current = true AND embedding IS NOT NULL";
+        Integer count = jdbc.queryForObject(sql, Integer.class, sourceId.toString());
+        return count != null ? count : 0;
+    }
+
+    public int countTotalChunksByProjectId(UUID projectId) {
+        String sql = "SELECT COUNT(*) FROM knowledge_chunk WHERE project_id = ?::uuid AND is_current = true";
+        Integer count = jdbc.queryForObject(sql, Integer.class, projectId.toString());
+        return count != null ? count : 0;
+    }
+
+    public int countEmbeddedChunksByProjectId(UUID projectId) {
+        String sql = "SELECT COUNT(*) FROM knowledge_chunk WHERE project_id = ?::uuid AND is_current = true AND embedding IS NOT NULL";
+        Integer count = jdbc.queryForObject(sql, Integer.class, projectId.toString());
+        return count != null ? count : 0;
+    }
+
+    public record DocumentIndexStats(int totalChunks, int embeddedChunks, Instant lastIndexedAt) {}
+
+    public DocumentIndexStats getDocumentStats(UUID documentId) {
+        String sql = """
+                SELECT
+                    COUNT(kc.id) AS total,
+                    COUNT(kc.embedding) AS embedded,
+                    MAX(ks.last_indexed_at) AS last_indexed
+                FROM knowledge_source ks
+                JOIN knowledge_chunk kc ON kc.source_id = ks.id AND kc.is_current = true
+                WHERE ks.source_ref_id = ?::uuid
+                """;
+        return jdbc.queryForObject(sql, (rs, rowNum) -> new DocumentIndexStats(
+                rs.getInt("total"),
+                rs.getInt("embedded"),
+                rs.getTimestamp("last_indexed") != null
+                        ? rs.getTimestamp("last_indexed").toInstant() : null
+        ), documentId.toString());
+    }
+
+    public record MissingEmbeddingChunk(UUID chunkId, String plainText) {}
+
+    public List<MissingEmbeddingChunk> findMissingEmbeddingChunks(UUID projectId, int limit) {
+        String sql = "SELECT id, plain_text FROM knowledge_chunk WHERE project_id = ?::uuid AND is_current = true AND embedding IS NULL ORDER BY chunk_ordinal ASC LIMIT ?";
+        return jdbc.query(sql, (rs, rowNum) ->
+                new MissingEmbeddingChunk(UUID.fromString(rs.getString("id")), rs.getString("plain_text")),
+                projectId.toString(), limit
+        );
+    }
+
+    public int bulkUpdateEmbeddings(List<MissingEmbeddingChunk> chunks, List<float[]> embeddings) {
+        if (chunks.isEmpty()) return 0;
+        String sql = "UPDATE knowledge_chunk SET embedding = CAST(? AS vector) WHERE id = CAST(? AS uuid)";
+        int[][] counts = jdbc.batchUpdate(sql, chunks, chunks.size(), (ps, chunk) -> {
+            int idx = chunks.indexOf(chunk);
+            float[] emb = idx < embeddings.size() ? embeddings.get(idx) : new float[0];
+            ps.setString(1, embeddingToString(emb));
+            ps.setString(2, chunk.chunkId().toString());
+        });
+        int total = 0;
+        for (int[] c : counts) for (int v : c) total += v;
+        return total;
     }
 
     private static String embeddingToString(float[] embedding) {

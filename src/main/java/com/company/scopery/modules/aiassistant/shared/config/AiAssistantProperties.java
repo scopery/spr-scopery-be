@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
 
 @Component
 @ConfigurationProperties(prefix = "scopery.ai-assistant")
@@ -27,6 +28,11 @@ public class AiAssistantProperties {
     private int maxTurnsPerUserPerDay = 200;
     private int maxTokensPerUserPerDay = 500000;
     private Memory memory = new Memory();
+    private List<String> actionIntentVerbs = List.of(
+            "tạo", "thêm", "xóa", "sửa", "cập nhật", "tạo mới", "tạo task", "tạo yêu cầu",
+            "create", "add", "delete", "remove", "update", "edit", "assign",
+            "schedule", "generate tasks", "make", "build", "draft"
+    );
 
     public static class Memory {
         private int triggerTurns = 20;
@@ -80,4 +86,6 @@ public class AiAssistantProperties {
     public void setMaxTokensPerUserPerDay(int maxTokensPerUserPerDay) { this.maxTokensPerUserPerDay = maxTokensPerUserPerDay; }
     public Memory getMemory() { return memory; }
     public void setMemory(Memory memory) { this.memory = memory; }
+    public List<String> getActionIntentVerbs() { return actionIntentVerbs; }
+    public void setActionIntentVerbs(List<String> actionIntentVerbs) { this.actionIntentVerbs = actionIntentVerbs; }
 }

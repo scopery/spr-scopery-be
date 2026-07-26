@@ -39,7 +39,7 @@ public class OrgMemberPersistenceMapper {
         entity.setRemovedAt(domain.removedAt());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
-            entity.setVersion(domain.version());
+            if (domain.version() != null) entity.setVersion(domain.version());
         }
         return entity;
     }

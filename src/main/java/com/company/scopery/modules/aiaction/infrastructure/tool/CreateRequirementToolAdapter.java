@@ -38,12 +38,14 @@ public class CreateRequirementToolAdapter implements AiActionToolAdapter {
 
     @Override
     public String description() {
-        return "Create a new project requirement. "
+        return "Create a new requirement in the Requirements module. "
+                + "USE THIS TOOL when the user says: 'requirement', 'yêu cầu', 'tạo yêu cầu', 'add requirement', 'create requirement'. "
+                + "This is the dedicated requirement management tool — distinct from functional catalog items. "
                 + "Required: projectId, workspaceId, title, requirementType (FR/NFR/BR/BO), priority (LOW/MEDIUM/HIGH/CRITICAL). "
-                + "Optional: code, description, functionalItemId (UUID of linked FR), nonFunctionalItemId, scopeItemId (UUID of linked scope item). "
+                + "Optional: code, description, functionalItemId (UUID of linked functional item), nonFunctionalItemId, scopeItemId. "
                 + "FIELD COMPLETENESS rules: "
                 + "(1) description: always include a full explanation of what this requirement entails and why it is needed. "
-                + "(2) requirementType: FR for functional requirements, NFR for non-functional, BR for business rules, BO for business objectives. "
+                + "(2) requirementType: FR for functional, NFR for non-functional, BR for business rules, BO for business objectives. "
                 + "(3) priority: infer from context or default to MEDIUM. "
                 + "(4) code: auto-generated if omitted (format REQ-XXXXXX).";
     }
@@ -117,10 +119,11 @@ public class CreateRequirementToolAdapter implements AiActionToolAdapter {
             return AiActionToolResult.failed("INVALID_UUID_INPUT", false);
         }
 
-        RequirementType type;
+        RequirementType type = parseRequirementType(typeStr);
+        if (type == null) return AiActionToolResult.failed("INVALID_ENUM_VALUE", false);
+
         RequirementPriority priority;
         try {
-            type = RequirementType.valueOf(typeStr.toUpperCase());
             priority = RequirementPriority.valueOf(priorityStr.toUpperCase());
         } catch (IllegalArgumentException e) {
             return AiActionToolResult.failed("INVALID_ENUM_VALUE", false);
@@ -158,6 +161,20 @@ public class CreateRequirementToolAdapter implements AiActionToolAdapter {
             if (!requirementRepository.existsByProjectIdAndCode(projectId, candidate)) return candidate;
         }
         return "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private static RequirementType parseRequirementType(String value) {
+        if (value == null) return null;
+        return switch (value.toUpperCase()) {
+            case "FR", "FUNCTIONAL"     -> RequirementType.FUNCTIONAL;
+            case "NFR", "NON_FUNCTIONAL" -> RequirementType.NON_FUNCTIONAL;
+            case "BR", "BUSINESS"       -> RequirementType.BUSINESS;
+            case "BO", "OTHER"          -> RequirementType.OTHER;
+            case "TECHNICAL"            -> RequirementType.TECHNICAL;
+            case "SECURITY"             -> RequirementType.SECURITY;
+            case "COMPLIANCE"           -> RequirementType.COMPLIANCE;
+            default -> null;
+        };
     }
 
     private static String getString(Map<String, Object> input, String key) {

@@ -14,5 +14,6 @@ public final class DocumentHubEntityTypes {
     public static final String SUGGESTION = "DOCUMENT_SUGGESTION";
     public static final String SYNCED_BLOCK = "SYNCED_BLOCK";
     public static final String NATIVE_TEMPLATE = "NATIVE_TEMPLATE";
+    public static final String DOCUMENT_LINK = "DOCUMENT_LINK";
     private DocumentHubEntityTypes() {}
 }

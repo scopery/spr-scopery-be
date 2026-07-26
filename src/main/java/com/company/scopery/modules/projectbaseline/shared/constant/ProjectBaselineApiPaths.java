@@ -7,6 +7,7 @@ public final class ProjectBaselineApiPaths {
 
     public static final String BASELINES = BASE + "/{projectId}/baselines";
     public static final String CURRENT_BASELINE = BASE + "/{projectId}/baseline/current";
+    public static final String BASELINE_COMPARE_CURRENT = BASELINES + "/{baselineId}/compare-current";
     public static final String CHANGE_REQUESTS = BASE + "/{projectId}/change-requests";
     public static final String CHANGE_REQUEST_ITEMS = CHANGE_REQUESTS + "/{changeRequestId}/items";
     public static final String CHANGE_REQUEST_IMPACT = CHANGE_REQUESTS + "/{changeRequestId}/impact";

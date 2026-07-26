@@ -4,6 +4,7 @@ import com.company.scopery.modules.project.project.domain.model.Project;
 import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.projectbaseline.baseline.application.response.ProjectBaselineResponse;
+import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineSnapshotParser;
 import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineSnapshotService;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaseline;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaselineRepository;
@@ -25,14 +26,17 @@ public class RefreshBaselineSnapshotAction {
     private final ProjectBaselineAuthorizationService authorization;
     private final ProjectBaselinePlatformPublisher publisher;
     private final ProjectBaselineActivityLogger activityLogger;
+    private final BaselineSnapshotParser parser;
 
     public RefreshBaselineSnapshotAction(ProjectRepository projects, ProjectBaselineRepository baselines,
                                          BaselineSnapshotService snapshotService,
                                          ProjectBaselineAuthorizationService authorization,
                                          ProjectBaselinePlatformPublisher publisher,
-                                         ProjectBaselineActivityLogger activityLogger) {
+                                         ProjectBaselineActivityLogger activityLogger,
+                                         BaselineSnapshotParser parser) {
         this.projects = projects; this.baselines = baselines; this.snapshotService = snapshotService;
         this.authorization = authorization; this.publisher = publisher; this.activityLogger = activityLogger;
+        this.parser = parser;
     }
 
     @Transactional
@@ -41,6 +45,7 @@ public class RefreshBaselineSnapshotAction {
         Project project = projects.findById(projectId).orElseThrow(() -> ProjectExceptions.projectNotFound(projectId));
         ProjectBaseline baseline = baselines.findByIdAndProjectId(baselineId, projectId)
                 .orElseThrow(() -> ProjectBaselineExceptions.baselineNotFound(baselineId));
+        if (baseline.isImmutable()) throw ProjectBaselineExceptions.baselineImmutable(baseline.id());
         if (!baseline.isEditable()) throw ProjectBaselineExceptions.baselineNotDraft(baseline.id());
         var snap = snapshotService.build(project, baseline.sourceScheduleRunId(), baseline.sourceEstimationRunId(),
                 baseline.sourceFinanceScenarioId(), baseline.sourceQuoteVersionId());
@@ -48,6 +53,6 @@ public class RefreshBaselineSnapshotAction {
         publisher.enqueueBaseline(baseline, ProjectBaselineEventCodes.PROJECT_BASELINE_REFRESHED);
         activityLogger.logSuccess(ProjectBaselineEntityTypes.PROJECT_BASELINE, baseline.id(),
                 ProjectBaselineActivityActions.PROJECT_BASELINE_REFRESHED, "PROJECT_BASELINE_REFRESHED");
-        return ProjectBaselineResponse.from(baseline);
+        return ProjectBaselineResponse.from(baseline, parser);
     }
 }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -49,6 +50,20 @@ public class DocumentContentIndexingListener {
                 indexingService.upsertSource(snapshot);
                 log.debug("Indexed native document content for document {}", documentId);
             });
+        } catch (ObjectOptimisticLockingFailureException e) {
+            // Concurrent indexing of same document — retry after brief delay; the winning thread
+            // may have already indexed successfully, in which case upsertSource will skip.
+            log.info("Concurrent graph node conflict for document {}, retrying after delay", documentId);
+            try {
+                Thread.sleep(1500);
+                adapter.buildSnapshot(projectId, documentId).ifPresent(snapshot ->
+                        indexingService.upsertSource(snapshot));
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            } catch (Exception retryEx) {
+                log.warn("Native document content indexing failed after retry for document {}: {}",
+                        documentId, retryEx.getMessage());
+            }
         } catch (Exception e) {
             log.warn("Native document content indexing failed for document {}: {}", documentId, e.getMessage());
         }

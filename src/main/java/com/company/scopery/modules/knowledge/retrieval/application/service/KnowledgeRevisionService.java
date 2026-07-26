@@ -33,7 +33,7 @@ public class KnowledgeRevisionService {
     @Cacheable(value = CacheConfig.AI_KNOWLEDGE_REVISION, key = "#projectId.toString()")
     public String getRevisionKey(UUID projectId) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("projectId", projectId.toString());
+                .addValue("projectId", projectId);
         String result = namedJdbc.queryForObject(REVISION_SQL, params, String.class);
         return result != null ? result : "0_0";
     }

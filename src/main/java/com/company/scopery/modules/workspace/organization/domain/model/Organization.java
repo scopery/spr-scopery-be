@@ -13,14 +13,14 @@ public record Organization(
         String description,
         UUID ownerUserId,
         OrganizationStatus status,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt) {
 
     public static Organization create(String name, OrganizationCode code, String description, UUID ownerUserId) {
         Instant now = Instant.now();
         return new Organization(UUID.randomUUID(), code, name, description, ownerUserId,
-                OrganizationStatus.ACTIVE, 0, now, now);
+                OrganizationStatus.ACTIVE, null, now, now);
     }
 
     public Organization update(String name, String description) {

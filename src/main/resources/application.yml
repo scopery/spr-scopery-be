@@ -142,6 +142,27 @@ scopery:
       trigger-unsummarized-tokens: ${AI_ASSISTANT_MEMORY_TRIGGER_TOKENS:12000}
       keep-latest-messages: ${AI_ASSISTANT_MEMORY_KEEP_MESSAGES:8}
       max-summary-tokens: ${AI_ASSISTANT_MEMORY_MAX_SUMMARY_TOKENS:2000}
+    action-intent-verbs:
+      - tạo
+      - thêm
+      - xóa
+      - sửa
+      - cập nhật
+      - tạo mới
+      - tạo task
+      - tạo yêu cầu
+      - create
+      - add
+      - delete
+      - remove
+      - update
+      - edit
+      - assign
+      - schedule
+      - generate tasks
+      - make
+      - build
+      - draft
     jobs:
       stream-event-purge-cron: ${AI_ASSISTANT_STREAM_PURGE_CRON:0 0 * * * *}
       retention-cron: ${AI_ASSISTANT_RETENTION_CRON:0 0 3 * * *}

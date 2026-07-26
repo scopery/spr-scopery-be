@@ -43,11 +43,13 @@ public class CreateNonFunctionalItemToolAdapter implements AiActionToolAdapter {
 
     @Override
     public String description() {
-        return "Create a new non-functional requirement (NFR). "
+        return "Create a new NFR catalog item — a non-functional quality attribute (performance, security, usability, etc.) in the NFR Catalog module. "
+                + "USE THIS TOOL when the user explicitly says: 'NFR', 'non-functional', 'phi chức năng', 'chất lượng hệ thống', or names a quality category (performance, security, usability). "
+                + "DO NOT use this tool when the user says 'requirement'/'yêu cầu' without specifying non-functional — use create_requirement instead. "
                 + "Required: projectId, workspaceId, title, category (PERFORMANCE/SECURITY/USABILITY/RELIABILITY/MAINTAINABILITY/SCALABILITY/COMPATIBILITY/OTHER). "
                 + "Optional: description, priority (LOW/MEDIUM/HIGH/CRITICAL), targetMetric, scopeType (SYSTEM/MODULE/FEATURE), scopeRefId. "
                 + "FIELD COMPLETENESS — always follow these rules: "
-                + "(1) description: always include a clear description of the requirement — what constraint or quality attribute it enforces and why it matters. Never leave empty. "
+                + "(1) description: always include a clear description of the quality attribute it enforces and why it matters. Never leave empty. "
                 + "(2) targetMetric: always include a measurable target when the context provides one (e.g. 'response time < 200ms', '99.9% uptime', 'WCAG 2.1 AA'). "
                 + "(3) priority: infer from user language or default to MEDIUM. "
                 + "(4) scopeType: set to SYSTEM unless the user specifies a specific module or feature.";

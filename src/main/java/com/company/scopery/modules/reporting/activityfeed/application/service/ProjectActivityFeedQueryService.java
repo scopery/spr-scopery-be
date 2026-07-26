@@ -27,7 +27,9 @@ public class ProjectActivityFeedQueryService {
 
     @Transactional(readOnly = true)
     public PageResult<ActivityFeedItemResponse> list(UUID projectId, int page, int size) {
-        projectAuthorization.requireProjectView(projectId);
+        // Path param is projectId — resolve workspace via project lookup (not requireProjectView,
+        // which takes workspaceId and would look up IAM with the wrong ref).
+        projectAuthorization.requireProjectViewByProjectId(projectId);
         Page<ActivityLogJpaEntity> result = activityLogs.findProjectActivityFeed(
                 projectId.toString(),
                 ProjectEntityTypes.PROJECT,

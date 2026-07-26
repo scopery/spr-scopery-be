@@ -7,6 +7,7 @@ import com.company.scopery.modules.project.project.domain.model.ProjectRepositor
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.projectbaseline.baseline.application.command.CreateBaselineCommand;
 import com.company.scopery.modules.projectbaseline.baseline.application.response.ProjectBaselineResponse;
+import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineSnapshotParser;
 import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineSnapshotService;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaseline;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaselineRepository;
@@ -30,16 +31,19 @@ public class CreateBaselineAction {
     private final CurrentUserAuthorizationService currentUser;
     private final ProjectBaselinePlatformPublisher publisher;
     private final ProjectBaselineActivityLogger activityLogger;
+    private final BaselineSnapshotParser parser;
 
     public CreateBaselineAction(ProjectRepository projects, ProjectBaselineRepository baselines,
                                 BaselineSnapshotService snapshotService,
                                 ProjectBaselineAuthorizationService authorization,
                                 CurrentUserAuthorizationService currentUser,
                                 ProjectBaselinePlatformPublisher publisher,
-                                ProjectBaselineActivityLogger activityLogger) {
+                                ProjectBaselineActivityLogger activityLogger,
+                                BaselineSnapshotParser parser) {
         this.projects = projects; this.baselines = baselines; this.snapshotService = snapshotService;
         this.authorization = authorization; this.currentUser = currentUser;
         this.publisher = publisher; this.activityLogger = activityLogger;
+        this.parser = parser;
     }
 
     @Transactional
@@ -65,6 +69,6 @@ public class CreateBaselineAction {
         publisher.enqueueBaseline(baseline, ProjectBaselineEventCodes.PROJECT_BASELINE_CREATED);
         activityLogger.logSuccess(ProjectBaselineEntityTypes.PROJECT_BASELINE, baseline.id(),
                 ProjectBaselineActivityActions.PROJECT_BASELINE_CREATED, "PROJECT_BASELINE_CREATED");
-        return ProjectBaselineResponse.from(baseline);
+        return ProjectBaselineResponse.from(baseline, parser);
     }
 }

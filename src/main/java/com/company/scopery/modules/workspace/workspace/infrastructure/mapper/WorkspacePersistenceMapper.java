@@ -43,7 +43,7 @@ public class WorkspacePersistenceMapper {
         entity.setStatus(domain.status().name());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());
-            entity.setVersion(domain.version());
+            if (domain.version() != null) entity.setVersion(domain.version());
         }
         return entity;
     }

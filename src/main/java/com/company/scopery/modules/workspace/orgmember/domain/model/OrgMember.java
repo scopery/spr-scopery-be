@@ -17,7 +17,7 @@ public record OrgMember(
         Instant joinedAt,
         Instant suspendedAt,
         Instant removedAt,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -29,7 +29,7 @@ public record OrgMember(
                                    OrgMembershipSource source) {
         Instant now = Instant.now();
         return new OrgMember(UUID.randomUUID(), organizationId, userId, membershipType,
-                OrgMemberStatus.ACTIVE, source, now, null, null, 0, now, now);
+                OrgMemberStatus.ACTIVE, source, now, null, null, null, now, now);
     }
 
     public OrgMember activate() {

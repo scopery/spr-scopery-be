@@ -59,7 +59,7 @@ public class ProjectNotificationAuthorizationService {
     /** Soft check for project view used at subscription time. */
     public void requireProjectView(UUID projectId) {
         try {
-            projectAuthorization.requireProjectView(projectId);
+            projectAuthorization.requireProjectViewByProjectId(projectId);
         } catch (RuntimeException ex) {
             throw ProjectNotificationExceptions.subscriberNoAccess();
         }

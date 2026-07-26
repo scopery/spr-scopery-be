@@ -63,7 +63,9 @@ public enum DocumentHubErrorCatalog implements ErrorCatalog {
     SYNCED_BLOCK_NOT_FOUND("DOCUMENT_SYNCED_BLOCK_NOT_FOUND", "Synced block not found", HttpStatus.NOT_FOUND),
     SYNCED_BLOCK_CYCLE_DETECTED("SYNCED_BLOCK_RECURSION", "Synced block would create a recursive reference", HttpStatus.UNPROCESSABLE_ENTITY),
     // Governance
-    BASELINE_GUARD_BLOCKED("GOVERNANCE_BASELINE_GUARD_BLOCKED", "Operation is blocked by baseline guard", HttpStatus.CONFLICT);
+    BASELINE_GUARD_BLOCKED("GOVERNANCE_BASELINE_GUARD_BLOCKED", "Operation is blocked by baseline guard", HttpStatus.CONFLICT),
+    // Document links
+    DOCUMENT_LINK_NOT_FOUND("DOCUMENT_LINK_NOT_FOUND", "Document link not found", HttpStatus.NOT_FOUND);
 
     private final String code; private final String defaultMessage; private final HttpStatus httpStatus;
     DocumentHubErrorCatalog(String c, String m, HttpStatus s) { code=c; defaultMessage=m; httpStatus=s; }

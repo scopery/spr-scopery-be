@@ -2,6 +2,7 @@ package com.company.scopery.modules.projectbaseline.baseline.application.action;
 
 import com.company.scopery.modules.projectbaseline.baseline.application.command.UpdateBaselineCommand;
 import com.company.scopery.modules.projectbaseline.baseline.application.response.ProjectBaselineResponse;
+import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineSnapshotParser;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaseline;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaselineRepository;
 import com.company.scopery.modules.projectbaseline.shared.activity.ProjectBaselineActivityLogger;
@@ -18,13 +19,16 @@ public class UpdateBaselineAction {
     private final ProjectBaselineAuthorizationService authorization;
     private final ProjectBaselinePlatformPublisher publisher;
     private final ProjectBaselineActivityLogger activityLogger;
+    private final BaselineSnapshotParser parser;
 
     public UpdateBaselineAction(ProjectBaselineRepository baselines,
                                 ProjectBaselineAuthorizationService authorization,
                                 ProjectBaselinePlatformPublisher publisher,
-                                ProjectBaselineActivityLogger activityLogger) {
+                                ProjectBaselineActivityLogger activityLogger,
+                                BaselineSnapshotParser parser) {
         this.baselines = baselines; this.authorization = authorization;
         this.publisher = publisher; this.activityLogger = activityLogger;
+        this.parser = parser;
     }
 
     @Transactional
@@ -37,6 +41,6 @@ public class UpdateBaselineAction {
         publisher.enqueueBaseline(baseline, ProjectBaselineEventCodes.PROJECT_BASELINE_CREATED);
         activityLogger.logSuccess(ProjectBaselineEntityTypes.PROJECT_BASELINE, baseline.id(),
                 ProjectBaselineActivityActions.PROJECT_BASELINE_UPDATED, "PROJECT_BASELINE_UPDATED");
-        return ProjectBaselineResponse.from(baseline);
+        return ProjectBaselineResponse.from(baseline, parser);
     }
 }

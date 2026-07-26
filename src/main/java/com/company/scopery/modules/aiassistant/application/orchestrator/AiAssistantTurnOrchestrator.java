@@ -448,12 +448,18 @@ public class AiAssistantTurnOrchestrator {
                 return;
             }
 
-            // J2. Load LLM-callable action tools and append capability block to system prompt
+            // J2. Load LLM-callable action tools — only expose them when the user query contains
+            // an explicit action verb. This prevents the LLM from calling write tools for read/info requests.
             List<AiActionToolPolicy> llmCallablePolicies = loadLlmCallablePolicies();
-            List<AiLlmToolDefinition> llmTools = buildLlmToolDefinitions(llmCallablePolicies);
-            if (!llmTools.isEmpty()) {
-                systemPrompt = systemPrompt + buildActionCapabilityBlock(project, req);
-                chatMessages.set(0, new AiChatMessage("system", systemPrompt));
+            List<AiLlmToolDefinition> llmTools;
+            if (!llmCallablePolicies.isEmpty() && hasActionIntent(req.userQuestion())) {
+                llmTools = buildLlmToolDefinitions(llmCallablePolicies);
+                if (!llmTools.isEmpty()) {
+                    systemPrompt = systemPrompt + buildActionCapabilityBlock(project, req);
+                    chatMessages.set(0, new AiChatMessage("system", systemPrompt));
+                }
+            } else {
+                llmTools = List.of();
             }
 
             // K. Stream via provider
@@ -788,6 +794,12 @@ public class AiAssistantTurnOrchestrator {
             sb.append("\n- MIXED: Questions that require both project evidence and general professional or technical knowledge.");
             sb.append("\n- ACTION: Requests to create, update, assign, schedule, or otherwise change project data.");
 
+            sb.append("\n\n## Document Access Policy");
+            sb.append("\nYou have full access to project documents through the retrieval system.");
+            sb.append("\n- When asked whether you can read, access, or retrieve project documents: always answer YES and immediately summarize what the retrieved evidence shows.");
+            sb.append("\n- NEVER say \"I cannot read\", \"I cannot access\", or \"I cannot extract content from\" project documents.");
+            sb.append("\n- If evidence was retrieved, present it. If no evidence was retrieved, say the content was not found in the indexed documents — not that you lack the ability to read them.");
+
             sb.append("\n\n## Project Grounding Policy");
             sb.append("\nFor PROJECT_GROUNDED and MIXED responses:");
             sb.append("\n- Treat the provided <retrieved_evidence> as the authoritative source for this response.");
@@ -795,7 +807,7 @@ public class AiAssistantTurnOrchestrator {
             sb.append("\n- Do not invent project facts, entity states, dates, owners, technologies, requirements, or decisions.");
             sb.append("\n- You may combine multiple evidence items and make a reasonable inference, but label it clearly as an inference.");
             sb.append("\n- When evidence is partially sufficient: answer the supported portion and state exactly what remains unknown.");
-            sb.append("\n- When no relevant evidence is available: state that the information was not found in the project documents; offer general guidance if useful.");
+            sb.append("\n- When no relevant evidence is available: state that the content was not found in the indexed project documents; offer general guidance if useful.");
 
             sb.append("\n\n## General Knowledge Policy");
             sb.append("\nYou may use general knowledge to explain concepts, describe industry practices, compare approaches, and provide implementation guidance.");
@@ -857,20 +869,45 @@ public class AiAssistantTurnOrchestrator {
         return definitions;
     }
 
+    private boolean hasActionIntent(String query) {
+        if (query == null || query.isBlank()) return false;
+        String lower = query.toLowerCase();
+        for (String verb : properties.getActionIntentVerbs()) {
+            if (lower.contains(verb)) return true;
+        }
+        return false;
+    }
+
     private static String buildActionCapabilityBlock(Project project, TurnRequest req) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\n## Action Capabilities");
         sb.append("\n\nYou have access to tools that let you take actions in Scopery on the user's behalf.");
         sb.append("\n\nIMPORTANT rules:");
-        sb.append("\n- ONLY call a write tool when the user has explicitly and unambiguously requested the action in their current message (e.g. \"create a requirement for X\", \"add a property to Y\"). Discussing, analyzing, or mentioning an entity is NOT a request to create it.");
-        sb.append("\n- Do NOT call write tools proactively. Never use a tool just because it might be helpful — wait to be asked.");
-        sb.append("\n- If the user's request is ambiguous or missing key details (title, type, scope), ask the user to clarify BEFORE calling any tool. Do not guess and create something the user did not intend.");
+        sb.append("\n- ONLY call a write tool when the user has used an explicit creation/modification verb in their current message: e.g. \"tạo\", \"thêm\", \"create\", \"add\", \"update\", \"delete\", \"assign\", \"schedule\".");
+        sb.append("\n- NEVER call a write tool when the user is: asking a question, requesting information, asking you to read or summarize documents, asking for an overview or analysis, or using phrases like \"nói về\", \"cho tôi biết\", \"thông tin\", \"đọc\", \"read\", \"tell me\", \"explain\", \"what is\", \"how does\".");
+        sb.append("\n- Discussing, analyzing, reading, or mentioning an entity is NOT a request to create or modify it.");
+        sb.append("\n- Do NOT call write tools proactively. If you are unsure whether the user wants an action, respond with text first and ask for confirmation.");
+        sb.append("\n- If the user's request is ambiguous or missing key details (title, type, scope), ask the user to clarify BEFORE calling any tool.");
         sb.append("\n- Once called, do NOT describe what you are about to do and ask to confirm in chat — the system shows a confirmation UI automatically.");
         sb.append("\n- Never invent entity IDs. Use IDs from context or provided by the user.");
-        sb.append("\n- BATCH LIMIT: Never call the same tool more than 10 times in one response. If the user wants to create many items, create at most 10 in this turn and let the user know they can ask for more.");
+        sb.append("\n- BATCH LIMIT: Never call the same tool more than 20 times in one response.");
+        sb.append("\n\n## Critical Tool Disambiguation");
+        sb.append("\nThese tool pairs are DIFFERENT — choose based on exactly what the user says:");
+        sb.append("\n");
+        sb.append("\n| User says | Correct tool | Wrong tool |");
+        sb.append("\n|---|---|---|");
+        sb.append("\n| \"tạo requirement\", \"yêu cầu\", \"create requirement\", \"add requirement\" | create_requirement | create_functional_item |");
+        sb.append("\n| \"tạo functional item\", \"chức năng\", \"feature spec\", \"user story\", \"use case\", \"FR item\" | create_functional_item | create_requirement |");
+        sb.append("\n| \"tạo NFR\", \"non-functional\", \"phi chức năng\" | create_non_functional_item | create_requirement |");
+        sb.append("\n| \"tạo task\", \"công việc\" | create_task | (any other) |");
+        sb.append("\n| \"tạo scope item\", \"phạm vi\" | create_scope_item | create_requirement |");
+        sb.append("\n");
+        sb.append("\nRULE: If the user says \"requirement\" or \"yêu cầu\" WITHOUT qualifying it as \"functional item\"/\"chức năng\", ALWAYS use create_requirement.");
+        sb.append("\nRULE: If the user says \"chức năng\" or \"functional item\" WITHOUT the word \"requirement\"/\"yêu cầu\", use create_functional_item.");
+        sb.append("\nRULE: When in doubt between create_requirement and create_functional_item, ask the user which module they mean.");
         sb.append("\n\n## Field Completeness Policy");
-        sb.append("\nWhen creating any item (functional requirement, NFR, task, module, etc.), always populate every available optional field you can derive from the user's request or the retrieved project context:");
-        sb.append("\n- description: Write a clear business requirement description — what the feature does, why it exists, who benefits. Never leave blank if context allows.");
+        sb.append("\nWhen creating any item (requirement, functional item, NFR, task, module, etc.), always populate every available optional field you can derive from the user's request or the retrieved project context:");
+        sb.append("\n- description: Write a clear description — what the item does, why it exists, who benefits. Never leave blank if context allows.");
         sb.append("\n- acceptanceCriteria (for functional items): Always include at least 2–4 concrete, testable acceptance criteria derived from the user's description. Use 'Given/When/Then' or plain sentences. Never omit.");
         sb.append("\n- priority: Infer from language ('critical', 'must have', 'nice to have') or default to MEDIUM.");
         sb.append("\n- targetMetric (for NFRs): Include measurable targets (e.g. 'response time < 200ms', '99.9% uptime') whenever the context provides them.");

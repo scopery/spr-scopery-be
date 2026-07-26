@@ -4,6 +4,7 @@ import com.company.scopery.modules.project.project.domain.model.ProjectRepositor
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhaseRepository;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.projectbaseline.baseline.application.response.ProjectBaselineResponse;
+import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineSnapshotParser;
 import com.company.scopery.modules.projectbaseline.baseline.domain.enums.BaselineStatus;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaseline;
 import com.company.scopery.modules.projectbaseline.baseline.domain.model.ProjectBaselineRepository;
@@ -27,15 +28,18 @@ public class ValidateBaselineAction {
     private final ProjectBaselineAuthorizationService authorization;
     private final ProjectBaselinePlatformPublisher publisher;
     private final ProjectBaselineActivityLogger activityLogger;
+    private final BaselineSnapshotParser parser;
 
     public ValidateBaselineAction(ProjectRepository projects, ProjectBaselineRepository baselines,
                                   ProjectPhaseRepository phases, ObjectMapper objectMapper,
                                   ProjectBaselineAuthorizationService authorization,
                                   ProjectBaselinePlatformPublisher publisher,
-                                  ProjectBaselineActivityLogger activityLogger) {
+                                  ProjectBaselineActivityLogger activityLogger,
+                                  BaselineSnapshotParser parser) {
         this.projects = projects; this.baselines = baselines; this.phases = phases;
         this.objectMapper = objectMapper; this.authorization = authorization;
         this.publisher = publisher; this.activityLogger = activityLogger;
+        this.parser = parser;
     }
 
     @Transactional
@@ -69,6 +73,6 @@ public class ValidateBaselineAction {
         publisher.enqueueBaseline(baseline, ProjectBaselineEventCodes.PROJECT_BASELINE_VALIDATED);
         activityLogger.logSuccess(ProjectBaselineEntityTypes.PROJECT_BASELINE, baseline.id(),
                 ProjectBaselineActivityActions.PROJECT_BASELINE_VALIDATED, "PROJECT_BASELINE_VALIDATED");
-        return ProjectBaselineResponse.from(baseline);
+        return ProjectBaselineResponse.from(baseline, parser);
     }
 }

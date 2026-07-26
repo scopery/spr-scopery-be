@@ -18,7 +18,7 @@ public record Workspace(
         WorkspaceVisibility defaultVisibility,
         WorkspaceJoinPolicy joinPolicy,
         WorkspaceStatus status,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -27,7 +27,7 @@ public record Workspace(
                                    WorkspaceJoinPolicy joinPolicy) {
         Instant now = Instant.now();
         return new Workspace(UUID.randomUUID(), organizationId, code, name, description,
-                ownerUserId, defaultVisibility, joinPolicy, WorkspaceStatus.ACTIVE, 0, now, now);
+                ownerUserId, defaultVisibility, joinPolicy, WorkspaceStatus.ACTIVE, null, now, now);
     }
 
     public Workspace update(String name, String description, WorkspaceVisibility defaultVisibility,

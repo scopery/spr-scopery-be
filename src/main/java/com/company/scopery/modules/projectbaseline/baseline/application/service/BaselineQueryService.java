@@ -14,24 +14,29 @@ import java.util.UUID;
 public class BaselineQueryService {
     private final ProjectBaselineRepository baselines;
     private final ProjectBaselineAuthorizationService authorization;
+    private final BaselineSnapshotParser parser;
 
     public BaselineQueryService(ProjectBaselineRepository baselines,
-                                ProjectBaselineAuthorizationService authorization) {
+                                ProjectBaselineAuthorizationService authorization,
+                                BaselineSnapshotParser parser) {
         this.baselines = baselines;
         this.authorization = authorization;
+        this.parser = parser;
     }
 
     @Transactional(readOnly = true)
     public List<ProjectBaselineResponse> list(UUID projectId) {
         authorization.requireBaselineView(projectId);
-        return baselines.findByProjectId(projectId).stream().map(ProjectBaselineResponse::from).toList();
+        return baselines.findByProjectId(projectId).stream()
+                .map(b -> ProjectBaselineResponse.from(b, parser))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public ProjectBaselineResponse get(UUID projectId, UUID baselineId) {
         authorization.requireBaselineView(projectId);
         return baselines.findByIdAndProjectId(baselineId, projectId)
-                .map(ProjectBaselineResponse::from)
+                .map(b -> ProjectBaselineResponse.from(b, parser))
                 .orElseThrow(() -> ProjectBaselineExceptions.baselineNotFound(baselineId));
     }
 
@@ -39,7 +44,7 @@ public class BaselineQueryService {
     public ProjectBaselineResponse getCurrent(UUID projectId) {
         authorization.requireBaselineView(projectId);
         return baselines.findCurrentByProjectId(projectId)
-                .map(ProjectBaselineResponse::from)
+                .map(b -> ProjectBaselineResponse.from(b, parser))
                 .orElseThrow(() -> ProjectBaselineExceptions.baselineNotFound(null));
     }
 }

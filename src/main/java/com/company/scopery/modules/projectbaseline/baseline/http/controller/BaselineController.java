@@ -4,7 +4,9 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.projectbaseline.baseline.application.action.*;
 import com.company.scopery.modules.projectbaseline.baseline.application.command.CreateBaselineCommand;
 import com.company.scopery.modules.projectbaseline.baseline.application.command.UpdateBaselineCommand;
+import com.company.scopery.modules.projectbaseline.baseline.application.response.BaselineCompareResponse;
 import com.company.scopery.modules.projectbaseline.baseline.application.response.ProjectBaselineResponse;
+import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineCompareService;
 import com.company.scopery.modules.projectbaseline.baseline.application.service.BaselineQueryService;
 import com.company.scopery.modules.projectbaseline.baseline.http.request.CreateBaselineRequest;
 import com.company.scopery.modules.projectbaseline.baseline.http.request.UpdateBaselineRequest;
@@ -30,14 +32,17 @@ public class BaselineController {
     private final ApproveBaselineAction approveAction;
     private final MarkCurrentBaselineAction markCurrentAction;
     private final ArchiveBaselineAction archiveAction;
+    private final BaselineCompareService compareService;
 
     public BaselineController(BaselineQueryService queryService, CreateBaselineAction createAction,
                               UpdateBaselineAction updateAction, RefreshBaselineSnapshotAction refreshAction,
                               ValidateBaselineAction validateAction, ApproveBaselineAction approveAction,
-                              MarkCurrentBaselineAction markCurrentAction, ArchiveBaselineAction archiveAction) {
+                              MarkCurrentBaselineAction markCurrentAction, ArchiveBaselineAction archiveAction,
+                              BaselineCompareService compareService) {
         this.queryService = queryService; this.createAction = createAction; this.updateAction = updateAction;
         this.refreshAction = refreshAction; this.validateAction = validateAction; this.approveAction = approveAction;
         this.markCurrentAction = markCurrentAction; this.archiveAction = archiveAction;
+        this.compareService = compareService;
     }
 
     @PostMapping(ProjectBaselineApiPaths.BASELINES)
@@ -105,5 +110,11 @@ public class BaselineController {
     @Operation(summary = "Archive baseline")
     public ApiResponse<ProjectBaselineResponse> archive(@PathVariable UUID projectId, @PathVariable UUID baselineId) {
         return ApiResponse.success(archiveAction.execute(projectId, baselineId));
+    }
+
+    @GetMapping(ProjectBaselineApiPaths.BASELINE_COMPARE_CURRENT)
+    @Operation(summary = "Compare baseline vs current live plan")
+    public ApiResponse<BaselineCompareResponse> compareCurrent(@PathVariable UUID projectId, @PathVariable UUID baselineId) {
+        return ApiResponse.success(compareService.compare(projectId, baselineId));
     }
 }

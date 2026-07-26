@@ -50,7 +50,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE_READ_ONLY,
                 AiActionRiskLevel.LOW,
                 AiActionExecutionMode.PREVIEW_ONLY,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -63,7 +63,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -74,7 +74,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.LOW,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -85,7 +85,29 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_requirement", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                20, false, false, false,
+                AiActionToolPolicyStatus.ACTIVE)) {
+            seeded++;
+        } else {
+            alreadyExisted++;
+        }
+
+        if (seedPolicy("create_scope_item", "v1",
+                AiActionInvocationScope.LLM_CALLABLE,
+                AiActionRiskLevel.MEDIUM,
+                AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -96,7 +118,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -107,7 +129,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -118,7 +140,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -129,7 +151,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.LOW,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -140,7 +162,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -151,7 +173,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -162,7 +184,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -173,7 +195,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
@@ -184,7 +206,7 @@ public class AiActionRegistryInitializer implements ApplicationListener<Applicat
                 AiActionInvocationScope.LLM_CALLABLE,
                 AiActionRiskLevel.MEDIUM,
                 AiActionExecutionMode.CONFIRM_BEFORE_EXECUTE,
-                1, false, false, false,
+                20, false, false, false,
                 AiActionToolPolicyStatus.ACTIVE)) {
             seeded++;
         } else {
