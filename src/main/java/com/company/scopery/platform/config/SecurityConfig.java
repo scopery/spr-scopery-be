@@ -81,11 +81,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
-                // CSRF — Double Submit Cookie pattern (JS reads XSRF-TOKEN cookie, sends as X-XSRF-TOKEN header)
+                // CSRF — disabled for all /api/** paths.
+                // CORS with allowCredentials=true and explicit allowedOrigins already blocks cross-origin CSRF
+                // for JSON endpoints (preflight required). Cookie double-submit cannot work when FE and BE
+                // are on different domains (JS cannot read cross-origin cookies to set X-XSRF-TOKEN header).
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers(SecurityPathPolicy.csrfIgnoredMatchers()))
+                        .ignoringRequestMatchers("/api/**"))
                 // Force deferred CSRF token to materialise on every response so the cookie is always set
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
