@@ -8,6 +8,8 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import com.company.scopery.common.audit.AuditEventType;
@@ -25,16 +27,22 @@ public class ActivateOrgMemberAction {
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final ImmutableAuditEventService auditEventService;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public ActivateOrgMemberAction(OrgMemberRepository repository, WorkspaceActivityLogger activityLogger,
                                    CurrentUserAuthorizationService currentUserService,
                                    WorkspaceIamIntegrationService iamIntegrationService,
-                                   ImmutableAuditEventService auditEventService) {
+                                   ImmutableAuditEventService auditEventService,
+                                   InAppDeliveryService inAppDeliveryService,
+                                   WorkspaceAudienceResolver audienceResolver) {
         this.repository = repository;
         this.activityLogger = activityLogger;
         this.currentUserService = currentUserService;
         this.iamIntegrationService = iamIntegrationService;
         this.auditEventService = auditEventService;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -43,6 +51,16 @@ public class ActivateOrgMemberAction {
         UUID actorId = currentUserService.resolveCurrentUser().id();
         iamIntegrationService.requireOrgAccess(command.organizationId(), actorId, IamAuthorities.ORGANIZATION_MANAGE);
         OrgMember saved = repository.save(member.activate());
+
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(saved.userId()),
+                "ORG_MEMBER_ACTIVATED",
+                saved.id(),
+                saved.organizationId(),
+                null,
+                "Restored to organization",
+                "Your organization membership was restored.");
+
         activityLogger.logSuccess(WorkspaceEntityTypes.ORG_MEMBER, saved.id(),
                 WorkspaceActivityActions.ACTIVATE_ORG_MEMBER, "Organization member activated: " + saved.userId());
         auditEventService.record(AuditEventType.ORG_MEMBER_ACTIVATED,

@@ -8,5 +8,8 @@ public class JpaRequirementRepository implements RequirementRepository {
     @Override public Requirement save(Requirement e){return mapper.toDomain(springData.saveAndFlush(mapper.toJpaEntity(e)));}
     @Override public Optional<Requirement> findByIdAndProjectId(UUID id, UUID projectId){return springData.findByIdAndProjectId(id,projectId).map(mapper::toDomain);}
     @Override public List<Requirement> findByProjectId(UUID projectId){return springData.findByProjectIdOrderByCreatedAtDesc(projectId).stream().map(mapper::toDomain).toList();}
+    @Override public List<Requirement> findByProjectIdAndScopePackageId(UUID projectId, UUID scopePackageId){
+        return springData.findByProjectIdAndScopePackageIdOrderByCreatedAtDesc(projectId, scopePackageId).stream().map(mapper::toDomain).toList();
+    }
     @Override public boolean existsByProjectIdAndCode(UUID projectId, String code){return springData.existsByProjectIdAndCode(projectId,code);}
 }

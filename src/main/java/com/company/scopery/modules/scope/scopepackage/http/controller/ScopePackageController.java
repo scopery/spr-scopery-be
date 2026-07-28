@@ -5,9 +5,12 @@ import com.company.scopery.modules.scope.scopepackage.application.action.*;
 import com.company.scopery.modules.scope.scopepackage.application.command.*;
 import com.company.scopery.modules.scope.scopepackage.application.response.ScopePackageResponse;
 import com.company.scopery.modules.scope.scopepackage.application.service.ScopePackageQueryService;
+import com.company.scopery.modules.scope.scopepackage.application.service.ScopePackageRequirementQueryService;
+import com.company.scopery.modules.scope.scopepackage.http.request.BulkLinkRequirementsRequest;
 import com.company.scopery.modules.scope.scopepackage.http.request.CreateScopePackageRequest;
 import com.company.scopery.modules.scope.scopepackage.http.request.ImportScopePackageFromQuoteRequest;
 import com.company.scopery.modules.scope.shared.constant.ScopeApiPaths;
+import com.company.scopery.modules.traceability.requirement.application.response.RequirementResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,16 +29,25 @@ public class ScopePackageController {
     private final ArchiveScopePackageAction archive;
     private final ImportScopePackageFromQuoteAction importFromQuote;
     private final ScopePackageQueryService query;
+    private final ScopePackageRequirementQueryService requirementQuery;
+    private final LinkRequirementsToScopePackageAction linkRequirements;
+    private final UnlinkRequirementsFromScopePackageAction unlinkRequirements;
 
     public ScopePackageController(CreateScopePackageAction create, ApproveScopePackageAction approve,
                                   MarkCurrentScopePackageAction markCurrent, ArchiveScopePackageAction archive,
-                                  ImportScopePackageFromQuoteAction importFromQuote, ScopePackageQueryService query) {
+                                  ImportScopePackageFromQuoteAction importFromQuote, ScopePackageQueryService query,
+                                  ScopePackageRequirementQueryService requirementQuery,
+                                  LinkRequirementsToScopePackageAction linkRequirements,
+                                  UnlinkRequirementsFromScopePackageAction unlinkRequirements) {
         this.create = create;
         this.approve = approve;
         this.markCurrent = markCurrent;
         this.archive = archive;
         this.importFromQuote = importFromQuote;
         this.query = query;
+        this.requirementQuery = requirementQuery;
+        this.linkRequirements = linkRequirements;
+        this.unlinkRequirements = unlinkRequirements;
     }
 
     @PostMapping
@@ -64,6 +76,31 @@ public class ScopePackageController {
     @Operation(summary = "Get scope package")
     public ApiResponse<ScopePackageResponse> get(@PathVariable UUID projectId, @PathVariable UUID packageId) {
         return ApiResponse.success(query.get(projectId, packageId));
+    }
+
+    @GetMapping("/{packageId}/requirements")
+    @Operation(summary = "List requirements linked to scope package")
+    public ApiResponse<List<RequirementResponse>> listRequirements(@PathVariable UUID projectId,
+                                                                    @PathVariable UUID packageId) {
+        return ApiResponse.success(requirementQuery.list(projectId, packageId));
+    }
+
+    @PostMapping("/{packageId}/requirements:link")
+    @Operation(summary = "Link requirements to scope package")
+    public ApiResponse<List<RequirementResponse>> linkRequirements(@PathVariable UUID projectId,
+                                                                    @PathVariable UUID packageId,
+                                                                    @Valid @RequestBody BulkLinkRequirementsRequest request) {
+        return ApiResponse.success(linkRequirements.execute(new BulkLinkRequirementsCommand(
+                projectId, packageId, request.requirementIds())));
+    }
+
+    @PostMapping("/{packageId}/requirements:unlink")
+    @Operation(summary = "Unlink requirements from scope package")
+    public ApiResponse<List<RequirementResponse>> unlinkRequirements(@PathVariable UUID projectId,
+                                                                      @PathVariable UUID packageId,
+                                                                      @Valid @RequestBody BulkLinkRequirementsRequest request) {
+        return ApiResponse.success(unlinkRequirements.execute(new BulkLinkRequirementsCommand(
+                projectId, packageId, request.requirementIds())));
     }
 
     @PostMapping("/{packageId}/approve")

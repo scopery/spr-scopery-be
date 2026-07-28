@@ -30,21 +30,37 @@ class IamOwnerPolicyCatalogInitializerTest {
                 .thenReturn(Optional.empty());
         when(ownerPolicyRepository.findActiveByResourceType(IamResourceType.TEAM))
                 .thenReturn(Optional.empty());
+        when(ownerPolicyRepository.findActiveByResourceType(IamResourceType.PROJECT))
+                .thenReturn(Optional.empty());
         when(ownerPolicyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         new IamOwnerPolicyCatalogInitializer(ownerPolicyRepository).onApplicationEvent(readyEvent);
 
         ArgumentCaptor<IamOwnerPolicy> captor = ArgumentCaptor.forClass(IamOwnerPolicy.class);
-        verify(ownerPolicyRepository, times(2)).save(captor.capture());
+        verify(ownerPolicyRepository, times(3)).save(captor.capture());
         assertThat(captor.getAllValues())
                 .extracting(IamOwnerPolicy::resourceType)
-                .containsExactlyInAnyOrder(IamResourceType.WORKSPACE, IamResourceType.TEAM);
+                .containsExactlyInAnyOrder(IamResourceType.WORKSPACE, IamResourceType.TEAM, IamResourceType.PROJECT);
     }
 
     @Test
     void onApplicationEvent_idempotentWhenAllPresent() {
-        when(ownerPolicyRepository.findActiveByResourceType(any()))
-                .thenReturn(Optional.of(mock(IamOwnerPolicy.class)));
+        IamOwnerPolicy org = mock(IamOwnerPolicy.class);
+        IamOwnerPolicy ws = mock(IamOwnerPolicy.class);
+        IamOwnerPolicy team = mock(IamOwnerPolicy.class);
+        IamOwnerPolicy project = mock(IamOwnerPolicy.class);
+        when(org.policyVersion()).thenReturn(1);
+        when(ws.policyVersion()).thenReturn(4);
+        when(team.policyVersion()).thenReturn(1);
+        when(project.policyVersion()).thenReturn(1);
+        when(ownerPolicyRepository.findActiveByResourceType(IamResourceType.ORGANIZATION))
+                .thenReturn(Optional.of(org));
+        when(ownerPolicyRepository.findActiveByResourceType(IamResourceType.WORKSPACE))
+                .thenReturn(Optional.of(ws));
+        when(ownerPolicyRepository.findActiveByResourceType(IamResourceType.TEAM))
+                .thenReturn(Optional.of(team));
+        when(ownerPolicyRepository.findActiveByResourceType(IamResourceType.PROJECT))
+                .thenReturn(Optional.of(project));
 
         new IamOwnerPolicyCatalogInitializer(ownerPolicyRepository).onApplicationEvent(readyEvent);
 

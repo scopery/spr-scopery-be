@@ -45,4 +45,6 @@ public final class TraceabilityExceptions {
     public static AppException moduleNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.MODULE_NOT_FOUND,"Module not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException nfrScopeTargetDuplicate(){return new AppException(TraceabilityErrorCatalog.NFR_SCOPE_TARGET_DUPLICATE);}
     public static AppException nfrScopeTargetNotFound(UUID nfrId, UUID targetId){return new AppException(TraceabilityErrorCatalog.NFR_SCOPE_TARGET_NOT_FOUND,"NFR scope target not found",Map.of("nfrId",nfrId==null?"":nfrId,"targetId",targetId==null?"":targetId));}
+    public static AppException importInvalidFunctionalItem(String reason){return new AppException(TraceabilityErrorCatalog.FUNCTIONAL_IMPORT_INVALID_ITEM,reason,Map.of());}
+    public static AppException importFunctionalItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.FUNCTIONAL_IMPORT_ITEM_NOT_FOUND,"Functional item not found in project: "+id,Map.of("id",id==null?"":id));}
 }

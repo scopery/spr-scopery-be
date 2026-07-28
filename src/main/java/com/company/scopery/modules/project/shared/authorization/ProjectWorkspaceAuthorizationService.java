@@ -11,7 +11,11 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Centralized workspace-scoped IAM checks for Project Core.
+ * Centralized workspace/project-scoped IAM checks for Project Core.
+ *
+ * <p>Phase C: when a PROJECT IAM resource exists, authorize against it only.
+ * Legacy projects without a PROJECT resource fall back to WORKSPACE.
+ * List endpoints gate on workspace {@code PROJECT_VIEW}, then filter rows by per-project grant.
  *
  * <p>Permission simplification (Phase 10 intentional mapping):
  * <ul>
@@ -46,10 +50,11 @@ public class ProjectWorkspaceAuthorizationService {
     }
 
     public void requireProjectPermission(UUID projectId, IamPermissionAction authority) {
-        UUID workspaceId = projectRepository.findById(projectId)
-                .orElseThrow(() -> ProjectExceptions.projectNotFound(projectId))
-                .workspaceId();
-        requireWorkspacePermission(workspaceId, authority);
+        var project = projectRepository.findById(projectId)
+                .orElseThrow(() -> ProjectExceptions.projectNotFound(projectId));
+        UUID userId = currentUserService.resolveCurrentUser().id();
+        iamIntegrationService.requireProjectOrWorkspaceAccess(
+                projectId, project.workspaceId(), userId, authority);
     }
 
     // ── Project ───────────────────────────────────────────────────────────────

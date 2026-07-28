@@ -11,6 +11,7 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +24,18 @@ public class CancelOrgInvitationAction {
     private final CurrentUserAuthorizationService currentUserAuthorizationService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final WorkspaceActivityLogger activityLogger;
+    private final InvitationInboxCleanupService inboxCleanupService;
 
     public CancelOrgInvitationAction(OrgInvitationRepository invitationRepository,
                                       CurrentUserAuthorizationService currentUserAuthorizationService,
                                       WorkspaceIamIntegrationService iamIntegrationService,
-                                      WorkspaceActivityLogger activityLogger) {
+                                      WorkspaceActivityLogger activityLogger,
+                                      InvitationInboxCleanupService inboxCleanupService) {
         this.invitationRepository = invitationRepository;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.iamIntegrationService = iamIntegrationService;
         this.activityLogger = activityLogger;
+        this.inboxCleanupService = inboxCleanupService;
     }
 
     @Transactional
@@ -52,6 +56,8 @@ public class CancelOrgInvitationAction {
 
         OrgInvitation cancelled = invitation.cancel();
         OrgInvitation saved = invitationRepository.save(cancelled);
+
+        inboxCleanupService.dismissOrgInvitationForAll(saved.id());
 
         activityLogger.logSuccess(WorkspaceEntityTypes.ORG_INVITATION, saved.id(),
                 WorkspaceActivityActions.CANCEL_ORG_INVITATION,

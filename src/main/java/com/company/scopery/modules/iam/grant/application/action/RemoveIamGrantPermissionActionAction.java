@@ -83,6 +83,7 @@ public class RemoveIamGrantPermissionActionAction {
             case ORGANIZATION -> IamAuthorities.ORGANIZATION_MANAGE;
             case WORKSPACE -> IamAuthorities.WORKSPACE_ACCESS_MANAGE_ACCESS;
             case TEAM -> IamAuthorities.TEAM_MANAGE;
+            case PROJECT -> IamAuthorities.PROJECT_MANAGE;
             default -> IamAuthorities.SYSTEM_IAM_MANAGE_ACCESS_GRANT;
         };
     }

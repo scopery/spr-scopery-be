@@ -20,11 +20,16 @@ import com.company.scopery.modules.workspace.invitation.domain.enums.WorkspaceIn
 import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitation;
 import com.company.scopery.modules.workspace.invitation.domain.model.WorkspaceInvitationRepository;
 import com.company.scopery.modules.workspace.invitation.domain.valueobject.InvitationCodeHasher;
+import com.company.scopery.modules.workspace.member.application.service.WorkspaceMembershipEnrollmentService;
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
+import com.company.scopery.modules.workspace.orgmember.application.service.OrgMembershipEnrollmentService;
 import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceVisibility;
@@ -57,7 +62,14 @@ class WorkspaceInvitationActionTest {
     @Mock private CurrentUserAuthorizationService currentUserService;
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
     @Mock private EmailNotificationTriggerPublisher notificationPublisher;
+    @Mock private com.company.scopery.modules.notification.shared.NotificationProperties notificationProperties;
+    @Mock private com.company.scopery.modules.iam.user.domain.model.IamUserRepository iamUserRepository;
     @Mock private WorkspaceActivityLogger activityLogger;
+    @Mock private InAppDeliveryService inAppDeliveryService;
+    @Mock private WorkspaceAudienceResolver audienceResolver;
+    @Mock private InvitationInboxCleanupService inboxCleanupService;
+    @Mock private WorkspaceMembershipEnrollmentService workspaceEnrollmentService;
+    @Mock private OrgMembershipEnrollmentService orgEnrollmentService;
 
     private CreateInvitationAction createInvitationAction;
     private AcceptInvitationAction acceptInvitationAction;
@@ -68,13 +80,19 @@ class WorkspaceInvitationActionTest {
     @BeforeEach
     void setUp() {
         createInvitationAction = new CreateInvitationAction(
-                invitationRepository, workspaceRepository, currentUserService,
-                iamIntegrationService, notificationPublisher, activityLogger);
+                invitationRepository, workspaceRepository, memberRepository, currentUserService,
+                iamIntegrationService, notificationPublisher,
+                notificationProperties, iamUserRepository,
+                new com.company.scopery.modules.workspace.invitation.application.service.WorkspaceInvitationInviteeNotifyService(
+                        inAppDeliveryService, audienceResolver),
+                activityLogger);
         acceptInvitationAction = new AcceptInvitationAction(
-                invitationRepository, memberRepository, orgMemberRepository, workspaceRepository,
-                currentUserService, notificationPublisher, activityLogger);
+                invitationRepository, memberRepository, workspaceEnrollmentService, orgEnrollmentService,
+                workspaceRepository, currentUserService, notificationPublisher, activityLogger,
+                inboxCleanupService, inAppDeliveryService, audienceResolver);
         revokeInvitationAction = new RevokeInvitationAction(
-                invitationRepository, currentUserService, iamIntegrationService, activityLogger);
+                invitationRepository, currentUserService, iamIntegrationService, activityLogger,
+                inboxCleanupService);
         invitationQueryService = new InvitationQueryService(
                 invitationRepository, currentUserService, iamIntegrationService);
 
@@ -83,6 +101,14 @@ class WorkspaceInvitationActionTest {
         IamUser currentUser = IamUser.of(currentUserId, Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
+        lenient().when(notificationProperties.getFrontendBaseUrl()).thenReturn("http://localhost:3000");
+        lenient().when(iamUserRepository.findByEmail(any())).thenReturn(Optional.empty());
+        lenient().when(audienceResolver.explicitUser(any())).thenAnswer(inv -> {
+            java.util.Set<UUID> s = new java.util.LinkedHashSet<>();
+            UUID id = inv.getArgument(0, UUID.class);
+            if (id != null) s.add(id);
+            return s;
+        });
     }
 
     @Test
@@ -112,15 +138,15 @@ class WorkspaceInvitationActionTest {
         when(invitationRepository.findByCodeHash(InvitationCodeHasher.hash(rawCode))).thenReturn(Optional.of(inv));
         when(memberRepository.isActiveMember(workspaceId, currentUserId)).thenReturn(false);
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(activeWorkspace(workspaceId)));
-        when(orgMemberRepository.existsByOrganizationIdAndUserId(any(), eq(currentUserId))).thenReturn(true);
-        when(orgMemberRepository.isActiveMember(any(), eq(currentUserId))).thenReturn(true);
         when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-        when(memberRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(workspaceEnrollmentService.ensureActiveMembership(workspaceId, currentUserId, false))
+                .thenReturn(WorkspaceMember.create(workspaceId, currentUserId));
 
         acceptInvitationAction.execute(new AcceptInvitationCommand(rawCode));
 
-        verify(memberRepository).save(any(WorkspaceMember.class));
+        verify(workspaceEnrollmentService).ensureActiveMembership(workspaceId, currentUserId, false);
         verify(invitationRepository).save(any(WorkspaceInvitation.class));
+        verify(inboxCleanupService).dismissWorkspaceInvitation(any(), eq(currentUserId));
     }
 
     @Test

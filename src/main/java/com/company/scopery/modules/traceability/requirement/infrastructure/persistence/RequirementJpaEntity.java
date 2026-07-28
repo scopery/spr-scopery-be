@@ -13,5 +13,6 @@ public class RequirementJpaEntity extends AuditableJpaEntity {
     @Column(name="functional_item_id") private UUID functionalItemId;
     @Column(name="non_functional_item_id") private UUID nonFunctionalItemId;
     @Column(name="scope_item_id") private UUID scopeItemId;
+    @Column(name="scope_package_id") private UUID scopePackageId;
     @Version private Integer version;
 }

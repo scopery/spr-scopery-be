@@ -8,6 +8,8 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
@@ -22,13 +24,19 @@ public class ActivateWorkspaceMemberAction {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceActivityLogger activityLogger;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public ActivateWorkspaceMemberAction(WorkspaceMemberRepository workspaceMemberRepository,
                                           WorkspaceRepository workspaceRepository,
-                                          WorkspaceActivityLogger activityLogger) {
+                                          WorkspaceActivityLogger activityLogger,
+                                          InAppDeliveryService inAppDeliveryService,
+                                          WorkspaceAudienceResolver audienceResolver) {
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.workspaceRepository = workspaceRepository;
         this.activityLogger = activityLogger;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -41,6 +49,15 @@ public class ActivateWorkspaceMemberAction {
         WorkspaceMember member = findMemberInWorkspaceOrThrow(command.memberId(), command.workspaceId());
         WorkspaceMember activated = member.activate();
         WorkspaceMember saved = workspaceMemberRepository.save(activated);
+
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(saved.userId()),
+                "WORKSPACE_MEMBER_ACTIVATED",
+                saved.id(),
+                ws.organizationId(),
+                command.workspaceId(),
+                "Added to workspace",
+                "You were added to a workspace.");
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE_MEMBER, saved.id(),
                 WorkspaceActivityActions.ACTIVATE_WORKSPACE_MEMBER,

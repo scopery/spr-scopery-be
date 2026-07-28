@@ -56,6 +56,12 @@ public class WorkspaceInvitationController {
         return ApiResponse.success(acceptInvitationAction.execute(new AcceptInvitationCommand(code)));
     }
 
+    @PostMapping(WorkspaceApiPaths.ME_WORKSPACE_INVITATION_ACCEPT)
+    @Operation(summary = "Accept workspace invitation by id (invitee inbox)")
+    public ApiResponse<WorkspaceInvitationResponse> acceptInvitationById(@PathVariable UUID id) {
+        return ApiResponse.success(acceptInvitationAction.executeById(id));
+    }
+
     @PatchMapping(WorkspaceApiPaths.WORKSPACE_INVITATIONS + "/{id}/revoke")
     @Operation(summary = "Revoke workspace invitation")
     public ApiResponse<WorkspaceInvitationResponse> revokeInvitation(

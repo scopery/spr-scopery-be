@@ -49,7 +49,7 @@ public class CreateRequirementAction {
                 project.id(), project.workspaceId(), c.applicationId(), c.code(), c.title().trim(), c.description(),
                 TraceabilityEnumParser.parseRequired(RequirementType.class, c.requirementType(), "requirementType"),
                 TraceabilityEnumParser.parseRequired(RequirementPriority.class, c.priority(), "priority"),
-                c.functionalItemId(), c.nonFunctionalItemId(), c.scopeItemId()));
+                c.functionalItemId(), c.nonFunctionalItemId(), c.scopeItemId(), c.scopePackageId()));
         activityLogger.logSuccess(TraceabilityEntityTypes.REQUIREMENT, saved.id(),
                 TraceabilityActivityActions.REQUIREMENT_CREATED, "Requirement created");
         publisher.publishEvent(Map.of(

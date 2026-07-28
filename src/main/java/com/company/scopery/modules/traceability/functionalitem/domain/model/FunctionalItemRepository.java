@@ -14,4 +14,6 @@ public interface FunctionalItemRepository {
     List<FunctionalItem> findByModuleIdIn(Collection<UUID> moduleIds);
     boolean existsByProjectIdAndCode(UUID projectId, String code);
     void delete(UUID id, UUID projectId);
+    Optional<FunctionalItem> findByProjectIdAndCode(UUID projectId, String code);
+    List<FunctionalItemTitleMatch> findSimilarByTitle(UUID projectId, String title, double threshold, int limit);
 }

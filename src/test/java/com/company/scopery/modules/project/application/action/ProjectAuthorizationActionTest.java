@@ -148,7 +148,7 @@ class ProjectAuthorizationActionTest {
         denyWorkspaceAccess(IamAuthorities.PROJECT_CREATE);
         CreateProjectAction action = new CreateProjectAction(
                 projectRepository, workspaceRepository, workspaceMemberRepository,
-                activityLogger, authorizationService, platformPublisher);
+                activityLogger, authorizationService, platformPublisher, iamIntegrationService);
 
         assertForbidden(() -> action.execute(
                 new CreateProjectCommand(workspaceId, "PRJ_01", "Project", null, null, "USD", null, null)));
@@ -159,7 +159,7 @@ class ProjectAuthorizationActionTest {
     void createProject_withProjectCreate_allowed_callsIam() {
         CreateProjectAction action = new CreateProjectAction(
                 projectRepository, workspaceRepository, workspaceMemberRepository,
-                activityLogger, authorizationService, platformPublisher);
+                activityLogger, authorizationService, platformPublisher, iamIntegrationService);
 
         // Will fail later on workspace lookup — assert IAM was checked first
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.empty());
@@ -172,20 +172,21 @@ class ProjectAuthorizationActionTest {
 
     @Test
     void viewProject_withoutProjectView_forbidden() {
-        denyWorkspaceAccess(IamAuthorities.PROJECT_VIEW);
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        denyProjectAccess(IamAuthorities.PROJECT_VIEW);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
 
         assertForbidden(() -> queryService.getProject(projectId));
     }
 
     @Test
     void viewProject_withProjectView_allowed() {
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
 
         var response = queryService.getProject(projectId);
 
         assertThat(response.id()).isEqualTo(projectId);
-        verify(iamIntegrationService).requireWorkspaceAccess(eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_VIEW));
     }
 
     @Test
@@ -212,11 +213,11 @@ class ProjectAuthorizationActionTest {
     @Test
     void projectList_requiresWorkspaceAccess() {
         denyWorkspaceAccess(IamAuthorities.PROJECT_VIEW);
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
 
         assertForbidden(() -> queryService.searchProjects(
                 new SearchProjectQuery(workspaceId, null, null, 0, 20)));
-        verify(projectRepository, never()).search(any(), any(), any(), any());
+        verify(projectRepository, never()).findAllByWorkspaceId(any());
     }
 
     @Test
@@ -226,16 +227,17 @@ class ProjectAuthorizationActionTest {
                 projectInWorkspace(foreignProjectId, otherWorkspaceId)));
         doThrow(new AppException(IamErrorCatalog.IAM_ACCESS_DENIED, "Access denied"))
                 .when(iamIntegrationService)
-                .requireWorkspaceAccess(eq(otherWorkspaceId), eq(userId), eq(IamAuthorities.PROJECT_VIEW));
+                .requireProjectOrWorkspaceAccess(
+                        eq(foreignProjectId), eq(otherWorkspaceId), eq(userId), eq(IamAuthorities.PROJECT_VIEW));
 
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
         assertForbidden(() -> queryService.getProject(foreignProjectId));
     }
 
     @Test
     void inactiveWorkspaceMember_cannotViewProject() {
-        denyWorkspaceAccess(IamAuthorities.PROJECT_VIEW);
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        denyProjectAccess(IamAuthorities.PROJECT_VIEW);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
         assertForbidden(() -> queryService.getProject(projectId));
     }
 
@@ -244,7 +246,7 @@ class ProjectAuthorizationActionTest {
         denyWorkspaceAccess(IamAuthorities.PROJECT_CREATE);
         CreateProjectAction action = new CreateProjectAction(
                 projectRepository, workspaceRepository, workspaceMemberRepository,
-                activityLogger, authorizationService, platformPublisher);
+                activityLogger, authorizationService, platformPublisher, iamIntegrationService);
         assertForbidden(() -> action.execute(
                 new CreateProjectCommand(workspaceId, "PRJ_01", "Project", null, null, "USD", null, null)));
     }
@@ -269,8 +271,8 @@ class ProjectAuthorizationActionTest {
                 new ProjectPhaseQueryService(projectPhaseRepository, authorizationService);
 
         queryService.searchProjectPhases(new SearchProjectPhaseQuery(projectId, null, 0, 20));
-        verify(iamIntegrationService).requireWorkspaceAccess(
-                eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_PHASE_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_PHASE_VIEW));
     }
 
     @Test
@@ -340,8 +342,8 @@ class ProjectAuthorizationActionTest {
         WbsNodeQueryService queryService = new WbsNodeQueryService(wbsNodeRepository, authorizationService);
 
         queryService.searchWbsNodes(new SearchWbsNodeQuery(projectId, null, null, null, 0, 20));
-        verify(iamIntegrationService).requireWorkspaceAccess(
-                eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_WBS_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_WBS_VIEW));
     }
 
     @Test
@@ -447,8 +449,8 @@ class ProjectAuthorizationActionTest {
                 new TaskQueryService(taskRepository, wbsNodeRepository, authorizationService);
 
         queryService.searchTasks(new SearchTaskQuery(projectId, null, null, null, null, null, 0, 20));
-        verify(iamIntegrationService).requireWorkspaceAccess(
-                eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_TASK_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_TASK_VIEW));
     }
 
     @Test
@@ -704,7 +706,7 @@ class ProjectAuthorizationActionTest {
     @Test
     void archivedProject_viewAllowedWithPermission() {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(archivedProject()));
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
 
         var response = queryService.getProject(projectId);
         assertThat(response.status()).isEqualTo(ProjectStatus.ARCHIVED.name());
@@ -776,7 +778,7 @@ class ProjectAuthorizationActionTest {
 
         CreateProjectAction action = new CreateProjectAction(
                 projectRepository, workspaceRepository, workspaceMemberRepository,
-                activityLogger, authorizationService, platformPublisher);
+                activityLogger, authorizationService, platformPublisher, iamIntegrationService);
 
         assertThatThrownBy(() -> action.execute(
                 new CreateProjectCommand(workspaceId, "PRJ_01", "Project", null, null, "USD", null, null)))
@@ -791,37 +793,39 @@ class ProjectAuthorizationActionTest {
         // List requires PROJECT_VIEW on the filtered workspace. An archived workspace's IAM
         // resource is inactive, so requireWorkspaceAccess fails — same deny path as inactive member.
         denyWorkspaceAccess(IamAuthorities.PROJECT_VIEW);
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
 
         assertForbidden(() -> queryService.searchProjects(
                 new SearchProjectQuery(workspaceId, null, null, 0, 20)));
-        verify(projectRepository, never()).search(any(), any(), any(), any());
+        verify(projectRepository, never()).findAllByWorkspaceId(any());
     }
 
     // ── Query service hardening (§26.7) ───────────────────────────────────────
 
     @Test
     void projectQueryService_filtersByAccessibleWorkspaces() {
-        // Search always requires an explicit workspaceId + PROJECT_VIEW — no cross-workspace dump.
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
-        when(projectRepository.search(eq(workspaceId), isNull(), isNull(), any(PageQuery.class)))
-                .thenReturn(new PageResult<>(List.of(), 0, 20, 0, 0, true, true));
+        // Search requires workspace PROJECT_VIEW, then filters rows by per-project grant.
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
+        when(projectRepository.findAllByWorkspaceId(workspaceId)).thenReturn(List.of(activeProject()));
+        when(iamIntegrationService.canViewProject(eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_VIEW)))
+                .thenReturn(true);
 
-        queryService.searchProjects(new SearchProjectQuery(workspaceId, null, null, 0, 20));
+        var result = queryService.searchProjects(new SearchProjectQuery(workspaceId, null, null, 0, 20));
 
         verify(iamIntegrationService).requireWorkspaceAccess(
                 eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_VIEW));
-        verify(projectRepository).search(eq(workspaceId), isNull(), isNull(), any(PageQuery.class));
+        verify(projectRepository).findAllByWorkspaceId(workspaceId);
+        assertThat(result.content()).hasSize(1);
     }
 
     @Test
     void projectQueryService_requiresWorkspaceAccessWhenWorkspaceFilterProvided() {
         denyWorkspaceAccess(IamAuthorities.PROJECT_VIEW);
-        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService);
+        ProjectQueryService queryService = new ProjectQueryService(projectRepository, authorizationService, currentUserService, iamIntegrationService);
 
         assertForbidden(() -> queryService.searchProjects(
                 new SearchProjectQuery(workspaceId, "kw", null, 0, 20)));
-        verify(projectRepository, never()).search(any(), any(), any(), any());
+        verify(projectRepository, never()).findAllByWorkspaceId(any());
     }
 
     @Test
@@ -834,8 +838,8 @@ class ProjectAuthorizationActionTest {
 
         queryService.searchTasks(new SearchTaskQuery(projectId, null, null, null, null, null, 0, 20));
 
-        verify(iamIntegrationService).requireWorkspaceAccess(
-                eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_TASK_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_TASK_VIEW));
     }
 
     @Test
@@ -845,8 +849,8 @@ class ProjectAuthorizationActionTest {
 
         queryService.getWbsTree(projectId, null);
 
-        verify(iamIntegrationService).requireWorkspaceAccess(
-                eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_WBS_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_WBS_VIEW));
     }
 
     @Test
@@ -858,8 +862,8 @@ class ProjectAuthorizationActionTest {
 
         queryService.searchProjectPhases(new SearchProjectPhaseQuery(projectId, null, 0, 20));
 
-        verify(iamIntegrationService).requireWorkspaceAccess(
-                eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_PHASE_VIEW));
+        verify(iamIntegrationService).requireProjectOrWorkspaceAccess(
+                eq(projectId), eq(workspaceId), eq(userId), eq(IamAuthorities.PROJECT_PHASE_VIEW));
     }
 
     @Test
@@ -894,7 +898,7 @@ class ProjectAuthorizationActionTest {
     private void denyProjectAccess(com.company.scopery.modules.iam.shared.constant.IamPermissionAction authority) {
         doThrow(new AppException(IamErrorCatalog.IAM_ACCESS_DENIED, "Access denied"))
                 .when(iamIntegrationService)
-                .requireWorkspaceAccess(eq(workspaceId), eq(userId), eq(authority));
+                .requireProjectOrWorkspaceAccess(eq(projectId), eq(workspaceId), eq(userId), eq(authority));
     }
 
     private Project activeProject() {

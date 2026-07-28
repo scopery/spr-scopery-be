@@ -141,7 +141,7 @@ public class CreateRequirementToolAdapter implements AiActionToolAdapter {
 
         Requirement saved = requirementRepository.save(
                 Requirement.create(projectUuid, workspaceUuid, null, code, title.trim(), description,
-                        type, priority, functionalItemId, nonFunctionalItemId, scopeItemId));
+                        type, priority, functionalItemId, nonFunctionalItemId, scopeItemId, null));
 
         log.info("[CreateRequirementTool] created — id={} code={} project={}", saved.id(), saved.code(), projectUuid);
 

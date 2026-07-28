@@ -12,8 +12,12 @@ public class WorkInboxItemPersistenceMapper {
         WorkInboxItemJpaEntity e = new WorkInboxItemJpaEntity();
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setUserId(d.userId()); e.setSourceType(d.sourceType()); e.setSourceId(d.sourceId());
         e.setActionType(d.actionType()); e.setTitle(d.title()); e.setPriority(d.priority()); e.setDueAt(d.dueAt()); e.setStatus(d.status());
-        e.setReadAt(d.readAt()); e.setDismissedAt(d.dismissedAt()); e.setSnoozedUntil(d.snoozedUntil()); e.setVersion(d.version());
-        if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
+        e.setReadAt(d.readAt()); e.setDismissedAt(d.dismissedAt()); e.setSnoozedUntil(d.snoozedUntil());
+        // Only stamp audit/@Version for updates. Null createdAt keeps Persistable.isNew() true (INSERT).
+        if (d.createdAt() != null) {
+            e.setCreatedAt(d.createdAt());
+            e.setVersion(d.version());
+        }
         return e;
     }
 }

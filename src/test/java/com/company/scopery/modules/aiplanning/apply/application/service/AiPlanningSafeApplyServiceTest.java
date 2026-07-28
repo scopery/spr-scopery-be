@@ -214,6 +214,6 @@ class AiPlanningSafeApplyServiceTest {
                 crId, projectId, UUID.randomUUID(), baselineId, "AI-CR-1", "title", "desc",
                 "SCOPE_CHANGE", "MEDIUM", "DRAFT", "reason",
                 null, null, null, null, null, null, null, null, null,
-                Instant.now(), Instant.now());
+                Instant.now(), Instant.now(), null);
     }
 }

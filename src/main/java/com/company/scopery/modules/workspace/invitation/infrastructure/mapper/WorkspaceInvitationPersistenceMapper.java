@@ -29,7 +29,10 @@ public class WorkspaceInvitationPersistenceMapper {
         e.setMaxUses(d.maxUses());
         e.setUsedCount(d.usedCount());
         e.setExpiresAt(d.expiresAt());
-        e.setCreatedAt(d.createdAt());
+        // Leave createdAt null on first insert so Persistable.isNew()=true → persist().
+        if (d.createdAt() != null) {
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

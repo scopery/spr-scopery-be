@@ -1,6 +1,8 @@
 package com.company.scopery.modules.traceability.functionalitem.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,4 +24,18 @@ public interface SpringDataFunctionalItemJpaRepository extends JpaRepository<Fun
     Optional<FunctionalItemJpaEntity> findByIdAndProjectId(UUID id, UUID projectId);
     boolean existsByProjectIdAndCode(UUID projectId, String code);
     void deleteByIdAndProjectId(UUID id, UUID projectId);
+    Optional<FunctionalItemJpaEntity> findByProjectIdAndCode(UUID projectId, String code);
+    @Query(value = """
+            SELECT id, code, title, similarity(title, :searchTitle) AS score
+            FROM app_functional_item
+            WHERE project_id = :projectId
+              AND status != 'ARCHIVED'
+              AND similarity(title, :searchTitle) > :threshold
+            ORDER BY score DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Object[]> findSimilarByTitle(@Param("projectId") UUID projectId,
+                                      @Param("searchTitle") String searchTitle,
+                                      @Param("threshold") double threshold,
+                                      @Param("limit") int limit);
 }

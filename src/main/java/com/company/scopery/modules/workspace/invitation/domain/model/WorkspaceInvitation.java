@@ -25,11 +25,11 @@ public record WorkspaceInvitation(
     public static WorkspaceInvitation create(UUID workspaceId, UUID createdByUserId,
                                               String invitedEmail, Integer maxUses,
                                               Instant expiresAt, String rawCode) {
-        Instant now = Instant.now();
+        // createdAt/updatedAt stay null until persistence (AuditableJpaEntity.isNew()).
         return new WorkspaceInvitation(
                 UUID.randomUUID(), workspaceId, createdByUserId, invitedEmail,
                 InvitationCodeHasher.hash(rawCode), InvitationCodeHasher.hint(rawCode),
-                WorkspaceInvitationStatus.PENDING, maxUses, 0, expiresAt, now, now);
+                WorkspaceInvitationStatus.PENDING, maxUses, 0, expiresAt, null, null);
     }
 
     public boolean isExpired() {

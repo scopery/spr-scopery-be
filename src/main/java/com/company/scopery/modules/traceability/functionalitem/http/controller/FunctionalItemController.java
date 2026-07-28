@@ -4,14 +4,22 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.functionalitem.application.action.BulkCreateFunctionalItemJobHandler;
 import com.company.scopery.modules.traceability.functionalitem.application.action.CreateFunctionalItemAction;
 import com.company.scopery.modules.traceability.functionalitem.application.action.DeleteFunctionalItemAction;
+import com.company.scopery.modules.traceability.functionalitem.application.action.ExecuteFunctionalItemsImportAction;
+import com.company.scopery.modules.traceability.functionalitem.application.action.PreviewFunctionalItemsImportAction;
 import com.company.scopery.modules.traceability.functionalitem.application.action.UpdateFunctionalItemAction;
 import com.company.scopery.modules.traceability.functionalitem.application.command.BulkCreateFunctionalItemCommand;
 import com.company.scopery.modules.traceability.functionalitem.application.command.CreateFunctionalItemCommand;
+import com.company.scopery.modules.traceability.functionalitem.application.command.ExecuteFunctionalItemsImportCommand;
+import com.company.scopery.modules.traceability.functionalitem.application.command.PreviewFunctionalItemsImportCommand;
 import com.company.scopery.modules.traceability.functionalitem.application.command.UpdateFunctionalItemCommand;
+import com.company.scopery.modules.traceability.functionalitem.application.response.FunctionalItemImportPreviewResponse;
+import com.company.scopery.modules.traceability.functionalitem.application.response.FunctionalItemImportResultResponse;
 import com.company.scopery.modules.traceability.functionalitem.application.response.FunctionalItemResponse;
 import com.company.scopery.modules.traceability.functionalitem.application.service.FunctionalItemQueryService;
 import com.company.scopery.modules.traceability.functionalitem.http.request.BulkCreateFunctionalItemRequest;
 import com.company.scopery.modules.traceability.functionalitem.http.request.CreateFunctionalItemRequest;
+import com.company.scopery.modules.traceability.functionalitem.http.request.ImportFunctionalItemsExecuteRequest;
+import com.company.scopery.modules.traceability.functionalitem.http.request.ImportFunctionalItemsPreviewRequest;
 import com.company.scopery.modules.traceability.functionalitem.http.request.UpdateFunctionalItemRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
@@ -34,6 +42,8 @@ public class FunctionalItemController {
     private final CreateFunctionalItemAction createAction;
     private final UpdateFunctionalItemAction updateAction;
     private final DeleteFunctionalItemAction deleteAction;
+    private final PreviewFunctionalItemsImportAction previewImportAction;
+    private final ExecuteFunctionalItemsImportAction executeImportAction;
     private final FunctionalItemQueryService query;
     private final BulkJobService bulkJobService;
     private final ObjectMapper objectMapper;
@@ -41,12 +51,16 @@ public class FunctionalItemController {
     public FunctionalItemController(CreateFunctionalItemAction createAction,
                                     UpdateFunctionalItemAction updateAction,
                                     DeleteFunctionalItemAction deleteAction,
+                                    PreviewFunctionalItemsImportAction previewImportAction,
+                                    ExecuteFunctionalItemsImportAction executeImportAction,
                                     FunctionalItemQueryService query,
                                     BulkJobService bulkJobService,
                                     ObjectMapper objectMapper) {
         this.createAction = createAction;
         this.updateAction = updateAction;
         this.deleteAction = deleteAction;
+        this.previewImportAction = previewImportAction;
+        this.executeImportAction = executeImportAction;
         this.query = query;
         this.bulkJobService = bulkJobService;
         this.objectMapper = objectMapper;
@@ -146,5 +160,29 @@ public class FunctionalItemController {
     ) {
         deleteAction.execute(id, projectId);
         return ApiResponse.success(null);
+    }
+
+    @PostMapping("/import/preview")
+    @Operation(summary = "Preview functional items import — classifies each entry as toCreate, toUpdate, or conflict")
+    public ApiResponse<FunctionalItemImportPreviewResponse> previewImport(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody ImportFunctionalItemsPreviewRequest request
+    ) {
+        return ApiResponse.success(previewImportAction.execute(
+                new PreviewFunctionalItemsImportCommand(projectId, request.items())));
+    }
+
+    @PostMapping("/import/execute")
+    @Operation(summary = "Execute functional items import — bulk create + update in one transaction")
+    public ApiResponse<FunctionalItemImportResultResponse> executeImport(
+            @PathVariable UUID projectId,
+            @RequestBody ImportFunctionalItemsExecuteRequest request
+    ) {
+        return ApiResponse.success(executeImportAction.execute(
+                new ExecuteFunctionalItemsImportCommand(
+                        projectId,
+                        request.toCreate(),
+                        request.toUpdate(),
+                        request.archiveUnmatched())));
     }
 }

@@ -10,7 +10,9 @@ import com.company.scopery.modules.workspace.orgmember.application.action.Suspen
 import com.company.scopery.modules.workspace.orgmember.application.command.AddOrgMemberCommand;
 import com.company.scopery.modules.workspace.orgmember.application.command.ChangeOrgMemberStatusCommand;
 import com.company.scopery.modules.workspace.orgmember.application.query.SearchOrgMemberQuery;
+import com.company.scopery.modules.workspace.orgmember.application.response.OrgMemberAccessResponse;
 import com.company.scopery.modules.workspace.orgmember.application.response.OrgMemberResponse;
+import com.company.scopery.modules.workspace.orgmember.application.service.OrgMemberAccessQueryService;
 import com.company.scopery.modules.workspace.orgmember.application.service.OrgMemberQueryService;
 import com.company.scopery.modules.workspace.orgmember.http.request.AddOrgMemberRequest;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceApiPaths;
@@ -32,17 +34,20 @@ public class OrgMemberController {
     private final ActivateOrgMemberAction activateAction;
     private final SuspendOrgMemberAction suspendAction;
     private final OrgMemberQueryService queryService;
+    private final OrgMemberAccessQueryService accessQueryService;
 
     public OrgMemberController(AddOrgMemberAction addAction,
                                 RemoveOrgMemberAction removeAction,
                                 ActivateOrgMemberAction activateAction,
                                 SuspendOrgMemberAction suspendAction,
-                                OrgMemberQueryService queryService) {
+                                OrgMemberQueryService queryService,
+                                OrgMemberAccessQueryService accessQueryService) {
         this.addAction = addAction;
         this.removeAction = removeAction;
         this.activateAction = activateAction;
         this.suspendAction = suspendAction;
         this.queryService = queryService;
+        this.accessQueryService = accessQueryService;
     }
 
     @Operation(summary = "Add a member to an organization")
@@ -59,6 +64,14 @@ public class OrgMemberController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OrgMemberResponse>> getMember(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(queryService.getMember(id)));
+    }
+
+    @Operation(summary = "Hierarchy access map for a person in this organization (workspaces + projects)")
+    @GetMapping("/by-user/{userId}/access")
+    public ResponseEntity<ApiResponse<OrgMemberAccessResponse>> memberAccess(
+            @PathVariable UUID organizationId,
+            @PathVariable UUID userId) {
+        return ResponseEntity.ok(ApiResponse.success(accessQueryService.getAccess(organizationId, userId)));
     }
 
     @Operation(summary = "List members of an organization")

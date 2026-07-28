@@ -85,6 +85,7 @@ class ProjectBusinessRulesActionTest {
     @Mock private ProjectWorkspaceAuthorizationService authorizationService;
     @Mock private ProjectPlatformPublisher platformPublisher;
     @Mock private CurrentUserAuthorizationService currentUserAuthorizationService;
+    @Mock private com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService iamIntegrationService;
 
     private ProjectMutationGuard mutationGuard;
     private CreateProjectAction createProjectAction;
@@ -109,7 +110,7 @@ class ProjectBusinessRulesActionTest {
 
         createProjectAction = new CreateProjectAction(
                 projectRepository, workspaceRepository, workspaceMemberRepository,
-                activityLogger, authorizationService, platformPublisher);
+                activityLogger, authorizationService, platformPublisher, iamIntegrationService);
         activateProjectAction = new ActivateProjectAction(
                 projectRepository, activityLogger, authorizationService,
                 currentUserAuthorizationService, platformPublisher);

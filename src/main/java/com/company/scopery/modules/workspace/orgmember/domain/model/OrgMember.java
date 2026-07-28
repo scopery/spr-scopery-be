@@ -33,11 +33,20 @@ public record OrgMember(
     }
 
     public OrgMember activate() {
-        if (status == OrgMemberStatus.REMOVED) {
-            throw new IllegalStateException("Removed organization membership cannot be activated");
-        }
+        Instant now = Instant.now();
+        // Kick/rejoin: REMOVED and SUSPENDED can return to ACTIVE (unique org+user row is retained).
         return new OrgMember(id, organizationId, userId, membershipType,
-                OrgMemberStatus.ACTIVE, source, joinedAt, null, removedAt, version, createdAt, Instant.now());
+                OrgMemberStatus.ACTIVE, source, joinedAt != null ? joinedAt : now, null, null, version, createdAt, now);
+    }
+
+    /** Rejoin after kick with an updated membership type (e.g. from invitation). */
+    public OrgMember reinstate(OrgMembershipType newMembershipType, OrgMembershipSource newSource) {
+        Instant now = Instant.now();
+        return new OrgMember(id, organizationId, userId,
+                newMembershipType != null ? newMembershipType : membershipType,
+                OrgMemberStatus.ACTIVE,
+                newSource != null ? newSource : source,
+                joinedAt != null ? joinedAt : now, null, null, version, createdAt, now);
     }
 
     public OrgMember suspend() {

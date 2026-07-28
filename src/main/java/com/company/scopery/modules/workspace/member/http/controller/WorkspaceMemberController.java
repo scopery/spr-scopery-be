@@ -10,9 +10,12 @@ import com.company.scopery.modules.workspace.member.application.command.Activate
 import com.company.scopery.modules.workspace.member.application.command.AddWorkspaceMemberCommand;
 import com.company.scopery.modules.workspace.member.application.command.DeactivateWorkspaceMemberCommand;
 import com.company.scopery.modules.workspace.member.application.query.SearchWorkspaceMemberQuery;
+import com.company.scopery.modules.workspace.member.application.response.WorkspaceMemberAccessResponse;
 import com.company.scopery.modules.workspace.member.application.response.WorkspaceMemberResponse;
+import com.company.scopery.modules.workspace.member.application.service.MemberProjectAccessService;
 import com.company.scopery.modules.workspace.member.application.service.WorkspaceMemberQueryService;
 import com.company.scopery.modules.workspace.member.http.request.AddWorkspaceMemberRequest;
+import com.company.scopery.modules.workspace.member.http.request.ReplaceMemberProjectAccessRequest;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceApiPaths;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,15 +35,18 @@ public class WorkspaceMemberController {
     private final ActivateWorkspaceMemberAction activateWorkspaceMemberAction;
     private final DeactivateWorkspaceMemberAction deactivateWorkspaceMemberAction;
     private final WorkspaceMemberQueryService queryService;
+    private final MemberProjectAccessService memberProjectAccessService;
 
     public WorkspaceMemberController(AddWorkspaceMemberAction addWorkspaceMemberAction,
                                       ActivateWorkspaceMemberAction activateWorkspaceMemberAction,
                                       DeactivateWorkspaceMemberAction deactivateWorkspaceMemberAction,
-                                      WorkspaceMemberQueryService queryService) {
+                                      WorkspaceMemberQueryService queryService,
+                                      MemberProjectAccessService memberProjectAccessService) {
         this.addWorkspaceMemberAction = addWorkspaceMemberAction;
         this.activateWorkspaceMemberAction = activateWorkspaceMemberAction;
         this.deactivateWorkspaceMemberAction = deactivateWorkspaceMemberAction;
         this.queryService = queryService;
+        this.memberProjectAccessService = memberProjectAccessService;
     }
 
     @Operation(summary = "Add a member to a workspace")
@@ -63,6 +69,26 @@ public class WorkspaceMemberController {
         SearchWorkspaceMemberQuery query = new SearchWorkspaceMemberQuery(workspaceId, userId, status, page, size);
         PageResult<WorkspaceMemberResponse> result = queryService.searchMembers(query);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.fromDomain(result)));
+    }
+
+    @Operation(summary = "Project access map for a workspace member")
+    @GetMapping("/by-user/{userId}/access")
+    public ResponseEntity<ApiResponse<WorkspaceMemberAccessResponse>> memberAccess(
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID userId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                memberProjectAccessService.getAccess(workspaceId, userId)));
+    }
+
+    @Operation(summary = "Replace a workspace member's project access (full workspace vs custom)")
+    @PutMapping("/by-user/{userId}/project-access")
+    public ResponseEntity<ApiResponse<WorkspaceMemberAccessResponse>> replaceProjectAccess(
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID userId,
+            @Valid @RequestBody ReplaceMemberProjectAccessRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                memberProjectAccessService.replaceAccess(
+                        workspaceId, userId, request.mode(), request.projectIds())));
     }
 
     @Operation(summary = "Activate a workspace member")

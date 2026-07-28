@@ -16,6 +16,10 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,23 +31,35 @@ public class ApproveJoinRequestAction {
 
     private final WorkspaceJoinRequestRepository joinRequestRepository;
     private final WorkspaceMemberRepository memberRepository;
+    private final WorkspaceRepository workspaceRepository;
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final EmailNotificationTriggerPublisher notificationPublisher;
     private final WorkspaceActivityLogger activityLogger;
+    private final InvitationInboxCleanupService inboxCleanupService;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public ApproveJoinRequestAction(WorkspaceJoinRequestRepository joinRequestRepository,
                                      WorkspaceMemberRepository memberRepository,
+                                     WorkspaceRepository workspaceRepository,
                                      CurrentUserAuthorizationService currentUserService,
                                      WorkspaceIamIntegrationService iamIntegrationService,
                                      EmailNotificationTriggerPublisher notificationPublisher,
-                                     WorkspaceActivityLogger activityLogger) {
+                                     WorkspaceActivityLogger activityLogger,
+                                     InvitationInboxCleanupService inboxCleanupService,
+                                     InAppDeliveryService inAppDeliveryService,
+                                     WorkspaceAudienceResolver audienceResolver) {
         this.joinRequestRepository = joinRequestRepository;
         this.memberRepository = memberRepository;
+        this.workspaceRepository = workspaceRepository;
         this.currentUserService = currentUserService;
         this.iamIntegrationService = iamIntegrationService;
         this.notificationPublisher = notificationPublisher;
         this.activityLogger = activityLogger;
+        this.inboxCleanupService = inboxCleanupService;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -65,6 +81,23 @@ public class ApproveJoinRequestAction {
         joinRequestRepository.save(approved);
 
         memberRepository.save(WorkspaceMember.create(request.workspaceId(), request.requestedByUserId()));
+        iamIntegrationService.ensureWorkspaceMemberBaselineAccess(
+                request.workspaceId(), request.requestedByUserId());
+
+        inboxCleanupService.dismissBySourceForAll(
+                InAppDeliveryService.SOURCE_JOIN_REQUEST, approved.id());
+
+        UUID organizationId = workspaceRepository.findById(request.workspaceId())
+                .map(ws -> ws.organizationId())
+                .orElse(null);
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(request.requestedByUserId()),
+                "JOIN_REQUEST_APPROVED",
+                approved.id(),
+                organizationId,
+                request.workspaceId(),
+                "Join request approved",
+                "Your request to join the workspace was approved.");
 
         notificationPublisher.publish(new EmailNotificationTriggerPayload(
                 null, "WORKSPACE", "WORKSPACE_JOIN_REQUEST_APPROVED",

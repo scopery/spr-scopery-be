@@ -5,16 +5,18 @@ public record ScopePackage(UUID id, UUID projectId, UUID workspaceId, UUID sourc
         String code, String name, String description, ScopePackageStatus status, boolean currentFlag,
         Instant approvedAt, UUID approvedBy, Instant archivedAt, UUID archivedBy, String traceId,
         int version, Instant createdAt, Instant updatedAt) {
+    /**
+     * Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() stays true and Spring Data
+     * persists (INSERT) instead of merge — otherwise @Version=0 triggers optimistic-lock 409.
+     */
     public static ScopePackage create(UUID projectId, UUID workspaceId, String code, String name, String description, String traceId) {
-        Instant now = Instant.now();
         return new ScopePackage(UUID.randomUUID(), projectId, workspaceId, null, null, code, name, description,
-                ScopePackageStatus.DRAFT, false, null, null, null, null, traceId, 0, now, now);
+                ScopePackageStatus.DRAFT, false, null, null, null, null, traceId, 0, null, null);
     }
     public static ScopePackage importFromQuote(UUID projectId, UUID workspaceId, UUID quoteVersionId,
                                                String code, String name, String description, String traceId) {
-        Instant now = Instant.now();
         return new ScopePackage(UUID.randomUUID(), projectId, workspaceId, quoteVersionId, null, code, name, description,
-                ScopePackageStatus.DRAFT, false, null, null, null, null, traceId, 0, now, now);
+                ScopePackageStatus.DRAFT, false, null, null, null, null, traceId, 0, null, null);
     }
     public ScopePackage approve(UUID actorId) {
         if (status == ScopePackageStatus.ARCHIVED) throw new IllegalStateException("Cannot approve archived package");

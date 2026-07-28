@@ -54,7 +54,9 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     MODULE_NOT_FOUND("APP_MODULE_NOT_FOUND_FOR_LINK", "Module not found", HttpStatus.NOT_FOUND),
     STRUCTURE_RELATION_SELF_LOOP("STRUCTURE_RELATION_SELF_LOOP", "A node cannot be related to itself", HttpStatus.UNPROCESSABLE_ENTITY),
     NFR_SCOPE_TARGET_DUPLICATE("NFR_SCOPE_TARGET_DUPLICATE", "This target is already linked to the NFR", HttpStatus.CONFLICT),
-    NFR_SCOPE_TARGET_NOT_FOUND("NFR_SCOPE_TARGET_NOT_FOUND", "NFR scope target link not found", HttpStatus.NOT_FOUND);
+    NFR_SCOPE_TARGET_NOT_FOUND("NFR_SCOPE_TARGET_NOT_FOUND", "NFR scope target link not found", HttpStatus.NOT_FOUND),
+    FUNCTIONAL_IMPORT_INVALID_ITEM("FUNCTIONAL_IMPORT_INVALID_ITEM", "Import item is invalid", HttpStatus.BAD_REQUEST),
+    FUNCTIONAL_IMPORT_ITEM_NOT_FOUND("FUNCTIONAL_IMPORT_ITEM_NOT_FOUND", "Update target functional item not found in project", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String defaultMessage;

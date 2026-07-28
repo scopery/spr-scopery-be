@@ -2,6 +2,7 @@ package com.company.scopery.modules.iam.user.application.service;
 
 import com.company.scopery.common.pagination.PageQuery;
 import com.company.scopery.common.pagination.PageResult;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
 import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
 import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.iam.shared.constant.IamSortFields;
@@ -22,16 +23,25 @@ public class IamUserQueryService {
 
     private final IamUserRepository iamUserRepository;
     private final IamSystemAuthorizationService systemAuthorizationService;
+    private final CurrentUserAuthorizationService currentUserService;
 
     public IamUserQueryService(IamUserRepository iamUserRepository,
-                                IamSystemAuthorizationService systemAuthorizationService) {
+                                IamSystemAuthorizationService systemAuthorizationService,
+                                CurrentUserAuthorizationService currentUserService) {
         this.iamUserRepository = iamUserRepository;
         this.systemAuthorizationService = systemAuthorizationService;
+        this.currentUserService = currentUserService;
     }
 
+    /**
+     * Resolve a user for display (projects list owners, assignees, etc.).
+     * Any authenticated user may fetch a single user by id (non-sensitive fields only).
+     * Directory search still requires VIEW_IAM_USER.
+     */
     @Transactional(readOnly = true)
     public IamUserResponse getUser(UUID id) {
-        systemAuthorizationService.requireSystemRight(IamAuthorities.SYSTEM_IAM_VIEW_USER.legacyRightCode());
+        // Ensure caller is authenticated; do not require VIEW_IAM_USER for single-id lookup.
+        currentUserService.resolveCurrentUser();
         return IamUserResponse.from(iamUserRepository.findById(id)
                 .orElseThrow(() -> IamExceptions.iamUserNotFound(id)));
     }

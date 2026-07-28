@@ -31,6 +31,7 @@ class OpenAiProviderAdapterTest {
 
     @Mock private OpenAiClient client;
     @Mock private ProviderSecretResolver providerSecretResolver;
+    @Mock private OpenAiProperties openAiProperties;
 
     private OpenAiProviderAdapter adapter;
 
@@ -38,7 +39,8 @@ class OpenAiProviderAdapterTest {
 
     @BeforeEach
     void setUp() {
-        adapter = new OpenAiProviderAdapter(client, providerSecretResolver);
+        when(openAiProperties.apiKey()).thenReturn(null);
+        adapter = new OpenAiProviderAdapter(client, providerSecretResolver, openAiProperties);
         when(providerSecretResolver.resolveApiKey(providerId)).thenReturn("sk-test-key");
     }
 

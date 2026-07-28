@@ -23,6 +23,9 @@ import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
@@ -54,6 +57,9 @@ class WorkspaceJoinRequestActionTest {
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
     @Mock private EmailNotificationTriggerPublisher notificationPublisher;
     @Mock private WorkspaceActivityLogger activityLogger;
+    @Mock private InAppDeliveryService inAppDeliveryService;
+    @Mock private WorkspaceAudienceResolver audienceResolver;
+    @Mock private InvitationInboxCleanupService inboxCleanupService;
 
     private UUID currentUserId;
 
@@ -64,15 +70,30 @@ class WorkspaceJoinRequestActionTest {
 
     @BeforeEach
     void setUp() {
-        approveJoinRequestAction = new ApproveJoinRequestAction(joinRequestRepository, memberRepository, currentUserService, iamIntegrationService, notificationPublisher, activityLogger);
-        cancelJoinRequestAction = new CancelJoinRequestAction(joinRequestRepository, currentUserService, activityLogger);
-        createJoinRequestAction = new CreateJoinRequestAction(joinRequestRepository, workspaceRepository, memberRepository, currentUserService, notificationPublisher, activityLogger);
-        rejectJoinRequestAction = new RejectJoinRequestAction(joinRequestRepository, currentUserService, iamIntegrationService, activityLogger);
+        approveJoinRequestAction = new ApproveJoinRequestAction(
+                joinRequestRepository, memberRepository, workspaceRepository, currentUserService,
+                iamIntegrationService, notificationPublisher, activityLogger,
+                inboxCleanupService, inAppDeliveryService, audienceResolver);
+        cancelJoinRequestAction = new CancelJoinRequestAction(
+                joinRequestRepository, currentUserService, activityLogger, inboxCleanupService);
+        createJoinRequestAction = new CreateJoinRequestAction(
+                joinRequestRepository, workspaceRepository, memberRepository, currentUserService,
+                notificationPublisher, activityLogger, inAppDeliveryService, audienceResolver);
+        rejectJoinRequestAction = new RejectJoinRequestAction(
+                joinRequestRepository, workspaceRepository, currentUserService, iamIntegrationService,
+                activityLogger, inboxCleanupService, inAppDeliveryService, audienceResolver);
         Instant now = Instant.now();
         currentUserId = UUID.randomUUID();
         IamUser currentUser = IamUser.of(currentUserId, Username.of("admin"),
                 EmailAddress.of("admin@example.com"), "Admin User", null, IamUserStatus.ACTIVE, now, now);
         lenient().when(currentUserService.resolveCurrentUser()).thenReturn(currentUser);
+        lenient().when(audienceResolver.usersWithWorkspaceRight(any(), any())).thenReturn(new java.util.LinkedHashSet<>());
+        lenient().when(audienceResolver.explicitUser(any())).thenAnswer(inv -> {
+            java.util.Set<UUID> s = new java.util.LinkedHashSet<>();
+            UUID id = inv.getArgument(0, UUID.class);
+            if (id != null) s.add(id);
+            return s;
+        });
     }
 
     @Test

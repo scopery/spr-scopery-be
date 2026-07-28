@@ -185,6 +185,12 @@ public final class WorkspaceExceptions {
                 Map.of("organizationId", organizationId, "userId", userId));
     }
 
+    public static AppException workspaceInvitationAlreadyMember(UUID workspaceId, UUID userId) {
+        return new AppException(WorkspaceErrorCatalog.WORKSPACE_INVITATION_ALREADY_MEMBER,
+                "This user is already a member of this workspace",
+                Map.of("workspaceId", workspaceId, "userId", userId));
+    }
+
     public static AppException orgInvitationExpired(UUID invitationId) {
         return new AppException(WorkspaceErrorCatalog.ORG_INVITATION_EXPIRED,
                 "Organization invitation has expired: " + invitationId, Map.of("invitationId", invitationId));

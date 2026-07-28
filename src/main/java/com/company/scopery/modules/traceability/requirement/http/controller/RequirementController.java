@@ -52,7 +52,7 @@ public class RequirementController {
                                                    @Valid @RequestBody CreateRequirementRequest r) {
         return ApiResponse.success(create.execute(new CreateRequirementCommand(
                 projectId, r.applicationId(), r.code(), r.title(), r.description(),
-                r.requirementType(), r.priority(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId())));
+                r.requirementType(), r.priority(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId(), r.scopePackageId())));
     }
 
     @GetMapping
@@ -73,7 +73,7 @@ public class RequirementController {
                                                    @RequestBody UpdateRequirementRequest r) {
         return ApiResponse.success(update.execute(new UpdateRequirementCommand(
                 requirementId, projectId, r.title(), r.description(), r.priority(), r.requirementType(),
-                r.applicationId(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId())));
+                r.applicationId(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId(), r.scopePackageId())));
     }
 
     @PostMapping("/{requirementId}/approve")

@@ -11,6 +11,7 @@ import com.company.scopery.modules.project.shared.constant.ProjectActivityAction
 import com.company.scopery.modules.project.shared.constant.ProjectEntityTypes;
 import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.project.shared.support.ProjectPlatformPublisher;
+import com.company.scopery.modules.iam.grant.application.service.WorkspaceIamIntegrationService;
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
@@ -27,19 +28,22 @@ public class CreateProjectAction {
     private final ProjectActivityLogger activityLogger;
     private final ProjectWorkspaceAuthorizationService authorizationService;
     private final ProjectPlatformPublisher platformPublisher;
+    private final WorkspaceIamIntegrationService iamIntegrationService;
 
     public CreateProjectAction(ProjectRepository projectRepository,
                                WorkspaceRepository workspaceRepository,
                                WorkspaceMemberRepository workspaceMemberRepository,
                                ProjectActivityLogger activityLogger,
                                ProjectWorkspaceAuthorizationService authorizationService,
-                               ProjectPlatformPublisher platformPublisher) {
+                               ProjectPlatformPublisher platformPublisher,
+                               WorkspaceIamIntegrationService iamIntegrationService) {
         this.projectRepository = projectRepository;
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.activityLogger = activityLogger;
         this.authorizationService = authorizationService;
         this.platformPublisher = platformPublisher;
+        this.iamIntegrationService = iamIntegrationService;
     }
 
     @Transactional
@@ -82,6 +86,13 @@ public class CreateProjectAction {
         );
 
         Project saved = projectRepository.save(project);
+
+        iamIntegrationService.bootstrapProjectAccess(
+                saved.id(),
+                saved.name(),
+                saved.workspaceId(),
+                saved.organizationId(),
+                saved.ownerUserId() != null ? saved.ownerUserId() : workspace.ownerUserId());
 
         platformPublisher.enqueueProject(saved, "PROJECT_CREATED");
 

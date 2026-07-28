@@ -43,6 +43,30 @@ public class JpaNotificationItemRepository implements NotificationItemRepository
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<NotificationItem> findByRecipientUserIdAndDedupKey(UUID recipientUserId, String dedupKey) {
+        return springRepo.findByRecipientUserIdAndDedupKey(recipientUserId, dedupKey).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationItem> findBySourceResourceTypeAndSourceResourceId(
+            String sourceResourceType, UUID sourceResourceId) {
+        return springRepo.findBySourceResourceTypeAndSourceResourceId(sourceResourceType, sourceResourceId)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationItem> findBySourceResourceTypeInAndStatusIn(
+            List<String> sourceResourceTypes,
+            List<com.company.scopery.modules.notification.notificationitem.domain.enums.NotificationItemStatus> statuses) {
+        List<String> statusNames = statuses.stream().map(Enum::name).toList();
+        return springRepo.findBySourceResourceTypeInAndStatusIn(sourceResourceTypes, statusNames)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<NotificationItem> findByRecipientUserId(UUID recipientUserId, boolean includeDismissed,
                                                          int page, int size) {
         return springRepo.findByRecipient(recipientUserId, includeDismissed, PageRequest.of(page, size))

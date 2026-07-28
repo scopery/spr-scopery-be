@@ -2,13 +2,15 @@ package com.company.scopery.modules.workspace.member.application.action;
 
 import com.company.scopery.modules.workspace.member.application.command.AddWorkspaceMemberCommand;
 import com.company.scopery.modules.workspace.member.application.response.WorkspaceMemberResponse;
+import com.company.scopery.modules.workspace.member.application.service.WorkspaceMembershipEnrollmentService;
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
-import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
 import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceStatus;
@@ -18,19 +20,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class AddWorkspaceMemberAction {
 
-    private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final WorkspaceMembershipEnrollmentService enrollmentService;
     private final WorkspaceRepository workspaceRepository;
     private final OrgMemberRepository orgMemberRepository;
     private final WorkspaceActivityLogger activityLogger;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
-    public AddWorkspaceMemberAction(WorkspaceMemberRepository workspaceMemberRepository,
+    public AddWorkspaceMemberAction(WorkspaceMembershipEnrollmentService enrollmentService,
                                      WorkspaceRepository workspaceRepository,
                                      OrgMemberRepository orgMemberRepository,
-                                     WorkspaceActivityLogger activityLogger) {
-        this.workspaceMemberRepository = workspaceMemberRepository;
+                                     WorkspaceActivityLogger activityLogger,
+                                     InAppDeliveryService inAppDeliveryService,
+                                     WorkspaceAudienceResolver audienceResolver) {
+        this.enrollmentService = enrollmentService;
         this.workspaceRepository = workspaceRepository;
         this.orgMemberRepository = orgMemberRepository;
         this.activityLogger = activityLogger;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -42,25 +50,26 @@ public class AddWorkspaceMemberAction {
             throw WorkspaceExceptions.workspaceNotActive(ws.code().value());
         }
 
-        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(command.workspaceId(), command.userId())) {
-            throw WorkspaceExceptions.workspaceMemberAlreadyExists(command.workspaceId(), command.userId());
+        if (!orgMemberRepository.isActiveMember(ws.organizationId(), command.userId())) {
+            throw WorkspaceExceptions.orgTeamMemberRequiresOrgMember(command.userId(), ws.organizationId());
         }
 
-        ensureOrgMembership(ws.organizationId(), command.userId());
+        WorkspaceMember saved = enrollmentService.ensureActiveMembership(
+                command.workspaceId(), command.userId(), true);
 
-        WorkspaceMember member = WorkspaceMember.create(command.workspaceId(), command.userId());
-        WorkspaceMember saved = workspaceMemberRepository.save(member);
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(saved.userId()),
+                "WORKSPACE_MEMBER_ADDED",
+                saved.id(),
+                ws.organizationId(),
+                command.workspaceId(),
+                "Added to workspace",
+                "You were added to a workspace.");
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE_MEMBER, saved.id(),
                 WorkspaceActivityActions.ADD_WORKSPACE_MEMBER,
                 "Workspace member added: userId=" + saved.userId() + " to workspaceId=" + saved.workspaceId());
 
         return WorkspaceMemberResponse.from(saved);
-    }
-
-    private void ensureOrgMembership(java.util.UUID organizationId, java.util.UUID userId) {
-        if (!orgMemberRepository.isActiveMember(organizationId, userId)) {
-            throw WorkspaceExceptions.orgTeamMemberRequiresOrgMember(userId, organizationId);
-        }
     }
 }

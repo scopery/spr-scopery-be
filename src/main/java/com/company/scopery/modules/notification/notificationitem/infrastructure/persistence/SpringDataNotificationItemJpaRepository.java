@@ -7,11 +7,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SpringDataNotificationItemJpaRepository extends JpaRepository<NotificationItemJpaEntity, UUID> {
 
     boolean existsByRecipientUserIdAndDedupKey(UUID recipientUserId, String dedupKey);
+
+    Optional<NotificationItemJpaEntity> findByRecipientUserIdAndDedupKey(UUID recipientUserId, String dedupKey);
+
+    List<NotificationItemJpaEntity> findBySourceResourceTypeAndSourceResourceId(
+            String sourceResourceType, UUID sourceResourceId);
+
+    @Query("""
+            SELECT n FROM NotificationItemJpaEntity n
+            WHERE n.sourceResourceType IN :sourceResourceTypes
+              AND n.status IN :statuses
+            """)
+    List<NotificationItemJpaEntity> findBySourceResourceTypeInAndStatusIn(
+            @Param("sourceResourceTypes") List<String> sourceResourceTypes,
+            @Param("statuses") List<String> statuses);
 
     @Query("""
             SELECT n FROM NotificationItemJpaEntity n

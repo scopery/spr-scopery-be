@@ -2,6 +2,7 @@ package com.company.scopery.modules.traceability.functionalitem.infrastructure.p
 
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItem;
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
+import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemTitleMatch;
 import com.company.scopery.modules.traceability.functionalitem.infrastructure.mapper.FunctionalItemPersistenceMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -66,5 +67,17 @@ public class JpaFunctionalItemRepository implements FunctionalItemRepository {
     @Override
     public void delete(UUID id, UUID projectId) {
         springData.deleteByIdAndProjectId(id, projectId);
+    }
+
+    @Override
+    public Optional<FunctionalItem> findByProjectIdAndCode(UUID projectId, String code) {
+        return springData.findByProjectIdAndCode(projectId, code).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<FunctionalItemTitleMatch> findSimilarByTitle(UUID projectId, String title, double threshold, int limit) {
+        return springData.findSimilarByTitle(projectId, title, threshold, limit).stream()
+                .map(row -> new FunctionalItemTitleMatch((UUID) row[0], (String) row[1], (String) row[2], ((Number) row[3]).doubleValue()))
+                .toList();
     }
 }

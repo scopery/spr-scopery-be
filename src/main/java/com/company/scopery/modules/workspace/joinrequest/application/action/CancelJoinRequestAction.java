@@ -10,6 +10,8 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,13 +23,16 @@ public class CancelJoinRequestAction {
     private final WorkspaceJoinRequestRepository joinRequestRepository;
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceActivityLogger activityLogger;
+    private final InvitationInboxCleanupService inboxCleanupService;
 
     public CancelJoinRequestAction(WorkspaceJoinRequestRepository joinRequestRepository,
                                     CurrentUserAuthorizationService currentUserService,
-                                    WorkspaceActivityLogger activityLogger) {
+                                    WorkspaceActivityLogger activityLogger,
+                                    InvitationInboxCleanupService inboxCleanupService) {
         this.joinRequestRepository = joinRequestRepository;
         this.currentUserService = currentUserService;
         this.activityLogger = activityLogger;
+        this.inboxCleanupService = inboxCleanupService;
     }
 
     @Transactional
@@ -45,6 +50,9 @@ public class CancelJoinRequestAction {
 
         WorkspaceJoinRequest cancelled = request.cancel();
         WorkspaceJoinRequest saved = joinRequestRepository.save(cancelled);
+
+        inboxCleanupService.dismissBySourceForAll(
+                InAppDeliveryService.SOURCE_JOIN_REQUEST, saved.id());
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE_JOIN_REQUEST, saved.id(),
                 WorkspaceActivityActions.CANCEL_JOIN_REQUEST, "Join request cancelled");

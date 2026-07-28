@@ -7,13 +7,15 @@ import com.company.scopery.modules.workspace.orginvitation.application.response.
 import com.company.scopery.modules.workspace.orginvitation.domain.enums.OrgInvitationStatus;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitation;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitationRepository;
+import com.company.scopery.modules.workspace.orgmember.application.service.OrgMembershipEnrollmentService;
 import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipSource;
-import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMember;
-import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,18 +25,27 @@ import java.util.UUID;
 public class AcceptOrgInvitationAction {
 
     private final OrgInvitationRepository invitationRepository;
-    private final OrgMemberRepository orgMemberRepository;
+    private final OrgMembershipEnrollmentService enrollmentService;
     private final CurrentUserAuthorizationService currentUserAuthorizationService;
     private final WorkspaceActivityLogger activityLogger;
+    private final InvitationInboxCleanupService inboxCleanupService;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public AcceptOrgInvitationAction(OrgInvitationRepository invitationRepository,
-                                      OrgMemberRepository orgMemberRepository,
+                                      OrgMembershipEnrollmentService enrollmentService,
                                       CurrentUserAuthorizationService currentUserAuthorizationService,
-                                      WorkspaceActivityLogger activityLogger) {
+                                      WorkspaceActivityLogger activityLogger,
+                                      InvitationInboxCleanupService inboxCleanupService,
+                                      InAppDeliveryService inAppDeliveryService,
+                                      WorkspaceAudienceResolver audienceResolver) {
         this.invitationRepository = invitationRepository;
-        this.orgMemberRepository = orgMemberRepository;
+        this.enrollmentService = enrollmentService;
         this.currentUserAuthorizationService = currentUserAuthorizationService;
         this.activityLogger = activityLogger;
+        this.inboxCleanupService = inboxCleanupService;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -51,17 +62,35 @@ public class AcceptOrgInvitationAction {
         }
 
         UUID userId = currentUserAuthorizationService.resolveCurrentUser().id();
-
-        if (orgMemberRepository.existsByOrganizationIdAndUserId(invitation.organizationId(), userId)) {
-            throw WorkspaceExceptions.orgInvitationAlreadyMember(invitation.organizationId(), userId);
+        var currentUser = currentUserAuthorizationService.resolveCurrentUser();
+        if (currentUser.email() == null
+                || currentUser.email().value() == null
+                || !currentUser.email().value().equalsIgnoreCase(invitation.inviteeEmail())) {
+            throw WorkspaceExceptions.orgInvitationNotFound(command.token());
         }
 
-        OrgMember member = OrgMember.create(invitation.organizationId(), userId, invitation.membershipType(),
-                OrgMembershipSource.ORGANIZATION_INVITATION);
-        orgMemberRepository.save(member);
+        enrollmentService.ensureActiveMembership(
+                invitation.organizationId(),
+                userId,
+                invitation.membershipType(),
+                OrgMembershipSource.ORGANIZATION_INVITATION,
+                WorkspaceExceptions::orgInvitationAlreadyMember);
 
         OrgInvitation accepted = invitation.accept(userId);
         OrgInvitation saved = invitationRepository.save(accepted);
+
+        inboxCleanupService.dismissOrgInvitation(saved.id(), userId);
+
+        if (saved.invitedBy() != null) {
+            inAppDeliveryService.deliverNotificationFyi(
+                    audienceResolver.explicitUser(saved.invitedBy()),
+                    "ORG_INVITATION_ACCEPTED",
+                    saved.id(),
+                    saved.organizationId(),
+                    null,
+                    "Organization invitation accepted",
+                    "Your invitation to " + invitation.inviteeEmail() + " was accepted.");
+        }
 
         activityLogger.logSuccess(WorkspaceEntityTypes.ORG_INVITATION, saved.id(),
                 WorkspaceActivityActions.ACCEPT_ORG_INVITATION,

@@ -6,11 +6,15 @@ import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.workspace.member.application.command.ActivateWorkspaceMemberCommand;
 import com.company.scopery.modules.workspace.member.application.command.AddWorkspaceMemberCommand;
 import com.company.scopery.modules.workspace.member.application.response.WorkspaceMemberResponse;
+import com.company.scopery.modules.workspace.member.application.service.WorkspaceMembershipEnrollmentService;
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMember;
 import com.company.scopery.modules.workspace.member.domain.model.WorkspaceMemberRepository;
 import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
@@ -48,13 +52,32 @@ class WorkspaceMemberActionTest {
     @Mock
     private OrgMemberRepository orgMemberRepository;
 
+    @Mock
+    private WorkspaceMembershipEnrollmentService enrollmentService;
+
+    @Mock
+    private InAppDeliveryService inAppDeliveryService;
+
+    @Mock
+    private WorkspaceAudienceResolver audienceResolver;
+
     private ActivateWorkspaceMemberAction activateWorkspaceMemberAction;
     private AddWorkspaceMemberAction addWorkspaceMemberAction;
 
     @BeforeEach
     void setUp() {
-        activateWorkspaceMemberAction = new ActivateWorkspaceMemberAction(workspaceMemberRepository, workspaceRepository, activityLogger);
-        addWorkspaceMemberAction = new AddWorkspaceMemberAction(workspaceMemberRepository, workspaceRepository, orgMemberRepository, activityLogger);
+        activateWorkspaceMemberAction = new ActivateWorkspaceMemberAction(
+                workspaceMemberRepository, workspaceRepository, activityLogger,
+                inAppDeliveryService, audienceResolver);
+        addWorkspaceMemberAction = new AddWorkspaceMemberAction(
+                enrollmentService, workspaceRepository, orgMemberRepository, activityLogger,
+                inAppDeliveryService, audienceResolver);
+        lenient().when(audienceResolver.explicitUser(any())).thenAnswer(inv -> {
+            java.util.Set<UUID> s = new java.util.LinkedHashSet<>();
+            UUID id = inv.getArgument(0, UUID.class);
+            if (id != null) s.add(id);
+            return s;
+        });
     }
 
     @Test
@@ -62,18 +85,20 @@ class WorkspaceMemberActionTest {
         UUID workspaceId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         AddWorkspaceMemberCommand command = new AddWorkspaceMemberCommand(workspaceId, userId);
+        WorkspaceMember member = WorkspaceMember.create(workspaceId, userId);
 
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(activeWorkspace(workspaceId)));
-        when(workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)).thenReturn(false);
         when(orgMemberRepository.isActiveMember(any(), eq(userId))).thenReturn(true);
-        when(workspaceMemberRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(enrollmentService.ensureActiveMembership(workspaceId, userId, true)).thenReturn(member);
 
         WorkspaceMemberResponse response = addWorkspaceMemberAction.execute(command);
 
         assertThat(response.workspaceId()).isEqualTo(workspaceId);
         assertThat(response.userId()).isEqualTo(userId);
         assertThat(response.status()).isEqualTo("ACTIVE");
-        verify(workspaceMemberRepository).save(any(WorkspaceMember.class));
+        verify(enrollmentService).ensureActiveMembership(workspaceId, userId, true);
+        verify(inAppDeliveryService).deliverNotificationFyi(any(), eq("WORKSPACE_MEMBER_ADDED"),
+                any(), any(), eq(workspaceId), any(), any());
         verify(activityLogger).logSuccess(eq("WORKSPACE_MEMBER"), any(UUID.class),
                 eq("ADD_WORKSPACE_MEMBER"), any(String.class));
     }
@@ -85,7 +110,9 @@ class WorkspaceMemberActionTest {
         AddWorkspaceMemberCommand command = new AddWorkspaceMemberCommand(workspaceId, userId);
 
         when(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(activeWorkspace(workspaceId)));
-        when(workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId)).thenReturn(true);
+        when(orgMemberRepository.isActiveMember(any(), eq(userId))).thenReturn(true);
+        when(enrollmentService.ensureActiveMembership(workspaceId, userId, true))
+                .thenThrow(WorkspaceExceptions.workspaceMemberAlreadyExists(workspaceId, userId));
 
         assertThatThrownBy(() -> addWorkspaceMemberAction.execute(command))
                 .isInstanceOf(AppException.class)
@@ -95,8 +122,6 @@ class WorkspaceMemberActionTest {
                     assertThat(ae.getErrorCode()).isEqualTo(
                             WorkspaceErrorCatalog.WORKSPACE_MEMBER_ALREADY_EXISTS.code());
                 });
-
-        verify(workspaceMemberRepository, never()).save(any());
     }
 
     @Test

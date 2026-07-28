@@ -16,8 +16,15 @@ import com.company.scopery.modules.workspace.orginvitation.application.command.C
 import com.company.scopery.modules.workspace.orginvitation.application.response.OrgInvitationResponse;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitation;
 import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvitationRepository;
+import com.company.scopery.modules.workspace.orgmember.application.service.OrgMembershipEnrollmentService;
+import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipSource;
+import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipType;
+import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMember;
 import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLogger;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +38,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +52,13 @@ class OrgInvitationActionTest {
     @Mock private CurrentUserAuthorizationService currentUserService;
     @Mock private WorkspaceIamIntegrationService iamIntegrationService;
     @Mock private WorkspaceActivityLogger activityLogger;
+    @Mock private com.company.scopery.modules.iam.user.domain.model.IamUserRepository iamUserRepository;
+    @Mock private com.company.scopery.modules.notification.emailtrigger.domain.model.EmailNotificationTriggerPublisher notificationPublisher;
+    @Mock private com.company.scopery.modules.notification.shared.NotificationProperties notificationProperties;
+    @Mock private InAppDeliveryService inAppDeliveryService;
+    @Mock private WorkspaceAudienceResolver audienceResolver;
+    @Mock private InvitationInboxCleanupService inboxCleanupService;
+    @Mock private OrgMembershipEnrollmentService enrollmentService;
 
     private CreateOrgInvitationAction createAction;
     private AcceptOrgInvitationAction acceptAction;
@@ -52,13 +68,25 @@ class OrgInvitationActionTest {
     @BeforeEach
     void setUp() {
         createAction = new CreateOrgInvitationAction(
-                invitationRepository, organizationRepository, currentUserService, iamIntegrationService, activityLogger);
+                invitationRepository, organizationRepository, orgMemberRepository,
+                currentUserService, iamIntegrationService, activityLogger,
+                iamUserRepository, notificationPublisher, notificationProperties,
+                inAppDeliveryService, audienceResolver);
         acceptAction = new AcceptOrgInvitationAction(
-                invitationRepository, orgMemberRepository, currentUserService, activityLogger);
+                invitationRepository, enrollmentService, currentUserService, activityLogger,
+                inboxCleanupService, inAppDeliveryService, audienceResolver);
         orgId = UUID.randomUUID();
         actor = IamUser.of(UUID.randomUUID(), Username.of("owner"), EmailAddress.of("o@example.com"),
                 "Owner", null, IamUserStatus.ACTIVE, Instant.now(), Instant.now());
         when(currentUserService.resolveCurrentUser()).thenReturn(actor);
+        lenient().when(notificationProperties.getFrontendBaseUrl()).thenReturn("http://localhost:3000");
+        lenient().when(iamUserRepository.findByEmail(any())).thenReturn(Optional.empty());
+        lenient().when(audienceResolver.explicitUser(any())).thenAnswer(inv -> {
+            java.util.Set<UUID> s = new java.util.LinkedHashSet<>();
+            UUID id = inv.getArgument(0, UUID.class);
+            if (id != null) s.add(id);
+            return s;
+        });
     }
 
     @Test
@@ -83,12 +111,14 @@ class OrgInvitationActionTest {
     @Test
     void acceptOrgInvitation_looksUpByHash() {
         String raw = InvitationCodeHasher.generateRawCode();
-        OrgInvitation pending = OrgInvitation.create(orgId, "invitee@example.com",
-                com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipType.MEMBER,
-                actor.id(), raw, Instant.now().plusSeconds(3600));
+        OrgInvitation pending = OrgInvitation.create(orgId, actor.email().value(),
+                OrgMembershipType.MEMBER, actor.id(), raw, Instant.now().plusSeconds(3600));
         when(invitationRepository.findByTokenHash(InvitationCodeHasher.hash(raw))).thenReturn(Optional.of(pending));
-        when(orgMemberRepository.existsByOrganizationIdAndUserId(orgId, actor.id())).thenReturn(false);
-        when(orgMemberRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(enrollmentService.ensureActiveMembership(
+                eq(orgId), eq(actor.id()), eq(OrgMembershipType.MEMBER),
+                eq(OrgMembershipSource.ORGANIZATION_INVITATION), any()))
+                .thenReturn(OrgMember.create(orgId, actor.id(), OrgMembershipType.MEMBER,
+                        OrgMembershipSource.ORGANIZATION_INVITATION));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         OrgInvitationResponse response = acceptAction.execute(new AcceptOrgInvitationCommand(raw));
@@ -96,5 +126,6 @@ class OrgInvitationActionTest {
         assertThat(response.status()).isEqualTo("ACCEPTED");
         assertThat(response.token()).isNull();
         verify(invitationRepository).findByTokenHash(InvitationCodeHasher.hash(raw));
+        verify(inboxCleanupService).dismissOrgInvitation(any(), eq(actor.id()));
     }
 }

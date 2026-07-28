@@ -7,7 +7,7 @@ public class RequirementPersistenceMapper {
         return new Requirement(e.getId(), e.getProjectId(), e.getWorkspaceId(), e.getApplicationId(), e.getCode(), e.getTitle(), e.getDescription(),
                 RequirementType.valueOf(e.getRequirementType()), RequirementPriority.valueOf(e.getPriority()), RequirementStatus.valueOf(e.getStatus()),
                 e.getOwnerUserId(), e.getCurrentVersionNumber(), e.getArchivedAt(), e.getArchivedBy(),
-                e.getFunctionalItemId(), e.getNonFunctionalItemId(), e.getScopeItemId(),
+                e.getFunctionalItemId(), e.getNonFunctionalItemId(), e.getScopeItemId(), e.getScopePackageId(),
                 e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public RequirementJpaEntity toJpaEntity(Requirement d) {
@@ -17,6 +17,7 @@ public class RequirementPersistenceMapper {
         e.setPriority(d.priority().name()); e.setStatus(d.status().name()); e.setOwnerUserId(d.ownerUserId());
         e.setCurrentVersionNumber(d.currentVersionNumber()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
         e.setFunctionalItemId(d.functionalItemId()); e.setNonFunctionalItemId(d.nonFunctionalItemId()); e.setScopeItemId(d.scopeItemId());
+        e.setScopePackageId(d.scopePackageId());
         if (d.createdAt() != null) {
             e.setVersion(d.version());
             e.setCreatedAt(d.createdAt());

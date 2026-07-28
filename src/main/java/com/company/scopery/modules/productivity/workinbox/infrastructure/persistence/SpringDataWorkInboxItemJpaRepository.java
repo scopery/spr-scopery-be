@@ -3,5 +3,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List; import java.util.Optional; import java.util.UUID;
 public interface SpringDataWorkInboxItemJpaRepository extends JpaRepository<WorkInboxItemJpaEntity, UUID> {
     Optional<WorkInboxItemJpaEntity> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
+    Optional<WorkInboxItemJpaEntity> findByIdAndUserId(UUID id, UUID userId);
     List<WorkInboxItemJpaEntity> findByWorkspaceIdAndUserIdAndStatusInOrderByDueAtAsc(UUID workspaceId, UUID userId, List<String> statuses);
+    List<WorkInboxItemJpaEntity> findByUserIdAndStatusInOrderByDueAtAsc(UUID userId, List<String> statuses);
+    List<WorkInboxItemJpaEntity> findByUserIdAndSourceTypeAndSourceId(UUID userId, String sourceType, UUID sourceId);
+    List<WorkInboxItemJpaEntity> findBySourceTypeAndSourceId(String sourceType, UUID sourceId);
+    List<WorkInboxItemJpaEntity> findBySourceTypeInAndStatusIn(List<String> sourceTypes, List<String> statuses);
 }

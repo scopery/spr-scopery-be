@@ -18,7 +18,11 @@ public class ScopePackagePersistenceMapper {
         e.setCode(d.code()); e.setName(d.name()); e.setDescription(d.description()); e.setStatus(d.status().name());
         e.setCurrentFlag(d.currentFlag()); e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy());
         e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId());
-        if (d.createdAt()!=null) { e.setCreatedAt(d.createdAt()); e.setVersion(d.version()); }
+        // Only copy audit/@Version for updates. Leaving createdAt null keeps AuditableJpaEntity.isNew()=true (INSERT).
+        if (d.createdAt() != null) {
+            e.setCreatedAt(d.createdAt());
+            e.setVersion(d.version());
+        }
         return e;
     }
 }

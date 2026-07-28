@@ -30,6 +30,7 @@ public final class TraceabilityActivityActions {
     public static final String FUNCTIONAL_ITEM_CREATED = "FUNCTIONAL_ITEM_CREATED";
     public static final String FUNCTIONAL_ITEM_UPDATED = "FUNCTIONAL_ITEM_UPDATED";
     public static final String FUNCTIONAL_ITEM_DELETED = "FUNCTIONAL_ITEM_DELETED";
+    public static final String FUNCTIONAL_ITEMS_IMPORTED = "FUNCTIONAL_ITEMS_IMPORTED";
     public static final String NON_FUNCTIONAL_ITEM_CREATED = "NON_FUNCTIONAL_ITEM_CREATED";
     public static final String NON_FUNCTIONAL_ITEM_UPDATED = "NON_FUNCTIONAL_ITEM_UPDATED";
     public static final String NON_FUNCTIONAL_ITEM_DELETED = "NON_FUNCTIONAL_ITEM_DELETED";

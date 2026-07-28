@@ -40,18 +40,7 @@ public enum ScopeErrorCatalog implements ErrorCatalog {
         httpStatus = s;
     }
 
-    @Override
-    public String code() {
-        return code;
-    }
-
-    @Override
-    public String defaultMessage() {
-        return defaultMessage;
-    }
-
-    @Override
-    public HttpStatus httpStatus() {
-        return httpStatus;
-    }
+    @Override public String code() { return code; }
+    @Override public String defaultMessage() { return defaultMessage; }
+    @Override public HttpStatus httpStatus() { return httpStatus; }
 }

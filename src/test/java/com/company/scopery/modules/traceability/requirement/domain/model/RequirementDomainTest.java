@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test; import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 class RequirementDomainTest {
     @Test void approve() {
-        var r = Requirement.create(UUID.randomUUID(), UUID.randomUUID(), null, "REQ-1", "Login", null, RequirementType.FUNCTIONAL, RequirementPriority.HIGH);
+        var r = Requirement.create(UUID.randomUUID(), UUID.randomUUID(), null, "REQ-1", "Login", null, RequirementType.FUNCTIONAL, RequirementPriority.HIGH, null, null, null, null);
         assertEquals(RequirementStatus.DRAFT, r.status());
         assertEquals(RequirementStatus.APPROVED, r.approve().status());
     }

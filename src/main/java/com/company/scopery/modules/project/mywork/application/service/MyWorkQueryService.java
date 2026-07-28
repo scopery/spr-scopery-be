@@ -59,7 +59,10 @@ public class MyWorkQueryService {
         IamUser user = currentUserService.resolveCurrentUser();
         iamIntegrationService.requireWorkspaceAccess(q.workspaceId(), user.id(), IamAuthorities.PROJECT_VIEW);
 
-        List<Project> projects = projectRepository.findAllByWorkspaceId(q.workspaceId());
+        List<Project> projects = projectRepository.findAllByWorkspaceId(q.workspaceId()).stream()
+                .filter(p -> iamIntegrationService.canViewProject(
+                        p.id(), q.workspaceId(), user.id(), IamAuthorities.PROJECT_VIEW))
+                .toList();
         if (q.projectId() != null) {
             projects = projects.stream().filter(p -> p.id().equals(q.projectId())).toList();
         }

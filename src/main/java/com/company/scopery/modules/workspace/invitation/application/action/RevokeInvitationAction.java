@@ -12,6 +12,7 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +25,18 @@ public class RevokeInvitationAction {
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final WorkspaceActivityLogger activityLogger;
+    private final InvitationInboxCleanupService inboxCleanupService;
 
     public RevokeInvitationAction(WorkspaceInvitationRepository invitationRepository,
                                    CurrentUserAuthorizationService currentUserService,
                                    WorkspaceIamIntegrationService iamIntegrationService,
-                                   WorkspaceActivityLogger activityLogger) {
+                                   WorkspaceActivityLogger activityLogger,
+                                   InvitationInboxCleanupService inboxCleanupService) {
         this.invitationRepository = invitationRepository;
         this.currentUserService = currentUserService;
         this.iamIntegrationService = iamIntegrationService;
         this.activityLogger = activityLogger;
+        this.inboxCleanupService = inboxCleanupService;
     }
 
     @Transactional
@@ -47,6 +51,8 @@ public class RevokeInvitationAction {
 
         WorkspaceInvitation revoked = invitation.revoke();
         WorkspaceInvitation saved = invitationRepository.save(revoked);
+
+        inboxCleanupService.dismissWorkspaceInvitationForAll(saved.id());
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE_INVITATION, saved.id(),
                 WorkspaceActivityActions.REVOKE_INVITATION, "Invitation revoked");

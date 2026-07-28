@@ -2,10 +2,10 @@ package com.company.scopery.modules.workspace.orgmember.application.action;
 
 import com.company.scopery.modules.workspace.orgmember.application.command.AddOrgMemberCommand;
 import com.company.scopery.modules.workspace.orgmember.application.response.OrgMemberResponse;
+import com.company.scopery.modules.workspace.orgmember.application.service.OrgMembershipEnrollmentService;
 import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipType;
 import com.company.scopery.modules.workspace.orgmember.domain.enums.OrgMembershipSource;
 import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMember;
-import com.company.scopery.modules.workspace.orgmember.domain.model.OrgMemberRepository;
 import com.company.scopery.modules.workspace.organization.domain.model.Organization;
 import com.company.scopery.modules.workspace.organization.domain.model.OrganizationRepository;
 import com.company.scopery.modules.workspace.organization.domain.enums.OrganizationStatus;
@@ -14,6 +14,8 @@ import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityAc
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.shared.util.WorkspaceEnumParser;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,25 +30,31 @@ import java.util.UUID;
 @Component
 public class AddOrgMemberAction {
 
-    private final OrgMemberRepository orgMemberRepository;
+    private final OrgMembershipEnrollmentService enrollmentService;
     private final OrganizationRepository organizationRepository;
     private final WorkspaceActivityLogger activityLogger;
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final ImmutableAuditEventService auditEventService;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
-    public AddOrgMemberAction(OrgMemberRepository orgMemberRepository,
+    public AddOrgMemberAction(OrgMembershipEnrollmentService enrollmentService,
                                OrganizationRepository organizationRepository,
                                WorkspaceActivityLogger activityLogger,
                                CurrentUserAuthorizationService currentUserService,
                                WorkspaceIamIntegrationService iamIntegrationService,
-                               ImmutableAuditEventService auditEventService) {
-        this.orgMemberRepository = orgMemberRepository;
+                               ImmutableAuditEventService auditEventService,
+                               InAppDeliveryService inAppDeliveryService,
+                               WorkspaceAudienceResolver audienceResolver) {
+        this.enrollmentService = enrollmentService;
         this.organizationRepository = organizationRepository;
         this.activityLogger = activityLogger;
         this.currentUserService = currentUserService;
         this.iamIntegrationService = iamIntegrationService;
         this.auditEventService = auditEventService;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -61,17 +69,25 @@ public class AddOrgMemberAction {
         UUID actorId = currentUserService.resolveCurrentUser().id();
         iamIntegrationService.requireOrgAccess(command.organizationId(), actorId, IamAuthorities.ORGANIZATION_MANAGE);
 
-        if (orgMemberRepository.existsByOrganizationIdAndUserId(command.organizationId(), command.userId())) {
-            throw WorkspaceExceptions.orgMemberAlreadyExists(command.organizationId(), command.userId());
-        }
-
         OrgMembershipType membershipType = WorkspaceEnumParser.parseRequired(
                 OrgMembershipType.class, command.membershipType(),
                 WorkspaceErrorCatalog.INVALID_ORG_MEMBERSHIP_TYPE.code(), "membershipType");
 
-        OrgMember member = OrgMember.create(command.organizationId(), command.userId(), membershipType,
-                OrgMembershipSource.MANUAL);
-        OrgMember saved = orgMemberRepository.save(member);
+        OrgMember saved = enrollmentService.ensureActiveMembership(
+                command.organizationId(),
+                command.userId(),
+                membershipType,
+                OrgMembershipSource.MANUAL,
+                WorkspaceExceptions::orgMemberAlreadyExists);
+
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(saved.userId()),
+                "ORG_MEMBER_ADDED",
+                saved.id(),
+                saved.organizationId(),
+                null,
+                "Added to organization",
+                "You were added to an organization.");
 
         activityLogger.logSuccess(WorkspaceEntityTypes.ORG_MEMBER, saved.id(),
                 WorkspaceActivityActions.ADD_ORG_MEMBER,

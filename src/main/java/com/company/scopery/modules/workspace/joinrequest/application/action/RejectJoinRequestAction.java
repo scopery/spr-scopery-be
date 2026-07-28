@@ -12,6 +12,10 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.InvitationInboxCleanupService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
+import com.company.scopery.modules.workspace.workspace.domain.model.WorkspaceRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,18 +25,30 @@ import java.util.UUID;
 public class RejectJoinRequestAction {
 
     private final WorkspaceJoinRequestRepository joinRequestRepository;
+    private final WorkspaceRepository workspaceRepository;
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final WorkspaceActivityLogger activityLogger;
+    private final InvitationInboxCleanupService inboxCleanupService;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public RejectJoinRequestAction(WorkspaceJoinRequestRepository joinRequestRepository,
+                                    WorkspaceRepository workspaceRepository,
                                     CurrentUserAuthorizationService currentUserService,
                                     WorkspaceIamIntegrationService iamIntegrationService,
-                                    WorkspaceActivityLogger activityLogger) {
+                                    WorkspaceActivityLogger activityLogger,
+                                    InvitationInboxCleanupService inboxCleanupService,
+                                    InAppDeliveryService inAppDeliveryService,
+                                    WorkspaceAudienceResolver audienceResolver) {
         this.joinRequestRepository = joinRequestRepository;
+        this.workspaceRepository = workspaceRepository;
         this.currentUserService = currentUserService;
         this.iamIntegrationService = iamIntegrationService;
         this.activityLogger = activityLogger;
+        this.inboxCleanupService = inboxCleanupService;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -52,6 +68,21 @@ public class RejectJoinRequestAction {
 
         WorkspaceJoinRequest rejected = request.reject(currentUserId, command.reviewNote());
         WorkspaceJoinRequest saved = joinRequestRepository.save(rejected);
+
+        inboxCleanupService.dismissBySourceForAll(
+                InAppDeliveryService.SOURCE_JOIN_REQUEST, saved.id());
+
+        UUID organizationId = workspaceRepository.findById(request.workspaceId())
+                .map(ws -> ws.organizationId())
+                .orElse(null);
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(request.requestedByUserId()),
+                "JOIN_REQUEST_REJECTED",
+                saved.id(),
+                organizationId,
+                request.workspaceId(),
+                "Join request rejected",
+                "Your request to join the workspace was rejected.");
 
         activityLogger.logSuccess(WorkspaceEntityTypes.WORKSPACE_JOIN_REQUEST, saved.id(),
                 WorkspaceActivityActions.REJECT_JOIN_REQUEST, "Join request rejected");

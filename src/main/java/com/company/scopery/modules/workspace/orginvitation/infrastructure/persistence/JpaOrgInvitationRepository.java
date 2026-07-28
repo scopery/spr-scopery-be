@@ -5,6 +5,7 @@ import com.company.scopery.modules.workspace.orginvitation.domain.model.OrgInvit
 import com.company.scopery.modules.workspace.orginvitation.infrastructure.mapper.OrgInvitationPersistenceMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,5 +36,14 @@ public class JpaOrgInvitationRepository implements OrgInvitationRepository {
     @Override
     public Optional<OrgInvitation> findByTokenHash(String tokenHash) {
         return springDataRepository.findByTokenHash(tokenHash).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<OrgInvitation> findByInviteeEmailIgnoreCaseAndStatus(String inviteeEmail, String status) {
+        return springDataRepository
+                .findByInviteeEmailIgnoreCaseAndStatusOrderByCreatedAtDesc(inviteeEmail, status)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

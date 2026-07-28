@@ -2,6 +2,7 @@ package com.company.scopery.modules.iam.user.application.action;
 
 import com.company.scopery.common.audit.ImmutableAuditEventService;
 import com.company.scopery.common.exception.AppException;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
 import com.company.scopery.modules.iam.authorization.application.service.IamSystemAuthorizationService;
 import com.company.scopery.modules.iam.shared.activity.IamActivityLogger;
 import com.company.scopery.modules.iam.shared.error.IamErrorCatalog;
@@ -37,6 +38,7 @@ class IamUserActionTest {
     @Mock private IamActivityLogger activityLogger;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private IamSystemAuthorizationService systemAuthorizationService;
+    @Mock private CurrentUserAuthorizationService currentUserService;
     @Mock private ImmutableAuditEventService auditEventService;
 
     private CreateIamUserAction createAction;
@@ -52,7 +54,7 @@ class IamUserActionTest {
         createAction = new CreateIamUserAction(userRepository, activityLogger, passwordEncoder);
         updateAction = new UpdateIamUserAction(userRepository, systemAuthorizationService, activityLogger);
         suspendAction = new SuspendIamUserAction(userRepository, systemAuthorizationService, activityLogger, auditEventService);
-        queryService = new IamUserQueryService(userRepository, systemAuthorizationService);
+        queryService = new IamUserQueryService(userRepository, systemAuthorizationService, currentUserService);
 
         Instant now = Instant.now();
         activeUser = IamUser.of(UUID.randomUUID(), Username.of("johndoe"),
@@ -103,6 +105,7 @@ class IamUserActionTest {
     @Test
     void getUser_notFound_throws404() {
         UUID id = UUID.randomUUID();
+        when(currentUserService.resolveCurrentUser()).thenReturn(activeUser);
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> queryService.getUser(id))

@@ -15,6 +15,7 @@ public final class WorkspaceApiPaths {
 
     public static final String WORKSPACE_INVITATIONS        = BASE_WORKSPACES + "/{workspaceId}/invitations";
     public static final String WORKSPACE_INVITATION_ACCEPT  = BASE_WORKSPACES + "/invitations/{code}/accept";
+    public static final String ME_WORKSPACE_INVITATION_ACCEPT = ApiPaths.BASE_PATH + "/me/workspace-invitations/{id}/accept";
     public static final String WORKSPACE_JOIN_REQUESTS      = BASE_WORKSPACES + "/{workspaceId}/join-requests";
     public static final String WORKSPACE_JOIN_REQUESTS_OPEN = ApiPaths.BASE_PATH + "/workspace-join-requests";
     public static final String WORKSPACE_CONTEXT            = ApiPaths.BASE_PATH + "/workspace-context";
@@ -23,6 +24,8 @@ public final class WorkspaceApiPaths {
     public static final String ORG_MEMBERS           = BASE_ORGS + "/{organizationId}/members";
     public static final String ORG_INVITATIONS       = BASE_ORGS + "/{organizationId}/invitations";
     public static final String ORG_INVITATION_ACCEPT = ApiPaths.BASE_PATH + "/org-invitations/{token}/accept";
+    public static final String ME_ORG_INVITATIONS = ApiPaths.BASE_PATH + "/me/org-invitations";
+    public static final String ME_ORG_INVITATION_ACCEPT = ME_ORG_INVITATIONS + "/{id}/accept";
 
     public static final String ORG_TEAMS                      = BASE_ORG_TEAMS;
     public static final String ORG_TEAM_MEMBERS               = BASE_ORG_TEAMS + "/{teamId}/members";
@@ -32,6 +35,8 @@ public final class WorkspaceApiPaths {
     public static final String WORKSPACE_ACCESS           = BASE_WORKSPACES + "/{workspaceId}/access";
     public static final String WORKSPACE_ACCESS_EXPLAIN   = WORKSPACE_ACCESS + "/{subjectType}/{subjectId}/explain";
     public static final String MY_WORK                    = BASE_WORKSPACES + "/{workspaceId}/my-work";
+    public static final String WORKSPACE_CAPABILITIES     = BASE_WORKSPACES + "/{workspaceId}/capabilities";
+    public static final String ORGANIZATION_CAPABILITIES  = BASE_ORGS + "/{organizationId}/capabilities";
 
     private WorkspaceApiPaths() {}
 }

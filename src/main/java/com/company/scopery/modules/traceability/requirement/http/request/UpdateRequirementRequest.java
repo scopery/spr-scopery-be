@@ -1,3 +1,2 @@
 package com.company.scopery.modules.traceability.requirement.http.request;
-import java.util.UUID;
-public record UpdateRequirementRequest(String title, String description, String priority, String requirementType, UUID applicationId, UUID functionalItemId, UUID nonFunctionalItemId, UUID scopeItemId){}
+public record UpdateRequirementRequest(String title, String description, String priority, String requirementType, java.util.UUID applicationId, java.util.UUID functionalItemId, java.util.UUID nonFunctionalItemId, java.util.UUID scopeItemId, java.util.UUID scopePackageId){}

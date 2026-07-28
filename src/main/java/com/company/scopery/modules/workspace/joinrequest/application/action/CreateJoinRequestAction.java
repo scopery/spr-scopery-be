@@ -2,6 +2,7 @@ package com.company.scopery.modules.workspace.joinrequest.application.action;
 
 import com.company.scopery.common.exception.AppException;
 import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
+import com.company.scopery.modules.iam.shared.constant.IamAuthorities;
 import com.company.scopery.modules.notification.emailtrigger.domain.model.EmailNotificationTriggerPayload;
 import com.company.scopery.modules.notification.emailtrigger.domain.model.EmailNotificationTriggerPublisher;
 import com.company.scopery.modules.workspace.joinrequest.application.command.CreateWorkspaceJoinRequestCommand;
@@ -14,6 +15,8 @@ import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityAc
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceErrorCatalog;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.workspace.domain.model.Workspace;
 import com.company.scopery.modules.workspace.workspace.domain.valueobject.WorkspaceCode;
 import com.company.scopery.modules.workspace.workspace.domain.enums.WorkspaceJoinPolicy;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -34,19 +38,25 @@ public class CreateJoinRequestAction {
     private final CurrentUserAuthorizationService currentUserService;
     private final EmailNotificationTriggerPublisher notificationPublisher;
     private final WorkspaceActivityLogger activityLogger;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public CreateJoinRequestAction(WorkspaceJoinRequestRepository joinRequestRepository,
                                     WorkspaceRepository workspaceRepository,
                                     WorkspaceMemberRepository memberRepository,
                                     CurrentUserAuthorizationService currentUserService,
                                     EmailNotificationTriggerPublisher notificationPublisher,
-                                    WorkspaceActivityLogger activityLogger) {
+                                    WorkspaceActivityLogger activityLogger,
+                                    InAppDeliveryService inAppDeliveryService,
+                                    WorkspaceAudienceResolver audienceResolver) {
         this.joinRequestRepository = joinRequestRepository;
         this.workspaceRepository = workspaceRepository;
         this.memberRepository = memberRepository;
         this.currentUserService = currentUserService;
         this.notificationPublisher = notificationPublisher;
         this.activityLogger = activityLogger;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -88,6 +98,19 @@ public class CreateJoinRequestAction {
 
         WorkspaceJoinRequest request = WorkspaceJoinRequest.create(ws.id(), currentUserId, command.message());
         WorkspaceJoinRequest saved = joinRequestRepository.save(request);
+
+        Set<UUID> reviewers = new java.util.LinkedHashSet<>(audienceResolver.usersWithWorkspaceRight(
+                ws.id(), IamAuthorities.WORKSPACE_MANAGE_JOIN_REQUEST));
+        reviewers.remove(currentUserId);
+        inAppDeliveryService.deliverWorkInbox(
+                ws.id(),
+                reviewers,
+                InAppDeliveryService.SOURCE_JOIN_REQUEST,
+                saved.id(),
+                InAppDeliveryService.ACTION_REVIEW_JOIN,
+                "Review join request for " + ws.name(),
+                "HIGH",
+                null);
 
         notificationPublisher.publish(new EmailNotificationTriggerPayload(
                 null, "WORKSPACE", "WORKSPACE_JOIN_REQUEST_CREATED",

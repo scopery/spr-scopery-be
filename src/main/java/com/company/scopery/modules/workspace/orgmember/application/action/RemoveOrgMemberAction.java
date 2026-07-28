@@ -8,6 +8,8 @@ import com.company.scopery.modules.workspace.shared.activity.WorkspaceActivityLo
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceActivityActions;
 import com.company.scopery.modules.workspace.shared.constant.WorkspaceEntityTypes;
 import com.company.scopery.modules.workspace.shared.error.WorkspaceExceptions;
+import com.company.scopery.modules.workspace.shared.service.InAppDeliveryService;
+import com.company.scopery.modules.workspace.shared.service.WorkspaceAudienceResolver;
 import com.company.scopery.modules.workspace.orgmember.application.service.OrgMembershipAccessRevocationService;
 import com.company.scopery.common.audit.AuditEventType;
 import com.company.scopery.common.audit.ImmutableAuditEventService;
@@ -28,19 +30,25 @@ public class RemoveOrgMemberAction {
     private final CurrentUserAuthorizationService currentUserService;
     private final WorkspaceIamIntegrationService iamIntegrationService;
     private final ImmutableAuditEventService auditEventService;
+    private final InAppDeliveryService inAppDeliveryService;
+    private final WorkspaceAudienceResolver audienceResolver;
 
     public RemoveOrgMemberAction(OrgMemberRepository orgMemberRepository,
                                   WorkspaceActivityLogger activityLogger,
                                   OrgMembershipAccessRevocationService accessRevocationService,
                                   CurrentUserAuthorizationService currentUserService,
                                   WorkspaceIamIntegrationService iamIntegrationService,
-                                  ImmutableAuditEventService auditEventService) {
+                                  ImmutableAuditEventService auditEventService,
+                                  InAppDeliveryService inAppDeliveryService,
+                                  WorkspaceAudienceResolver audienceResolver) {
         this.orgMemberRepository = orgMemberRepository;
         this.activityLogger = activityLogger;
         this.accessRevocationService = accessRevocationService;
         this.currentUserService = currentUserService;
         this.iamIntegrationService = iamIntegrationService;
         this.auditEventService = auditEventService;
+        this.inAppDeliveryService = inAppDeliveryService;
+        this.audienceResolver = audienceResolver;
     }
 
     @Transactional
@@ -58,6 +66,15 @@ public class RemoveOrgMemberAction {
         OrgMember removed = member.remove();
         OrgMember saved = orgMemberRepository.save(removed);
         accessRevocationService.revokeDescendantAccess(saved.organizationId(), saved.userId(), actorId);
+
+        inAppDeliveryService.deliverNotificationFyi(
+                audienceResolver.explicitUser(saved.userId()),
+                "ORG_MEMBER_REMOVED",
+                saved.id(),
+                saved.organizationId(),
+                null,
+                "Removed from organization",
+                "You were removed from an organization.");
 
         activityLogger.logSuccess(WorkspaceEntityTypes.ORG_MEMBER, saved.id(),
                 WorkspaceActivityActions.REMOVE_ORG_MEMBER,
