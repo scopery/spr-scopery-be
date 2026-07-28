@@ -155,7 +155,7 @@ public class UpdateTaskAction {
         Task saved = taskRepository.save(updated);
 
         platformPublisher.enqueueTask(saved, "TASK_UPDATED");
-        if (assigneeChanged) {
+        if (assigneeChanged && saved.inChargeUserId() != null) {
             platformPublisher.enqueueTask(saved, "TASK_ASSIGNED");
         }
         if (planningChanged) {

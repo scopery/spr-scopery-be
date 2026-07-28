@@ -3,10 +3,12 @@ package com.company.scopery.modules.project.shared.support;
 import com.company.scopery.common.audit.AuditEventType;
 import com.company.scopery.common.audit.ImmutableAuditEventService;
 import com.company.scopery.common.outbox.TransactionalOutboxService;
+import com.company.scopery.modules.iam.authorization.application.service.CurrentUserAuthorizationService;
 import com.company.scopery.modules.project.gantt.shared.listeners.GanttEventDefinitionSeedInitializer;
 import com.company.scopery.modules.project.milestone.domain.model.ProjectMilestone;
 import com.company.scopery.modules.project.phasedefinition.domain.model.PhaseDefinition;
 import com.company.scopery.modules.project.project.domain.model.Project;
+import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhase;
 import com.company.scopery.modules.project.scheduleoverride.domain.model.TaskScheduleOverride;
 import com.company.scopery.modules.project.scheduling.schedulerun.domain.model.ScheduleRun;
@@ -43,11 +45,17 @@ public class ProjectPlatformPublisher {
 
     private final TransactionalOutboxService outboxService;
     private final ImmutableAuditEventService auditEventService;
+    private final ProjectRepository projectRepository;
+    private final CurrentUserAuthorizationService currentUserAuthorizationService;
 
     public ProjectPlatformPublisher(TransactionalOutboxService outboxService,
-                                    ImmutableAuditEventService auditEventService) {
+                                    ImmutableAuditEventService auditEventService,
+                                    ProjectRepository projectRepository,
+                                    CurrentUserAuthorizationService currentUserAuthorizationService) {
         this.outboxService = outboxService;
         this.auditEventService = auditEventService;
+        this.projectRepository = projectRepository;
+        this.currentUserAuthorizationService = currentUserAuthorizationService;
     }
 
     public void enqueueProject(Project project, String eventCode) {
@@ -81,13 +89,15 @@ public class ProjectPlatformPublisher {
     }
 
     public void enqueueTask(Task task, String eventCode) {
+        Project project = projectRepository.findById(task.projectId()).orElse(null);
+        UUID actorUserId = resolveActorUserId();
         outboxService.enqueue(
                 AGGREGATE_TASK,
                 task.id(),
                 eventCode,
                 ProjectEventDefinitionSeedInitializer.SOURCE_SYSTEM,
                 1,
-                taskPayload(task));
+                taskNotificationPayload(task, project, actorUserId));
     }
 
     public void enqueueDependency(TaskDependency dep, String eventCode) {
@@ -444,6 +454,62 @@ public class ProjectPlatformPublisher {
         map.put("wbsNodeId", t.wbsNodeId());
         map.put("projectPhaseId", t.projectPhaseId());
         return map;
+    }
+
+    /**
+     * Nested shape required by project-notification bridge + TASK_ASSIGNEE recipient strategy
+     * ({@code task.id}, {@code project.id}, {@code workspace.id}, {@code assignee.userId}, {@code actor.userId}).
+     * Flat fields are kept for audit / legacy consumers.
+     */
+    private Map<String, Object> taskNotificationPayload(Task t, Project project, UUID actorUserId) {
+        Map<String, Object> map = new LinkedHashMap<>(taskPayload(t));
+
+        Map<String, Object> task = new LinkedHashMap<>();
+        task.put("id", t.id());
+        task.put("code", t.code());
+        task.put("title", t.title() == null ? "" : t.title());
+        task.put("status", t.status().name());
+        task.put("assigneeUserId", t.inChargeUserId());
+        task.put("dueDate", t.dueDate() != null ? t.dueDate().toString() : null);
+        map.put("task", task);
+
+        if (project != null) {
+            Map<String, Object> projectMap = new LinkedHashMap<>();
+            projectMap.put("id", project.id());
+            projectMap.put("name", project.name() == null ? "" : project.name());
+            projectMap.put("code", project.code());
+            map.put("project", projectMap);
+
+            Map<String, Object> workspace = new LinkedHashMap<>();
+            workspace.put("id", project.workspaceId());
+            map.put("workspace", workspace);
+        } else {
+            Map<String, Object> projectMap = new LinkedHashMap<>();
+            projectMap.put("id", t.projectId());
+            map.put("project", projectMap);
+        }
+
+        if (t.inChargeUserId() != null) {
+            Map<String, Object> assignee = new LinkedHashMap<>();
+            assignee.put("userId", t.inChargeUserId());
+            map.put("assignee", assignee);
+        }
+
+        if (actorUserId != null) {
+            Map<String, Object> actor = new LinkedHashMap<>();
+            actor.put("userId", actorUserId);
+            map.put("actor", actor);
+        }
+
+        return map;
+    }
+
+    private UUID resolveActorUserId() {
+        try {
+            return currentUserAuthorizationService.resolveCurrentUser().id();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private Map<String, Object> dependencyPayload(TaskDependency d) {

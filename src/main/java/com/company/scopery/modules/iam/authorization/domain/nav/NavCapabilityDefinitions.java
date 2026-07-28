@@ -57,7 +57,7 @@ public final class NavCapabilityDefinitions {
 
     private static final List<Gate> WORKSPACE_GATES = List.of(
             new Gate("workspace.overview", IamAuthorities.WORKSPACE_VIEW),
-            new Gate("workspace.activity", IamAuthorities.WORKSPACE_VIEW),
+            new Gate("workspace.activity", IamAuthorities.WORKSPACE_MANAGE),
             new Gate("workspace.projects", IamAuthorities.PROJECT_VIEW),
             new Gate("workspace.projects.create", IamAuthorities.PROJECT_CREATE),
             new Gate("workspace.capacity", IamAuthorities.CAPACITY_VIEW),

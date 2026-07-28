@@ -33,6 +33,11 @@ public final class ProjectApiPaths {
     public static final String GANTT_TASK_CLEAR_OVERRIDE = GANTT + "/tasks/{taskId}/clear-override";
     public static final String MILESTONES = BASE + "/{projectId}/milestones";
 
+    /** Owner tick-grant permissions for members on a PROJECT IAM resource. */
+    public static final String PROJECT_MEMBER_PERMISSIONS = BASE + "/{projectId}/member-permissions";
+    public static final String PROJECT_MEMBER_PERMISSIONS_BY_USER =
+            BASE + "/{projectId}/members/by-user/{userId}/permissions";
+
     // Phase 11 — templates under /api/project/templates
     private static final String TEMPLATE_BASE = ApiPaths.BASE_PATH + "/project/templates";
 

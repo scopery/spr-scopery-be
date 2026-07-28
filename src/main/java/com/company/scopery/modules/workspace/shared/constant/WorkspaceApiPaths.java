@@ -37,6 +37,15 @@ public final class WorkspaceApiPaths {
     public static final String MY_WORK                    = BASE_WORKSPACES + "/{workspaceId}/my-work";
     public static final String WORKSPACE_CAPABILITIES     = BASE_WORKSPACES + "/{workspaceId}/capabilities";
     public static final String ORGANIZATION_CAPABILITIES  = BASE_ORGS + "/{organizationId}/capabilities";
+    public static final String WORKSPACE_MEMBER_PERMISSIONS =
+            BASE_WORKSPACES + "/{workspaceId}/member-permissions";
+    public static final String ORGANIZATION_MEMBER_PERMISSIONS =
+            BASE_ORGS + "/{organizationId}/member-permissions";
+
+    public static final String WORKSPACE_ACTIVITY_FEED =
+            BASE_WORKSPACES + "/{workspaceId}/activity-feed";
+    public static final String ORGANIZATION_ACTIVITY_FEED =
+            BASE_ORGS + "/{organizationId}/activity-feed";
 
     private WorkspaceApiPaths() {}
 }
