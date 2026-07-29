@@ -29,4 +29,24 @@ public interface SpringDataTaskJpaRepository
     List<TaskJpaEntity> findOverdueCandidates(@Param("beforeDate") LocalDate beforeDate,
                                               @Param("excluded") Collection<String> excluded,
                                               Pageable pageable);
+
+    @Query(value = """
+            SELECT t.id, t.code, t.title, t.project_id,
+                   p.name  AS project_name,
+                   t.project_phase_id, ph.name AS phase_name,
+                   t.in_charge_user_id, t.completed_at, t.started_at,
+                   t.estimate_hours, t.status
+            FROM project_task t
+            JOIN project_project p ON p.id = t.project_id
+            LEFT JOIN project_project_phase ph ON ph.id = t.project_phase_id
+            WHERE p.workspace_id = :workspaceId
+              AND t.in_charge_user_id IN :userIds
+              AND (
+                  (t.status = 'DONE' AND (t.completed_at AT TIME ZONE 'UTC')::date = :date)
+                  OR t.status = 'IN_PROGRESS'
+              )
+            """, nativeQuery = true)
+    List<Object[]> findDailySummaryRows(@Param("workspaceId") UUID workspaceId,
+                                        @Param("userIds") Collection<UUID> userIds,
+                                        @Param("date") LocalDate date);
 }

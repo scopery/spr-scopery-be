@@ -60,6 +60,13 @@ public class JpaWorkspaceMemberRepository implements WorkspaceMemberRepository {
     }
 
     @Override
+    public List<WorkspaceMember> findAllActiveByWorkspaceId(UUID workspaceId) {
+        return springDataRepository
+                .findAllByWorkspaceIdAndStatus(workspaceId, WorkspaceMemberStatus.ACTIVE.name())
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public PageResult<WorkspaceMember> findAll(UUID workspaceId, UUID userId, WorkspaceMemberStatus status,
                                                 PageQuery pageQuery) {
         Specification<WorkspaceMemberJpaEntity> spec = buildSearchSpec(workspaceId, userId, status);

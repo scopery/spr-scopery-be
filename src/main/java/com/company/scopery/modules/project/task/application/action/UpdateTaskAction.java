@@ -155,8 +155,13 @@ public class UpdateTaskAction {
         Task saved = taskRepository.save(updated);
 
         platformPublisher.enqueueTask(saved, "TASK_UPDATED");
-        if (assigneeChanged && saved.inChargeUserId() != null) {
-            platformPublisher.enqueueTask(saved, "TASK_ASSIGNED");
+        if (assigneeChanged) {
+            if (saved.inChargeUserId() != null) {
+                platformPublisher.enqueueTask(saved, "TASK_ASSIGNED");
+            }
+            if (task.inChargeUserId() != null) {
+                platformPublisher.enqueueTaskUnassigned(saved, task.inChargeUserId());
+            }
         }
         if (planningChanged) {
             var actorId = currentUserAuthorizationService.resolveCurrentUser().id();

@@ -89,6 +89,7 @@ public class ProjectEventDefinitionSeedInitializer implements ApplicationListene
             new SeedEvent("TASK_CREATED", "Task Created", "Task created"),
             new SeedEvent("TASK_UPDATED", "Task Updated", "Task updated"),
             new SeedEvent("TASK_ASSIGNED", "Task Assigned", "Task assigned"),
+            new SeedEvent("TASK_UNASSIGNED", "Task Unassigned", "Task unassigned from previous assignee"),
             new SeedEvent("TASK_STARTED", "Task Started", "Task started"),
             new SeedEvent("TASK_BLOCKED", "Task Blocked", "Task blocked"),
             new SeedEvent("TASK_COMPLETED", "Task Completed", "Task completed"),

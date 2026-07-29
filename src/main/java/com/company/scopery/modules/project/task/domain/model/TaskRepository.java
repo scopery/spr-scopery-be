@@ -62,4 +62,12 @@ public interface TaskRepository {
 
     /** My Work: count tasks with no dueDate and no plannedStartDate assigned to the user. */
     long countUndatedForUser(Collection<UUID> projectIds, UUID userId, boolean excludeTerminal);
+
+    /**
+     * Daily summary: returns DONE tasks completed on {@code date} and all IN_PROGRESS tasks
+     * for the given workspace, restricted to the provided assignee user IDs.
+     * Each row: [id, code, title, projectId, projectName, projectPhaseId, phaseName,
+     *            inChargeUserId, completedAt, startedAt, estimateHours, status]
+     */
+    List<Object[]> findDailySummaryRows(UUID workspaceId, Collection<UUID> userIds, LocalDate date);
 }

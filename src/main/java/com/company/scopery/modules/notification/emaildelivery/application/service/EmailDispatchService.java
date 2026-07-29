@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -88,7 +89,7 @@ public class EmailDispatchService {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void dispatch(EmailNotificationTriggerPayload triggerPayload) {
         if (!notificationProperties.isEnabled()) {
             log.debug("[EmailDispatch] Notification disabled, skipping dispatch for event {}",

@@ -131,6 +131,18 @@ public class ProjectNotificationTemplateRuleSeedInitializer implements Applicati
                 "<p>Assigned: {{task.title}}</p>",
                 "Assigned: {{task.title}}",
                 EmailRecipientStrategy.TASK_ASSIGNEE, false, "{\"excludeActor\":true}");
+
+        seed("PROJECT_TASK_UNASSIGNED_EMAIL", "Task Unassigned", "TASK_UNASSIGNED",
+                "Task unassigned: {{task.title}}",
+                "<p>You were unassigned from task <strong>{{task.title}}</strong> in project {{project.name}}.</p>",
+                "You were unassigned from task {{task.title}} in project {{project.name}}.",
+                EmailRecipientStrategy.EVENT_VARIABLE_USER, false, null);
+
+        seed("PROJECT_TASK_UNASSIGNED_INAPP", "Task Unassigned In-App", "TASK_UNASSIGNED",
+                "Unassigned: {{task.title}}",
+                "<p>Unassigned from {{task.title}}</p>",
+                "Unassigned from {{task.title}}",
+                EmailRecipientStrategy.EVENT_VARIABLE_USER, false, null);
         seed("PROJECT_TASK_DUE_SOON_INAPP", "Task Due Soon In-App", "PROJECT_TASK_DUE_SOON",
                 "Due soon: {{task.title}}", "<p>Due soon: {{task.title}}</p>", "Due soon: {{task.title}}",
                 EmailRecipientStrategy.TASK_ASSIGNEE, false, null);

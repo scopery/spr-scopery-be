@@ -10,6 +10,7 @@ public final class ProjectNotificationEventCodes {
     /** Outbox event codes that should fan into Phase 06 notification dispatch. */
     public static final Set<String> BRIDGEABLE_EVENT_CODES = Set.of(
             "TASK_ASSIGNED",
+            "TASK_UNASSIGNED",
             "TASK_DUE_DATE_CAPACITY_GAP_DETECTED",
             "SCHEDULE_RUN_FAILED",
             "TASK_SCHEDULE_AT_RISK",

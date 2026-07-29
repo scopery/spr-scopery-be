@@ -47,5 +47,8 @@ public final class WorkspaceApiPaths {
     public static final String ORGANIZATION_ACTIVITY_FEED =
             BASE_ORGS + "/{organizationId}/activity-feed";
 
+    public static final String WORKSPACE_TASK_DAILY_SUMMARY =
+            BASE_WORKSPACES + "/{workspaceId}/tasks/daily-summary";
+
     private WorkspaceApiPaths() {}
 }

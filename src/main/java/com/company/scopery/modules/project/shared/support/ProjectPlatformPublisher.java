@@ -100,6 +100,28 @@ public class ProjectPlatformPublisher {
                 taskNotificationPayload(task, project, actorUserId));
     }
 
+    public void enqueueTaskUnassigned(Task task, UUID previousAssigneeId) {
+        Project project = projectRepository.findById(task.projectId()).orElse(null);
+        UUID actorUserId = resolveActorUserId();
+        Map<String, Object> payload = taskNotificationPayload(task, project, actorUserId);
+        // Override assignee to the previous holder for audit context
+        Map<String, Object> assignee = new LinkedHashMap<>();
+        assignee.put("userId", previousAssigneeId);
+        payload.put("assignee", assignee);
+        payload.put("previousAssigneeUserId", previousAssigneeId);
+        // targetUser.userId is consumed by EVENT_VARIABLE_USER recipient strategy to notify only the previous assignee
+        Map<String, Object> targetUser = new LinkedHashMap<>();
+        targetUser.put("userId", previousAssigneeId);
+        payload.put("targetUser", targetUser);
+        outboxService.enqueue(
+                AGGREGATE_TASK,
+                task.id(),
+                "TASK_UNASSIGNED",
+                ProjectEventDefinitionSeedInitializer.SOURCE_SYSTEM,
+                1,
+                payload);
+    }
+
     public void enqueueDependency(TaskDependency dep, String eventCode) {
         outboxService.enqueue(
                 AGGREGATE_TASK_DEPENDENCY,

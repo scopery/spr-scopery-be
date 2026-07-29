@@ -15,6 +15,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -55,7 +56,13 @@ public class ProjectNotificationOutboxBridgeListener {
                 log.debug("[ProjectNotificationBridge] No EventDefinition for {}", event.eventType());
                 return;
             }
-            Map<String, Object> payload = parsePayload(event.payloadJson());
+            Map<String, Object> envelope = parsePayload(event.payloadJson());
+            // TransactionalOutboxService always wraps the domain payload under "data" — unwrap it
+            // so downstream handlers (recipient resolver, template renderer) see flat keys directly.
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payload = envelope.get("data") instanceof Map<?, ?> dataMap
+                    ? new LinkedHashMap<>((Map<String, Object>) dataMap)
+                    : new LinkedHashMap<>(envelope);
             payload.putIfAbsent("eventCode", event.eventType());
             payload.putIfAbsent("aggregateId", event.aggregateId() == null ? null : event.aggregateId().toString());
             payload.putIfAbsent("occurrenceId", event.outboxId() == null ? null : event.outboxId().toString());

@@ -113,6 +113,12 @@ public class JpaTaskRepository implements TaskRepository {
     }
 
     @Override
+    public List<Object[]> findDailySummaryRows(UUID workspaceId, Collection<UUID> userIds, LocalDate date) {
+        if (userIds.isEmpty()) return List.of();
+        return springDataRepository.findDailySummaryRows(workspaceId, userIds, date);
+    }
+
+    @Override
     public long countUndatedForUser(Collection<UUID> projectIds, UUID userId, boolean excludeTerminal) {
         if (projectIds.isEmpty()) return 0L;
         Specification<TaskJpaEntity> spec = (root, query, cb) -> {
