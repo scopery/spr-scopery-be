@@ -12,6 +12,7 @@ import com.company.scopery.modules.iam.permission.domain.model.IamPermissionActi
 import com.company.scopery.modules.iam.permission.domain.model.IamPermissionActionDefinitionRepository;
 import com.company.scopery.modules.iam.permission.domain.model.IamPermissionRepository;
 import com.company.scopery.modules.iam.permission.domain.valueobject.IamPermissionCode;
+import com.company.scopery.modules.iam.resource.domain.enums.IamResourceStatus;
 import com.company.scopery.modules.iam.resource.domain.enums.IamResourceType;
 import com.company.scopery.modules.iam.resource.domain.model.IamAuthResource;
 import com.company.scopery.modules.iam.resource.domain.model.IamAuthResourceRepository;
@@ -61,7 +62,16 @@ public class EnsureProjectMemberBaselineAccessAction {
             new BaselineAction(IamPermissionCodes.DECISION_MANAGEMENT, IamActionCodes.VIEW),
             new BaselineAction(IamPermissionCodes.DELIVERABLE_MANAGEMENT, IamActionCodes.VIEW),
             new BaselineAction(IamPermissionCodes.REPORTING_MANAGEMENT, IamActionCodes.DASHBOARD_VIEW),
-            new BaselineAction(IamPermissionCodes.REPORTING_MANAGEMENT, IamActionCodes.REPORT_VIEW)
+            new BaselineAction(IamPermissionCodes.REPORTING_MANAGEMENT, IamActionCodes.REPORT_VIEW),
+            new BaselineAction(IamPermissionCodes.QUALITY_MANAGEMENT, IamActionCodes.VIEW),
+            new BaselineAction(IamPermissionCodes.TEST_MANAGEMENT, IamActionCodes.VIEW),
+            new BaselineAction(IamPermissionCodes.TEST_MANAGEMENT, IamActionCodes.CREATE),
+            new BaselineAction(IamPermissionCodes.TEST_MANAGEMENT, IamActionCodes.UPDATE),
+            new BaselineAction(IamPermissionCodes.TEST_MANAGEMENT, IamActionCodes.EXECUTE),
+            new BaselineAction(IamPermissionCodes.DEFECT_MANAGEMENT, IamActionCodes.VIEW),
+            new BaselineAction(IamPermissionCodes.DEFECT_MANAGEMENT, IamActionCodes.CREATE),
+            new BaselineAction(IamPermissionCodes.DEFECT_MANAGEMENT, IamActionCodes.UPDATE),
+            new BaselineAction(IamPermissionCodes.RELEASE_MANAGEMENT, IamActionCodes.VIEW)
     );
 
     private final IamAuthResourceRepository authResourceRepository;
@@ -81,6 +91,26 @@ public class EnsureProjectMemberBaselineAccessAction {
         this.grantActionRepository = grantActionRepository;
         this.permissionRepository = permissionRepository;
         this.actionRepository = actionRepository;
+    }
+
+    /**
+     * Backfill: attach any missing baseline actions onto all existing DIRECT ALLOW grants
+     * on PROJECT resources. Idempotent — safe to call on every startup.
+     */
+    @Transactional
+    public int syncAllExistingProjectMemberGrants() {
+        int attached = 0;
+        for (IamAuthResource resource : authResourceRepository.findAllByResourceTypeAndStatus(
+                IamResourceType.PROJECT, IamResourceStatus.ACTIVE)) {
+            List<IamAccessGrant> grants = grantRepository.findActiveByResource(resource.id());
+            for (IamAccessGrant grant : grants) {
+                if (grant.kind() != IamGrantKind.DIRECT || grant.effect() != IamGrantEffect.ALLOW) {
+                    continue;
+                }
+                attached += attachBaselineActions(grant.id());
+            }
+        }
+        return attached;
     }
 
     @Transactional
@@ -123,7 +153,8 @@ public class EnsureProjectMemberBaselineAccessAction {
         return created;
     }
 
-    private void attachBaselineActions(UUID grantId) {
+    private int attachBaselineActions(UUID grantId) {
+        int count = 0;
         for (BaselineAction baseline : BASELINE_ACTIONS) {
             IamPermission permission = permissionRepository
                     .findByCode(IamPermissionCode.of(baseline.permissionCode()))
@@ -144,6 +175,8 @@ public class EnsureProjectMemberBaselineAccessAction {
                 continue;
             }
             grantActionRepository.save(IamAccessGrantPermissionAction.create(grantId, action.id()));
+            count++;
         }
+        return count;
     }
 }

@@ -10,7 +10,7 @@ public record ReleasePackage(UUID id, UUID projectId, UUID workspaceId, String c
                                         String description, ReleaseType type, LocalDate planned) {
         Instant now = Instant.now();
         return new ReleasePackage(UUID.randomUUID(), projectId, workspaceId, code, versionLabel, name, description, type,
-                ReleasePackageStatus.DRAFT, planned, null, ReadinessStatus.NOT_CHECKED, null, null, null, null, null, null, null, null, null, 0, now, now);
+                ReleasePackageStatus.DRAFT, planned, null, ReadinessStatus.NOT_CHECKED, null, null, null, null, null, null, null, null, null, -1, now, now);
     }
     public ReleasePackage withReadiness(ReadinessStatus rs, String summaryJson) {
         return new ReleasePackage(id, projectId, workspaceId, code, versionLabel, name, description, releaseType, status,

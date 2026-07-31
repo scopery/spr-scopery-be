@@ -12,9 +12,11 @@ public class DefectPersistenceMapper {
                 e.getReproductionSteps(), e.getExpectedResult(), e.getActualResult(), e.getEnvironmentNotes(),
                 e.getResolutionType() == null ? null : DefectResolutionType.valueOf(e.getResolutionType()),
                 e.getResolutionNote(), e.getResolvedAt(), e.getResolvedBy(), e.getClosedAt(), e.getClosedBy(),
-                e.getReopenedAt(), e.getReopenedBy(), e.getReopenReason(), e.getSourceTestCaseResultId(), e.getSourceAiSuggestionId(),
-                e.getArchivedAt(), e.getArchivedBy(), e.getTraceId(), e.getVersion() == null ? 0 : e.getVersion(),
-                e.getCreatedAt(), e.getUpdatedAt());
+                e.getReopenedAt(), e.getReopenedBy(), e.getReopenReason(),
+                e.getSourceTestCaseResultId(), e.getSourceVerificationResultId(), e.getSourceTestRunId(),
+                e.getSourceTestCaseId(), e.getSourceVerificationCaseId(),
+                e.getSourceAiSuggestionId(), e.getArchivedAt(), e.getArchivedBy(), e.getTraceId(),
+                e.getVersion() == null ? 0 : e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public DefectJpaEntity toJpaEntity(Defect d) {
         DefectJpaEntity e = new DefectJpaEntity();
@@ -27,9 +29,15 @@ public class DefectPersistenceMapper {
         e.setResolutionType(d.resolutionType() == null ? null : d.resolutionType().name());
         e.setResolutionNote(d.resolutionNote()); e.setResolvedAt(d.resolvedAt()); e.setResolvedBy(d.resolvedBy());
         e.setClosedAt(d.closedAt()); e.setClosedBy(d.closedBy()); e.setReopenedAt(d.reopenedAt()); e.setReopenedBy(d.reopenedBy());
-        e.setReopenReason(d.reopenReason()); e.setSourceTestCaseResultId(d.sourceTestCaseResultId());
+        e.setReopenReason(d.reopenReason());
+        e.setSourceTestCaseResultId(d.sourceTestCaseResultId());
+        e.setSourceVerificationResultId(d.sourceVerificationResultId());
+        e.setSourceTestRunId(d.sourceTestRunId());
+        e.setSourceTestCaseId(d.sourceTestCaseId());
+        e.setSourceVerificationCaseId(d.sourceVerificationCaseId());
         e.setSourceAiSuggestionId(d.sourceAiSuggestionId()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
-        e.setTraceId(d.traceId()); e.setVersion(d.version());
+        e.setTraceId(d.traceId());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
         return e;
     }

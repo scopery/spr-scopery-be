@@ -54,7 +54,7 @@ public class DefectController {
     public ApiResponse<DefectResponse> create(@PathVariable UUID projectId, @Valid @RequestBody CreateDefectRequest r) {
         return ApiResponse.success(create.execute(new CreateDefectCommand(projectId, r.code(), r.title(), r.description(),
                 r.category(), r.severity(), r.priority(), r.reproductionSteps(), r.expectedResult(), r.actualResult(),
-                r.sourceTestCaseResultId())));
+                r.sourceTestCaseResultId(), r.sourceVerificationResultId())));
     }
 
     @GetMapping

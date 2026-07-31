@@ -162,11 +162,12 @@ public class ProjectDashboardQueryService {
         Project project = requireProject(projectId);
         Map<String, Object> taskRisk = computeTaskRisk(projectId);
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("project", Map.of(
-                "id", project.id(),
-                "code", project.code(),
-                "name", project.name(),
-                "status", project.status().name()));
+        Map<String, Object> projectMap = new LinkedHashMap<>();
+        projectMap.put("id", project.id());
+        projectMap.put("code", project.code() != null ? project.code() : "");
+        projectMap.put("name", project.name() != null ? project.name() : "");
+        projectMap.put("status", project.status() != null ? project.status().name() : "UNKNOWN");
+        result.put("project", projectMap);
         result.put("taskRisk", taskRisk);
         result.put("health", computeHealth(projectId, taskRisk));
         result.put("baseline", Map.of(

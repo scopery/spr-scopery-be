@@ -7,6 +7,6 @@ public record ReleaseReadinessCheck(UUID id, UUID projectId, UUID releasePackage
     public static ReleaseReadinessCheck create(UUID projectId, UUID releasePackageId, String code, String name,
                                                ReadinessCheckStatus status, String details, boolean blocking) {
         Instant now = Instant.now();
-        return new ReleaseReadinessCheck(UUID.randomUUID(), projectId, releasePackageId, code, name, status, details, blocking, null, null, null, 0, now, now);
+        return new ReleaseReadinessCheck(UUID.randomUUID(), projectId, releasePackageId, code, name, status, details, blocking, null, null, null, -1, now, now);
     }
 }

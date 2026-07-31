@@ -25,5 +25,14 @@ public final class TraceabilityTableNames {
     public static final String FUNCTION_API = "app_function_api";
     public static final String SCREEN_COMPONENT = "app_screen_component";
     public static final String NFR_SCOPE_TARGET = "app_nfr_scope_target";
+    public static final String USE_CASE                      = "app_use_case";
+    public static final String USE_CASE_SUPPORTING_FUNCTION  = "app_use_case_supporting_function";
+    public static final String USE_CASE_CONDITION            = "app_use_case_condition";
+    public static final String USE_CASE_FLOW                 = "app_use_case_flow";
+    public static final String USE_CASE_FLOW_STEP            = "app_use_case_flow_step";
+    public static final String USE_CASE_BUSINESS_RULE        = "app_use_case_business_rule";
+    public static final String USE_CASE_ACCEPTANCE_CRITERION = "app_use_case_acceptance_criterion";
+    public static final String REQUIREMENT_FUNCTION          = "app_requirement_function";
+    public static final String REQUIREMENT_USE_CASE          = "app_requirement_use_case";
     private TraceabilityTableNames() {}
 }

@@ -23,6 +23,14 @@ public final class TraceabilityEntityTypes {
     public static final String FUNCTION_SCREEN = "FUNCTION_SCREEN";
     public static final String FUNCTION_API = "FUNCTION_API";
     public static final String SCREEN_COMPONENT = "SCREEN_COMPONENT";
-    public static final String NFR_SCOPE_TARGET = "NFR_SCOPE_TARGET";
+    public static final String NFR_SCOPE_TARGET   = "NFR_SCOPE_TARGET";
+    public static final String FUNCTION_WORKFLOW      = "FUNCTION_WORKFLOW";
+    public static final String FUNCTION_WORKFLOW_STEP = "FUNCTION_WORKFLOW_STEP";
+    public static final String USE_CASE                      = "USE_CASE";
+    public static final String USE_CASE_FLOW                 = "USE_CASE_FLOW";
+    public static final String USE_CASE_FLOW_STEP            = "USE_CASE_FLOW_STEP";
+    public static final String USE_CASE_CONDITION            = "USE_CASE_CONDITION";
+    public static final String USE_CASE_BUSINESS_RULE        = "USE_CASE_BUSINESS_RULE";
+    public static final String USE_CASE_ACCEPTANCE_CRITERION = "USE_CASE_ACCEPTANCE_CRITERION";
     private TraceabilityEntityTypes() {}
 }

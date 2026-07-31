@@ -27,6 +27,12 @@ public final class QualityExceptions {
     public static AppException testStepNotFound(UUID id) {
         return new AppException(QualityErrorCatalog.TEST_STEP_NOT_FOUND, "Test step not found: " + id, Map.of("id", id == null ? "" : id));
     }
+    public static AppException testCaseStepNotFound(UUID id) {
+        return new AppException(QualityErrorCatalog.TEST_CASE_STEP_NOT_FOUND, "Test case step not found: " + id, Map.of("id", id == null ? "" : id));
+    }
+    public static AppException staleVersion() {
+        return new AppException(QualityErrorCatalog.STALE_VERSION);
+    }
     public static AppException testRunNotFound(UUID id) {
         return new AppException(QualityErrorCatalog.TEST_RUN_NOT_FOUND, "Test run not found: " + id, Map.of("id", id == null ? "" : id));
     }
@@ -80,5 +86,29 @@ public final class QualityExceptions {
     }
     public static AppException nameRequired() {
         return new AppException(QualityErrorCatalog.QUALITY_NAME_REQUIRED);
+    }
+    public static AppException verificationCaseNotFound(UUID id) {
+        return new AppException(QualityErrorCatalog.VERIFICATION_CASE_NOT_FOUND, "Verification case not found: " + id, Map.of("id", id == null ? "" : id));
+    }
+    public static AppException verificationCaseAlreadyArchived(UUID id) {
+        return new AppException(QualityErrorCatalog.VERIFICATION_CASE_ARCHIVED, "Verification case already archived: " + id, Map.of("id", id));
+    }
+    public static AppException nfrSpecificationNotFound(UUID requirementId) {
+        return new AppException(QualityErrorCatalog.NFR_SPECIFICATION_NOT_FOUND, "NFR specification not found for requirement: " + requirementId, Map.of("requirementId", requirementId == null ? "" : requirementId));
+    }
+    public static AppException verificationResultNotFound(UUID id) {
+        return new AppException(QualityErrorCatalog.VERIFICATION_RESULT_NOT_FOUND, "Verification result not found: " + id, Map.of("id", id == null ? "" : id));
+    }
+    public static AppException runMembershipScopeMismatch(String caseKind, String runScope) {
+        return new AppException(QualityErrorCatalog.RUN_MEMBERSHIP_SCOPE_MISMATCH, "Case kind " + caseKind + " not allowed for run scope " + runScope, Map.of("caseKind", caseKind, "runScope", runScope));
+    }
+    public static AppException runMembershipRunClosed(UUID runId) {
+        return new AppException(QualityErrorCatalog.RUN_MEMBERSHIP_RUN_CLOSED, "Cannot modify membership of a completed or cancelled run: " + runId, Map.of("runId", runId));
+    }
+    public static AppException runMembershipCaseNotFound(UUID caseId) {
+        return new AppException(QualityErrorCatalog.RUN_MEMBERSHIP_CASE_NOT_FOUND, "Case not found in this project: " + caseId, Map.of("caseId", caseId == null ? "" : caseId));
+    }
+    public static AppException defectSourceResultNotFound(UUID resultId) {
+        return new AppException(QualityErrorCatalog.DEFECT_SOURCE_NOT_FOUND, "Source result not found: " + resultId, Map.of("resultId", resultId == null ? "" : resultId));
     }
 }

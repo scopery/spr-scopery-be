@@ -20,7 +20,8 @@ public class DeploymentRecordPersistenceMapper {
         e.setStartedAt(d.startedAt()); e.setCompletedAt(d.completedAt()); e.setDeployedBy(d.deployedBy());
         e.setFailureReason(d.failureReason()); e.setRollbackPlanId(d.rollbackPlanId());
         e.setRolledBackAt(d.rolledBackAt()); e.setRolledBackBy(d.rolledBackBy()); e.setRollbackReason(d.rollbackReason());
-        e.setTraceId(d.traceId()); e.setVersion(d.version());
+        e.setTraceId(d.traceId());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

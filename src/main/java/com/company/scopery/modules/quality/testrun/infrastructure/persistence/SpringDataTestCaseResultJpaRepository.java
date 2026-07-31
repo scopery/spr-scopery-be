@@ -3,4 +3,5 @@ import org.springframework.data.jpa.repository.JpaRepository; import java.util.*
 public interface SpringDataTestCaseResultJpaRepository extends JpaRepository<TestCaseResultJpaEntity, UUID> {
     Optional<TestCaseResultJpaEntity> findByIdAndProjectId(UUID id, UUID projectId);
     List<TestCaseResultJpaEntity> findByTestRunIdOrderByCreatedAtAsc(UUID testRunId);
+    List<TestCaseResultJpaEntity> findByTestRunIdAndProjectIdOrderByCreatedAtAsc(UUID testRunId, UUID projectId);
 }

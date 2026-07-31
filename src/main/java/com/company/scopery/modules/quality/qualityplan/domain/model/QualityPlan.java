@@ -34,7 +34,7 @@ public record QualityPlan(
         Instant now = Instant.now();
         return new QualityPlan(UUID.randomUUID(), projectId, workspaceId, null, code, name, description,
                 QualityPlanStatus.DRAFT, false, qualityObjectives, testStrategy, entryCriteria, exitCriteria,
-                null, null, null, null, null, null, null, 0, now, now);
+                null, null, null, null, null, null, null, -1, now, now);
     }
     public QualityPlan approve(UUID actorId) {
         if (status != QualityPlanStatus.DRAFT && status != QualityPlanStatus.READY)

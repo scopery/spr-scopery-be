@@ -7,7 +7,7 @@ public record RollbackPlan(UUID id, UUID projectId, UUID releasePackageId, UUID 
     public static RollbackPlan create(UUID projectId, UUID releasePackageId, UUID deploymentRecordId, String title, String description, UUID ownerUserId, String stepsJson) {
         Instant now = Instant.now();
         return new RollbackPlan(UUID.randomUUID(), projectId, releasePackageId, deploymentRecordId, title, description, ownerUserId,
-                RollbackPlanStatus.DRAFT, stepsJson, null, null, null, null, 0, now, now);
+                RollbackPlanStatus.DRAFT, stepsJson, null, null, null, null, -1, now, now);
     }
     public RollbackPlan approve(UUID actorId) {
         return new RollbackPlan(id, projectId, releasePackageId, deploymentRecordId, title, description, ownerUserId,

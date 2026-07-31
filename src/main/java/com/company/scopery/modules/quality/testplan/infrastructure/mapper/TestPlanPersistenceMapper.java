@@ -16,7 +16,8 @@ public class TestPlanPersistenceMapper {
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setWorkspaceId(d.workspaceId()); e.setQualityPlanId(d.qualityPlanId());
         e.setReleasePackageId(d.releasePackageId()); e.setCode(d.code()); e.setName(d.name()); e.setDescription(d.description());
         e.setTestLevel(d.testLevel().name()); e.setStatus(d.status().name()); e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

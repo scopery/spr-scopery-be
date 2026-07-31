@@ -7,7 +7,20 @@ public final class QualityActivityActions {
     public static final String TEST_PLAN_APPROVED = "TEST_PLAN_APPROVED";
     public static final String TEST_SUITE_CREATED = "TEST_SUITE_CREATED";
     public static final String TEST_CASE_CREATED = "TEST_CASE_CREATED";
+    public static final String TEST_CASE_UPDATED = "TEST_CASE_UPDATED";
+    public static final String TEST_CASE_BATCH_UPDATED = "TEST_CASE_BATCH_UPDATED";
+    public static final String TEST_CASE_BATCH_CREATED = "TEST_CASE_BATCH_CREATED";
     public static final String TEST_CASE_APPROVED = "TEST_CASE_APPROVED";
+    public static final String TEST_CASE_STEP_CREATED = "TEST_CASE_STEP_CREATED";
+    public static final String TEST_CASE_STEP_UPDATED = "TEST_CASE_STEP_UPDATED";
+    public static final String TEST_CASE_STEP_ARCHIVED = "TEST_CASE_STEP_ARCHIVED";
+    public static final String TEST_CASE_STEP_DUPLICATED = "TEST_CASE_STEP_DUPLICATED";
+    public static final String TEST_CASE_STEPS_REORDERED = "TEST_CASE_STEPS_REORDERED";
+    public static final String TEST_CASE_STEP_BATCH_CREATED = "TEST_CASE_STEP_BATCH_CREATED";
+    public static final String TEST_CASE_REQUIREMENT_LINKS_UPDATED = "TEST_CASE_REQUIREMENT_LINKS_UPDATED";
+    public static final String TEST_CASE_USE_CASE_LINKS_UPDATED = "TEST_CASE_USE_CASE_LINKS_UPDATED";
+    public static final String TEST_RUN_RESULT_UPDATED = "TEST_RUN_RESULT_UPDATED";
+    public static final String TEST_RUN_RESULTS_BATCH_UPDATED = "TEST_RUN_RESULTS_BATCH_UPDATED";
     public static final String TEST_RUN_CREATED = "TEST_RUN_CREATED";
     public static final String TEST_RUN_STARTED = "TEST_RUN_STARTED";
     public static final String TEST_RUN_COMPLETED = "TEST_RUN_COMPLETED";
@@ -28,5 +41,14 @@ public final class QualityActivityActions {
     public static final String DEPLOYMENT_SUCCEEDED = "DEPLOYMENT_SUCCEEDED";
     public static final String DEPLOYMENT_FAILED = "DEPLOYMENT_FAILED";
     public static final String ROLLBACK_PLAN_APPROVED = "ROLLBACK_PLAN_APPROVED";
+    public static final String VERIFICATION_CASE_CREATED = "VERIFICATION_CASE_CREATED";
+    public static final String VERIFICATION_CASE_UPDATED = "VERIFICATION_CASE_UPDATED";
+    public static final String VERIFICATION_CASE_ARCHIVED = "VERIFICATION_CASE_ARCHIVED";
+    public static final String NFR_SPECIFICATION_SAVED = "NFR_SPECIFICATION_SAVED";
+    public static final String NFR_TARGETS_MANAGED = "NFR_TARGETS_MANAGED";
+    public static final String VERIFICATION_RESULT_RECORDED = "VERIFICATION_RESULT_RECORDED";
+    public static final String VERIFICATION_RESULT_UPDATED = "VERIFICATION_RESULT_UPDATED";
+    public static final String RUN_MEMBERSHIP_UPDATED = "RUN_MEMBERSHIP_UPDATED";
+    public static final String RUN_MEMBERSHIP_COPIED = "RUN_MEMBERSHIP_COPIED";
     private QualityActivityActions() {}
 }

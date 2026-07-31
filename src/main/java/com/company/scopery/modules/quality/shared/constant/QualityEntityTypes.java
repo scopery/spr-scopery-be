@@ -5,6 +5,7 @@ public final class QualityEntityTypes {
     public static final String TEST_SUITE = "TEST_SUITE";
     public static final String TEST_CASE = "TEST_CASE";
     public static final String TEST_STEP = "TEST_STEP";
+    public static final String TEST_CASE_STEP = "TEST_CASE_STEP";
     public static final String TEST_RUN = "TEST_RUN";
     public static final String TEST_CASE_RESULT = "TEST_CASE_RESULT";
     public static final String DEFECT = "DEFECT";
@@ -14,5 +15,10 @@ public final class QualityEntityTypes {
     public static final String DEPLOYMENT_ENVIRONMENT = "DEPLOYMENT_ENVIRONMENT";
     public static final String DEPLOYMENT_RECORD = "DEPLOYMENT_RECORD";
     public static final String ROLLBACK_PLAN = "ROLLBACK_PLAN";
+    public static final String VERIFICATION_CASE = "VERIFICATION_CASE";
+    public static final String NFR_SPECIFICATION = "NFR_SPECIFICATION";
+    public static final String NFR_TARGET = "NFR_TARGET";
+    public static final String VERIFICATION_CASE_RESULT = "VERIFICATION_CASE_RESULT";
+    public static final String RUN_MEMBERSHIP = "RUN_MEMBERSHIP";
     private QualityEntityTypes() {}
 }

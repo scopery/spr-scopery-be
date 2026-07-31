@@ -171,28 +171,33 @@ public class ProjectNotificationTemplateRuleSeedInitializer implements Applicati
     private void seed(String templateCode, String name, String eventCode,
                       String subject, String html, String text,
                       EmailRecipientStrategy strategy, boolean mandatory, String recipientConfigJson) {
-        if (templateRepository.existsByCode(templateCode)) {
-            return;
-        }
         UUID eventDefId = eventDefinitionRepository.findByCode(EventDefinitionCode.of(eventCode))
                 .map(e -> e.id()).orElse(null);
         if (eventDefId == null) {
             log.warn("[ProjectNotificationTemplateRuleSeed] Event {} missing, skip {}", eventCode, templateCode);
             return;
         }
-        EmailTemplate template = EmailTemplate.createSystem(
-                EmailTemplateCode.of(templateCode), name, "Phase 20 project notification template", eventDefId);
-        template = templateRepository.save(template);
-        EmailTemplateVersion version = EmailTemplateVersion.createDraft(template.id(), 1, subject, html, text);
-        version.publish();
-        version = templateRepository.saveVersion(version);
-        template.publishVersion(version.id());
-        templateRepository.save(template);
+
+        UUID templateId;
+        if (templateRepository.existsByCode(templateCode)) {
+            templateId = templateRepository.findByCode(templateCode).map(EmailTemplate::id).orElse(null);
+            if (templateId == null) return;
+        } else {
+            EmailTemplate template = EmailTemplate.createSystem(
+                    EmailTemplateCode.of(templateCode), name, "Phase 20 project notification template", eventDefId);
+            template = templateRepository.save(template);
+            EmailTemplateVersion version = EmailTemplateVersion.createDraft(template.id(), 1, subject, html, text);
+            version.publish();
+            version = templateRepository.saveVersion(version);
+            template.publishVersion(version.id());
+            templateRepository.save(template);
+            templateId = template.id();
+        }
 
         String ruleCode = "RULE_" + templateCode;
         if (!ruleRepository.existsByCode(ruleCode)) {
             EmailRule rule = EmailRule.createSystem(
-                    ruleCode, name + " Rule", null, eventDefId, template.id(),
+                    ruleCode, name + " Rule", null, eventDefId, templateId,
                     strategy, recipientConfigJson, 20, mandatory, false);
             ruleRepository.save(rule);
         }

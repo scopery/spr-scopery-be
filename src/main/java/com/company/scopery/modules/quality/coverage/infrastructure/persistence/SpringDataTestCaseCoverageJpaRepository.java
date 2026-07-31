@@ -4,4 +4,5 @@ import java.util.*;
 public interface SpringDataTestCaseCoverageJpaRepository extends JpaRepository<TestCaseCoverageJpaEntity, UUID> {
     Optional<TestCaseCoverageJpaEntity> findByIdAndProjectId(UUID id, UUID projectId);
     List<TestCaseCoverageJpaEntity> findByProjectIdAndTestCaseIdOrderByCreatedAtDesc(UUID projectId, UUID testCaseId);
+    List<TestCaseCoverageJpaEntity> findByProjectIdAndTestCaseIdAndTargetType(UUID projectId, UUID testCaseId, String targetType);
 }

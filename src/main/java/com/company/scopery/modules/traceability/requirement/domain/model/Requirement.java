@@ -6,13 +6,15 @@ public record Requirement(UUID id, UUID projectId, UUID workspaceId, UUID applic
         RequirementType requirementType, RequirementPriority priority, RequirementStatus status, UUID ownerUserId,
         int currentVersionNumber, Instant archivedAt, UUID archivedBy,
         UUID functionalItemId, UUID nonFunctionalItemId, UUID scopeItemId, UUID scopePackageId,
+        String requiresUseCase,
         Integer version, Instant createdAt, Instant updatedAt) {
     public static Requirement create(UUID projectId, UUID workspaceId, UUID applicationId, String code, String title, String description,
                                      RequirementType type, RequirementPriority priority,
                                      UUID functionalItemId, UUID nonFunctionalItemId, UUID scopeItemId, UUID scopePackageId) {
         Instant now = Instant.now();
         return new Requirement(UUID.randomUUID(), projectId, workspaceId, applicationId, code, title, description, type, priority,
-                RequirementStatus.DRAFT, null, 1, null, null, functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, null, now, now);
+                RequirementStatus.DRAFT, null, 1, null, null, functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId,
+                "AUTO", null, now, now);
     }
     public Requirement approve() {
         return copyWith(status, RequirementStatus.APPROVED, functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, archivedAt, archivedBy);
@@ -38,11 +40,11 @@ public record Requirement(UUID id, UUID projectId, UUID workspaceId, UUID applic
         Instant now = Instant.now();
         return new Requirement(id, projectId, workspaceId, applicationId, code, title, description, requirementType, priority,
                 RequirementStatus.ARCHIVED, ownerUserId, currentVersionNumber, now, archivedBy,
-                functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, version, createdAt, now);
+                functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, requiresUseCase, version, createdAt, now);
     }
     public Requirement update(String title, String description, RequirementPriority priority, RequirementType type,
                               UUID applicationId, UUID functionalItemId, UUID nonFunctionalItemId, UUID scopeItemId,
-                              UUID scopePackageId) {
+                              UUID scopePackageId, String requiresUseCase) {
         if (status == RequirementStatus.APPROVED)
             throw TraceabilityExceptions.requirementImmutable();
         return new Requirement(id, projectId, workspaceId,
@@ -57,6 +59,7 @@ public record Requirement(UUID id, UUID projectId, UUID workspaceId, UUID applic
                 nonFunctionalItemId != null ? nonFunctionalItemId : this.nonFunctionalItemId,
                 scopeItemId != null ? scopeItemId : this.scopeItemId,
                 scopePackageId != null ? scopePackageId : this.scopePackageId,
+                requiresUseCase != null ? requiresUseCase : this.requiresUseCase,
                 version, createdAt, Instant.now());
     }
 
@@ -64,12 +67,19 @@ public record Requirement(UUID id, UUID projectId, UUID workspaceId, UUID applic
     public Requirement withScopePackageId(UUID scopePackageId) {
         return new Requirement(id, projectId, workspaceId, applicationId, code, title, description, requirementType, priority,
                 status, ownerUserId, currentVersionNumber, archivedAt, archivedBy,
-                functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, version, createdAt, Instant.now());
+                functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, requiresUseCase, version, createdAt, Instant.now());
+    }
+
+    /** Explicit override of requiresUseCase value. */
+    public Requirement withRequiresUseCase(String requiresUseCase) {
+        return new Requirement(id, projectId, workspaceId, applicationId, code, title, description, requirementType, priority,
+                status, ownerUserId, currentVersionNumber, archivedAt, archivedBy,
+                functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, requiresUseCase, version, createdAt, Instant.now());
     }
 
     private Requirement copyWith(RequirementStatus ignored, RequirementStatus newStatus,
                                  UUID fi, UUID nfi, UUID si, UUID sp, Instant archAt, UUID archBy) {
         return new Requirement(id, projectId, workspaceId, applicationId, code, title, description, requirementType, priority,
-                newStatus, ownerUserId, currentVersionNumber, archAt, archBy, fi, nfi, si, sp, version, createdAt, Instant.now());
+                newStatus, ownerUserId, currentVersionNumber, archAt, archBy, fi, nfi, si, sp, requiresUseCase, version, createdAt, Instant.now());
     }
 }

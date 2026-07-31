@@ -14,7 +14,8 @@ public class TestCaseCoveragePersistenceMapper {
         TestCaseCoverageJpaEntity e = new TestCaseCoverageJpaEntity();
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setTestCaseId(d.testCaseId());
         e.setTargetType(d.targetType()); e.setTargetId(d.targetId()); e.setCoverageType(d.coverageType().name());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

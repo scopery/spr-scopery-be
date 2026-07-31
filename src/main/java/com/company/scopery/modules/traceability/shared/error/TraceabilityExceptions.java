@@ -47,4 +47,19 @@ public final class TraceabilityExceptions {
     public static AppException nfrScopeTargetNotFound(UUID nfrId, UUID targetId){return new AppException(TraceabilityErrorCatalog.NFR_SCOPE_TARGET_NOT_FOUND,"NFR scope target not found",Map.of("nfrId",nfrId==null?"":nfrId,"targetId",targetId==null?"":targetId));}
     public static AppException importInvalidFunctionalItem(String reason){return new AppException(TraceabilityErrorCatalog.FUNCTIONAL_IMPORT_INVALID_ITEM,reason,Map.of());}
     public static AppException importFunctionalItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.FUNCTIONAL_IMPORT_ITEM_NOT_FOUND,"Functional item not found in project: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.USE_CASE_NOT_FOUND,"Use case not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseKeyExists(String key){return new AppException(TraceabilityErrorCatalog.USE_CASE_KEY_EXISTS,"Use case key already exists: "+key,Map.of("key",key));}
+    public static AppException useCaseFlowNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.USE_CASE_FLOW_NOT_FOUND,"Use case flow not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseFlowStepNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.USE_CASE_FLOW_STEP_NOT_FOUND,"Flow step not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseMainFlowExists(UUID useCaseId){return new AppException(TraceabilityErrorCatalog.USE_CASE_MAIN_FLOW_EXISTS,"Main flow already exists for use case: "+useCaseId,Map.of("useCaseId",useCaseId==null?"":useCaseId));}
+    public static AppException useCaseConditionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.USE_CASE_CONDITION_NOT_FOUND,"Use case condition not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseBusinessRuleNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.USE_CASE_BUSINESS_RULE_NOT_FOUND,"Use case business rule not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseCriterionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.USE_CASE_CRITERION_NOT_FOUND,"Acceptance criterion not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException useCaseSupportingFnDuplicate(){return new AppException(TraceabilityErrorCatalog.USE_CASE_SUPPORTING_FN_DUPLICATE);}
+    public static AppException useCaseSupportingFnNotFound(UUID useCaseId, UUID functionId){return new AppException(TraceabilityErrorCatalog.USE_CASE_SUPPORTING_FN_NOT_FOUND,"Supporting function link not found",Map.of("useCaseId",useCaseId==null?"":useCaseId,"functionId",functionId==null?"":functionId));}
+    public static AppException useCaseScreenNotLinked(UUID screenId){return new AppException(TraceabilityErrorCatalog.USE_CASE_SCREEN_NOT_LINKED,"Screen not linked to primary function: "+screenId,Map.of("screenId",screenId==null?"":screenId));}
+    public static AppException requirementFunctionDuplicate(){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_FUNCTION_DUPLICATE);}
+    public static AppException requirementFunctionNotFound(UUID reqId, UUID fnId){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_FUNCTION_NOT_FOUND,"Requirement-function link not found",Map.of("requirementId",reqId==null?"":reqId,"functionId",fnId==null?"":fnId));}
+    public static AppException requirementUseCaseDuplicate(){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_DUPLICATE);}
+    public static AppException requirementUseCaseNotFound(UUID reqId, UUID ucId){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_NOT_FOUND,"Requirement-use case link not found",Map.of("requirementId",reqId==null?"":reqId,"useCaseId",ucId==null?"":ucId));}
 }

@@ -20,7 +20,8 @@ public class ReleasePackagePersistenceMapper {
         e.setReadinessStatus(d.readinessStatus()==null?null:d.readinessStatus().name());
         e.setReadinessSummaryJson(d.readinessSummaryJson()); e.setReleaseNotes(d.releaseNotes());
         e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy()); e.setReleasedAt(d.releasedAt()); e.setReleasedBy(d.releasedBy());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

@@ -9,5 +9,8 @@ public class TestCaseResultJpaEntity extends AuditableJpaEntity {
     @Column(name="actual_result", columnDefinition="text") private String actualResult;
     @Column(name="evidence_reference", columnDefinition="text") private String evidenceReference;
     @Column(name="executed_at") private Instant executedAt; @Column(name="executed_by") private UUID executedBy;
-    @Column(name="defect_id") private UUID defectId; @Version private Integer version;
+    @Column(name="defect_id") private UUID defectId;
+    @Column(name="comment", columnDefinition="text") private String comment;
+    @Column(name="assignee_id") private UUID assigneeId;
+    @Version private Integer version;
 }

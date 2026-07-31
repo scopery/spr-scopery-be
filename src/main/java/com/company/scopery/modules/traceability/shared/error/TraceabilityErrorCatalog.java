@@ -56,7 +56,22 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     NFR_SCOPE_TARGET_DUPLICATE("NFR_SCOPE_TARGET_DUPLICATE", "This target is already linked to the NFR", HttpStatus.CONFLICT),
     NFR_SCOPE_TARGET_NOT_FOUND("NFR_SCOPE_TARGET_NOT_FOUND", "NFR scope target link not found", HttpStatus.NOT_FOUND),
     FUNCTIONAL_IMPORT_INVALID_ITEM("FUNCTIONAL_IMPORT_INVALID_ITEM", "Import item is invalid", HttpStatus.BAD_REQUEST),
-    FUNCTIONAL_IMPORT_ITEM_NOT_FOUND("FUNCTIONAL_IMPORT_ITEM_NOT_FOUND", "Update target functional item not found in project", HttpStatus.NOT_FOUND);
+    FUNCTIONAL_IMPORT_ITEM_NOT_FOUND("FUNCTIONAL_IMPORT_ITEM_NOT_FOUND", "Update target functional item not found in project", HttpStatus.NOT_FOUND),
+    USE_CASE_NOT_FOUND("USE_CASE_NOT_FOUND", "Use case not found", HttpStatus.NOT_FOUND),
+    USE_CASE_KEY_EXISTS("USE_CASE_KEY_ALREADY_EXISTS", "Use case key already exists in this project", HttpStatus.CONFLICT),
+    USE_CASE_FLOW_NOT_FOUND("USE_CASE_FLOW_NOT_FOUND", "Use case flow not found", HttpStatus.NOT_FOUND),
+    USE_CASE_FLOW_STEP_NOT_FOUND("USE_CASE_FLOW_STEP_NOT_FOUND", "Flow step not found", HttpStatus.NOT_FOUND),
+    USE_CASE_MAIN_FLOW_EXISTS("USE_CASE_MAIN_FLOW_ALREADY_EXISTS", "A main flow already exists for this use case", HttpStatus.CONFLICT),
+    USE_CASE_CONDITION_NOT_FOUND("USE_CASE_CONDITION_NOT_FOUND", "Use case condition not found", HttpStatus.NOT_FOUND),
+    USE_CASE_BUSINESS_RULE_NOT_FOUND("USE_CASE_BUSINESS_RULE_NOT_FOUND", "Use case business rule not found", HttpStatus.NOT_FOUND),
+    USE_CASE_CRITERION_NOT_FOUND("USE_CASE_CRITERION_NOT_FOUND", "Acceptance criterion not found", HttpStatus.NOT_FOUND),
+    USE_CASE_SUPPORTING_FN_DUPLICATE("USE_CASE_SUPPORTING_FN_DUPLICATE", "Function already linked as supporting function", HttpStatus.CONFLICT),
+    USE_CASE_SUPPORTING_FN_NOT_FOUND("USE_CASE_SUPPORTING_FN_NOT_FOUND", "Supporting function link not found", HttpStatus.NOT_FOUND),
+    USE_CASE_SCREEN_NOT_LINKED("USE_CASE_SCREEN_NOT_LINKED", "Screen is not linked to the primary function of this use case", HttpStatus.UNPROCESSABLE_ENTITY),
+    REQUIREMENT_FUNCTION_DUPLICATE("REQUIREMENT_FUNCTION_DUPLICATE", "Requirement already linked to this function", HttpStatus.CONFLICT),
+    REQUIREMENT_FUNCTION_NOT_FOUND("REQUIREMENT_FUNCTION_NOT_FOUND", "Requirement-function link not found", HttpStatus.NOT_FOUND),
+    REQUIREMENT_USE_CASE_DUPLICATE("REQUIREMENT_USE_CASE_DUPLICATE", "Requirement already linked to this use case", HttpStatus.CONFLICT),
+    REQUIREMENT_USE_CASE_NOT_FOUND("REQUIREMENT_USE_CASE_NOT_FOUND", "Requirement-use case link not found", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String defaultMessage;

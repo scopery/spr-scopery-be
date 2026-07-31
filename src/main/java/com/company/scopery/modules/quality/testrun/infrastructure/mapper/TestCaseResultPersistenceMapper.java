@@ -6,13 +6,16 @@ public class TestCaseResultPersistenceMapper {
     public TestCaseResult toDomain(TestCaseResultJpaEntity e) {
         return new TestCaseResult(e.getId(), e.getProjectId(), e.getTestRunId(), e.getTestCaseId(), TestResultStatus.valueOf(e.getResultStatus()),
                 e.getActualResult(), e.getEvidenceReference(), e.getExecutedAt(), e.getExecutedBy(), e.getDefectId(),
+                e.getComment(), e.getAssigneeId(),
                 e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public TestCaseResultJpaEntity toJpaEntity(TestCaseResult d) {
         TestCaseResultJpaEntity e = new TestCaseResultJpaEntity();
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setTestRunId(d.testRunId()); e.setTestCaseId(d.testCaseId());
         e.setResultStatus(d.resultStatus().name()); e.setActualResult(d.actualResult()); e.setEvidenceReference(d.evidenceReference());
-        e.setExecutedAt(d.executedAt()); e.setExecutedBy(d.executedBy()); e.setDefectId(d.defectId()); e.setVersion(d.version());
+        e.setExecutedAt(d.executedAt()); e.setExecutedBy(d.executedBy()); e.setDefectId(d.defectId());
+        e.setComment(d.comment()); e.setAssigneeId(d.assigneeId());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

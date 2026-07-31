@@ -8,6 +8,7 @@ public class TestCaseJpaEntity extends AuditableJpaEntity {
     @Id private UUID id;
     @Column(name="project_id", nullable=false) private UUID projectId;
     @Column(name="test_suite_id") private UUID testSuiteId;
+    @Column(name="use_case_id") private UUID useCaseId;
     private String code; @Column(nullable=false) private String title;
     @Column(columnDefinition="text") private String description;
     @Column(nullable=false) private String type; @Column(nullable=false) private String priority; @Column(nullable=false) private String status;
@@ -16,5 +17,7 @@ public class TestCaseJpaEntity extends AuditableJpaEntity {
     @Column(name="version_number", nullable=false) private int versionNumber;
     @Column(name="approved_at") private Instant approvedAt; @Column(name="approved_by") private UUID approvedBy;
     @Column(name="archived_at") private Instant archivedAt; @Column(name="archived_by") private UUID archivedBy;
+    @Column(name="assignee_id") private UUID assigneeId;
+    @Column(name="automation_status", nullable=false, length=20) private String automationStatus;
     @Version private Integer version;
 }

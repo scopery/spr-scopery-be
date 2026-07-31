@@ -22,7 +22,8 @@ public class QualityPlanPersistenceMapper {
         e.setEntryCriteria(d.entryCriteria()); e.setExitCriteria(d.exitCriteria());
         e.setDefectPolicyJson(d.defectPolicyJson()); e.setReleaseReadinessPolicyJson(d.releaseReadinessPolicyJson());
         e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy()); e.setArchivedAt(d.archivedAt());
-        e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId()); e.setVersion(d.version());
+        e.setArchivedBy(d.archivedBy()); e.setTraceId(d.traceId());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
         return e;
     }

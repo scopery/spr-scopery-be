@@ -2,8 +2,12 @@ package com.company.scopery.modules.traceability.requirement.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.requirement.application.action.*;
+import com.company.scopery.modules.traceability.requirement.application.command.SetRequiresUseCaseCommand;
+import com.company.scopery.modules.traceability.requirement.http.request.SetRequiresUseCaseRequest;
 import com.company.scopery.modules.traceability.requirement.application.command.*;
+import com.company.scopery.modules.traceability.requirement.application.response.LinkableFunctionResponse;
 import com.company.scopery.modules.traceability.requirement.application.response.LinkableTestCaseResponse;
+import com.company.scopery.modules.traceability.requirement.application.response.LinkableUseCaseResponse;
 import com.company.scopery.modules.traceability.requirement.application.response.RequirementResponse;
 import com.company.scopery.modules.traceability.requirement.application.service.RequirementQueryService;
 import com.company.scopery.modules.traceability.requirement.http.request.CreateRequirementRequest;
@@ -32,6 +36,7 @@ public class RequirementController {
     private final MarkImplementedRequirementAction markImplemented;
     private final ArchiveRequirementAction archive;
     private final LinkTestCasesToRequirementAction linkTestCases;
+    private final SetRequiresUseCaseAction setRequiresUseCase;
     private final RequirementQueryService query;
 
     public RequirementController(CreateRequirementAction create, UpdateRequirementAction update,
@@ -40,10 +45,11 @@ public class RequirementController {
                                   MarkImplementedRequirementAction markImplemented,
                                   ArchiveRequirementAction archive,
                                   LinkTestCasesToRequirementAction linkTestCases,
+                                  SetRequiresUseCaseAction setRequiresUseCase,
                                   RequirementQueryService query) {
         this.create = create; this.update = update; this.approve = approve; this.reject = reject;
         this.defer = defer; this.markImplemented = markImplemented; this.archive = archive;
-        this.linkTestCases = linkTestCases; this.query = query;
+        this.linkTestCases = linkTestCases; this.setRequiresUseCase = setRequiresUseCase; this.query = query;
     }
 
     @PostMapping
@@ -73,7 +79,8 @@ public class RequirementController {
                                                    @RequestBody UpdateRequirementRequest r) {
         return ApiResponse.success(update.execute(new UpdateRequirementCommand(
                 requirementId, projectId, r.title(), r.description(), r.priority(), r.requirementType(),
-                r.applicationId(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId(), r.scopePackageId())));
+                r.applicationId(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId(), r.scopePackageId(),
+                r.requiresUseCase())));
     }
 
     @PostMapping("/{requirementId}/approve")
@@ -122,5 +129,33 @@ public class RequirementController {
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "20") int limit) {
         return ApiResponse.success(query.linkableTestCases(projectId, requirementId, q, limit));
+    }
+
+    @PatchMapping("/{requirementId}/requires-use-case")
+    @Operation(summary = "Set requiresUseCase override (YES | NO | AUTO)")
+    public ApiResponse<RequirementResponse> setRequiresUseCase(@PathVariable UUID projectId,
+                                                                @PathVariable UUID requirementId,
+                                                                @Valid @RequestBody SetRequiresUseCaseRequest r) {
+        return ApiResponse.success(setRequiresUseCase.execute(new SetRequiresUseCaseCommand(requirementId, projectId, r.value())));
+    }
+
+    @GetMapping("/{requirementId}/linkable-functions")
+    @Operation(summary = "Search functions not yet linked to this requirement")
+    public ApiResponse<List<LinkableFunctionResponse>> linkableFunctions(
+            @PathVariable UUID projectId,
+            @PathVariable UUID requirementId,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ApiResponse.success(query.linkableFunctions(projectId, requirementId, q, limit));
+    }
+
+    @GetMapping("/{requirementId}/linkable-use-cases")
+    @Operation(summary = "Search use cases not yet linked to this requirement")
+    public ApiResponse<List<LinkableUseCaseResponse>> linkableUseCases(
+            @PathVariable UUID projectId,
+            @PathVariable UUID requirementId,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ApiResponse.success(query.linkableUseCases(projectId, requirementId, q, limit));
     }
 }

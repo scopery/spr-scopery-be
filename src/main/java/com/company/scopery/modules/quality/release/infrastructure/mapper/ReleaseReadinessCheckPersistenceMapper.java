@@ -13,7 +13,8 @@ public class ReleaseReadinessCheckPersistenceMapper {
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setReleasePackageId(d.releasePackageId());
         e.setCheckCode(d.checkCode()); e.setCheckName(d.checkName()); e.setStatus(d.status().name());
         e.setDetails(d.details()); e.setBlocking(d.blocking()); e.setOverrideReason(d.overrideReason());
-        e.setOverriddenAt(d.overriddenAt()); e.setOverriddenBy(d.overriddenBy()); e.setVersion(d.version());
+        e.setOverriddenAt(d.overriddenAt()); e.setOverriddenBy(d.overriddenBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

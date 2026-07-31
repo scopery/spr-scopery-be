@@ -15,7 +15,8 @@ public class RollbackPlanPersistenceMapper {
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setReleasePackageId(d.releasePackageId()); e.setDeploymentRecordId(d.deploymentRecordId());
         e.setTitle(d.title()); e.setDescription(d.description()); e.setOwnerUserId(d.ownerUserId()); e.setStatus(d.status().name());
         e.setStepsJson(d.stepsJson()); e.setApprovedAt(d.approvedAt()); e.setApprovedBy(d.approvedBy());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

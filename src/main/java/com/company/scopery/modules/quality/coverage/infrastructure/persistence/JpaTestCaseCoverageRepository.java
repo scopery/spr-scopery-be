@@ -17,4 +17,10 @@ public class JpaTestCaseCoverageRepository implements TestCaseCoverageRepository
     @Override public List<TestCaseCoverage> findByProjectIdAndTestCaseId(UUID projectId, UUID testCaseId) {
         return springData.findByProjectIdAndTestCaseIdOrderByCreatedAtDesc(projectId, testCaseId).stream().map(mapper::toDomain).toList();
     }
+    @Override public List<TestCaseCoverage> findByProjectIdAndTestCaseIdAndTargetType(UUID projectId, UUID testCaseId, String targetType) {
+        return springData.findByProjectIdAndTestCaseIdAndTargetType(projectId, testCaseId, targetType).stream().map(mapper::toDomain).toList();
+    }
+    @Override public void saveAll(List<TestCaseCoverage> entities) {
+        springData.saveAllAndFlush(entities.stream().map(mapper::toJpaEntity).toList());
+    }
 }

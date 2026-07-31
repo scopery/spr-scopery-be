@@ -13,8 +13,8 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import java.util.List; import java.util.UUID;
 @RestController
-@RequestMapping(QualityApiPaths.TEST_CASE_STEPS)
-@Tag(name = "Quality - Test Steps")
+@RequestMapping(QualityApiPaths.TEST_CASE_STEPS + "/legacy")
+@Tag(name = "Quality - Test Steps (Legacy)")
 public class TestStepController {
     private final CreateTestStepAction create;
     private final ArchiveTestStepAction archive;

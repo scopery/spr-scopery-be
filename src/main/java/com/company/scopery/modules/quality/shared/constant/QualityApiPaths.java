@@ -7,9 +7,20 @@ public final class QualityApiPaths {
     public static final String TEST_PLAN_SUITES = TEST_PLANS + "/{testPlanId}/suites";
     public static final String TEST_SUITES = BASE + "/test-suites";
     public static final String TEST_CASES = BASE + "/test-cases";
+    public static final String TEST_CASES_BATCH = TEST_CASES + "/batch";
     public static final String TEST_CASE_STEPS = TEST_CASES + "/{testCaseId}/steps";
+    public static final String TEST_CASE_STEP = TEST_CASE_STEPS + "/{stepId}";
+    public static final String TEST_CASE_STEPS_REORDER = TEST_CASE_STEPS + "/reorder";
+    public static final String TEST_CASE_STEPS_BATCH = TEST_CASE_STEPS + "/batch";
+    public static final String TEST_CASE_STEP_DUPLICATE = TEST_CASE_STEPS + "/{stepId}/duplicate";
+    public static final String TEST_CASE_STEP_ARCHIVE = TEST_CASE_STEPS + "/{stepId}/archive";
+    public static final String TEST_CASE_TRACEABILITY = TEST_CASES + "/{testCaseId}/traceability";
+    public static final String TEST_CASE_REQ_LINKS = TEST_CASES + "/{testCaseId}/requirement-links";
+    public static final String TEST_CASE_UC_LINKS = TEST_CASES + "/{testCaseId}/use-case-links";
     public static final String TEST_CASE_COVERAGE = TEST_CASES + "/{testCaseId}/coverage";
     public static final String TEST_RUNS = BASE + "/test-runs";
+    public static final String TEST_RUN_RESULTS = TEST_RUNS + "/{testRunId}/results";
+    public static final String TEST_RUN_RESULT = TEST_RUN_RESULTS + "/{resultId}";
     public static final String DEFECTS = BASE + "/defects";
     public static final String DEFECT_LINKS = DEFECTS + "/{defectId}/links";
     public static final String RELEASES = BASE + "/releases";
@@ -18,5 +29,13 @@ public final class QualityApiPaths {
     public static final String DEPLOYMENTS = BASE + "/deployments";
     public static final String ROLLBACK_PLANS = BASE + "/rollback-plans";
     public static final String REPORTS = BASE + "/reports";
+    public static final String VERIFICATION_CASES = BASE + "/verification-cases";
+    private static final String REQUIREMENTS_NFR_BASE = BASE + "/requirements/{requirementId}";
+    public static final String NFR_SPECIFICATION = REQUIREMENTS_NFR_BASE + "/nfr-specification";
+    public static final String NFR_TARGETS = REQUIREMENTS_NFR_BASE + "/nfr-targets";
+    public static final String VERIFICATION_RESULTS = TEST_RUNS + "/{testRunId}/verification-results";
+    public static final String VERIFICATION_RESULT = VERIFICATION_RESULTS + "/{resultId}";
+    public static final String TEST_RUN_MEMBERSHIP = TEST_RUNS + "/{testRunId}/membership";
+    public static final String TEST_RUN_MEMBERSHIP_COPY = TEST_RUN_MEMBERSHIP + "/copy";
     private QualityApiPaths() {}
 }

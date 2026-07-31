@@ -15,7 +15,8 @@ public class DeploymentEnvironmentPersistenceMapper {
         e.setId(d.id()); e.setWorkspaceId(d.workspaceId()); e.setProjectId(d.projectId());
         e.setCode(d.code()); e.setName(d.name()); e.setEnvironmentType(d.environmentType().name());
         e.setDescription(d.description()); e.setActive(d.active());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

@@ -8,6 +8,7 @@ public class RequirementPersistenceMapper {
                 RequirementType.valueOf(e.getRequirementType()), RequirementPriority.valueOf(e.getPriority()), RequirementStatus.valueOf(e.getStatus()),
                 e.getOwnerUserId(), e.getCurrentVersionNumber(), e.getArchivedAt(), e.getArchivedBy(),
                 e.getFunctionalItemId(), e.getNonFunctionalItemId(), e.getScopeItemId(), e.getScopePackageId(),
+                e.getRequiresUseCase() != null ? e.getRequiresUseCase() : "AUTO",
                 e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public RequirementJpaEntity toJpaEntity(Requirement d) {
@@ -18,6 +19,7 @@ public class RequirementPersistenceMapper {
         e.setCurrentVersionNumber(d.currentVersionNumber()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
         e.setFunctionalItemId(d.functionalItemId()); e.setNonFunctionalItemId(d.nonFunctionalItemId()); e.setScopeItemId(d.scopeItemId());
         e.setScopePackageId(d.scopePackageId());
+        e.setRequiresUseCase(d.requiresUseCase() != null ? d.requiresUseCase() : "AUTO");
         if (d.createdAt() != null) {
             e.setVersion(d.version());
             e.setCreatedAt(d.createdAt());

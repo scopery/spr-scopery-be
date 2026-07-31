@@ -33,6 +33,10 @@ public class DefectJpaEntity extends AuditableJpaEntity {
     @Column(name="reopened_by") private UUID reopenedBy;
     @Column(name="reopen_reason", columnDefinition="text") private String reopenReason;
     @Column(name="source_test_case_result_id") private UUID sourceTestCaseResultId;
+    @Column(name="source_verification_result_id") private UUID sourceVerificationResultId;
+    @Column(name="source_test_run_id") private UUID sourceTestRunId;
+    @Column(name="source_test_case_id") private UUID sourceTestCaseId;
+    @Column(name="source_verification_case_id") private UUID sourceVerificationCaseId;
     @Column(name="source_ai_suggestion_id") private UUID sourceAiSuggestionId;
     @Column(name="archived_at") private Instant archivedAt;
     @Column(name="archived_by") private UUID archivedBy;

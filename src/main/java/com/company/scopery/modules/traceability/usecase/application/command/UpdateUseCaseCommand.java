@@ -1,0 +1,13 @@
+package com.company.scopery.modules.traceability.usecase.application.command;
+
+import java.util.UUID;
+
+public record UpdateUseCaseCommand(
+        UUID projectId,
+        UUID useCaseId,
+        String name,
+        String goal,
+        String primaryActorName,
+        String triggerText,
+        String status
+) {}

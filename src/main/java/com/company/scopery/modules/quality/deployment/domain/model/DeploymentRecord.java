@@ -9,7 +9,7 @@ public record DeploymentRecord(UUID id, UUID projectId, UUID workspaceId, UUID r
     public static DeploymentRecord create(UUID projectId, UUID workspaceId, UUID releasePackageId, UUID envId, String buildReference, String deploymentReference, UUID rollbackPlanId) {
         Instant now = Instant.now();
         return new DeploymentRecord(UUID.randomUUID(), projectId, workspaceId, releasePackageId, envId, DeploymentStatus.PLANNED,
-                buildReference, deploymentReference, null, null, null, null, rollbackPlanId, null, null, null, null, 0, now, now);
+                buildReference, deploymentReference, null, null, null, null, rollbackPlanId, null, null, null, null, -1, now, now);
     }
     public DeploymentRecord start(UUID actorId) {
         return new DeploymentRecord(id, projectId, workspaceId, releasePackageId, deploymentEnvironmentId, DeploymentStatus.IN_PROGRESS,

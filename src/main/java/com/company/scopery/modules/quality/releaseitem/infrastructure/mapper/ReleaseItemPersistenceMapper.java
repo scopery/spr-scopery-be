@@ -15,7 +15,8 @@ public class ReleaseItemPersistenceMapper {
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setReleasePackageId(d.releasePackageId());
         e.setTargetType(d.targetType()); e.setTargetId(d.targetId()); e.setRequired(d.required());
         e.setStatus(d.status().name()); e.setNotes(d.notes());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

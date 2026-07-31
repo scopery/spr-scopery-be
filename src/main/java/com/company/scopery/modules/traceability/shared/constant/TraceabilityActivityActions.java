@@ -25,6 +25,7 @@ public final class TraceabilityActivityActions {
     public static final String REQUIREMENT_VERSION_CREATED = "REQUIREMENT_VERSION_CREATED";
     public static final String REQUIREMENT_SOURCE_ADDED = "REQUIREMENT_SOURCE_ADDED";
     public static final String REQUIREMENT_CRITERIA_CREATED = "REQUIREMENT_CRITERIA_CREATED";
+    public static final String REQUIREMENT_REQUIRES_USE_CASE_SET = "REQUIREMENT_REQUIRES_USE_CASE_SET";
     public static final String TRACE_LINK_CREATED = "TRACE_LINK_CREATED";
     public static final String TRACE_LINK_ARCHIVED = "TRACE_LINK_ARCHIVED";
     public static final String FUNCTIONAL_ITEM_CREATED = "FUNCTIONAL_ITEM_CREATED";
@@ -46,6 +47,31 @@ public final class TraceabilityActivityActions {
     public static final String SCREEN_COMPONENT_LINKED = "SCREEN_COMPONENT_LINKED";
     public static final String SCREEN_COMPONENT_UNLINKED = "SCREEN_COMPONENT_UNLINKED";
     public static final String NFR_SCOPE_TARGET_LINKED = "NFR_SCOPE_TARGET_LINKED";
-    public static final String NFR_SCOPE_TARGET_UNLINKED = "NFR_SCOPE_TARGET_UNLINKED";
+    public static final String NFR_SCOPE_TARGET_UNLINKED        = "NFR_SCOPE_TARGET_UNLINKED";
+    public static final String USE_CASE_CREATED                      = "USE_CASE_CREATED";
+    public static final String USE_CASE_UPDATED                      = "USE_CASE_UPDATED";
+    public static final String USE_CASE_DELETED                      = "USE_CASE_DELETED";
+    public static final String USE_CASE_FLOW_CREATED                 = "USE_CASE_FLOW_CREATED";
+    public static final String USE_CASE_FLOW_UPDATED                 = "USE_CASE_FLOW_UPDATED";
+    public static final String USE_CASE_FLOW_DELETED                 = "USE_CASE_FLOW_DELETED";
+    public static final String USE_CASE_FLOW_STEP_ADDED              = "USE_CASE_FLOW_STEP_ADDED";
+    public static final String USE_CASE_FLOW_STEP_UPDATED            = "USE_CASE_FLOW_STEP_UPDATED";
+    public static final String USE_CASE_FLOW_STEP_DELETED            = "USE_CASE_FLOW_STEP_DELETED";
+    public static final String USE_CASE_FLOW_STEPS_REORDERED         = "USE_CASE_FLOW_STEPS_REORDERED";
+    public static final String USE_CASE_CONDITION_ADDED              = "USE_CASE_CONDITION_ADDED";
+    public static final String USE_CASE_CONDITION_UPDATED            = "USE_CASE_CONDITION_UPDATED";
+    public static final String USE_CASE_CONDITION_DELETED            = "USE_CASE_CONDITION_DELETED";
+    public static final String USE_CASE_BUSINESS_RULE_ADDED          = "USE_CASE_BUSINESS_RULE_ADDED";
+    public static final String USE_CASE_BUSINESS_RULE_UPDATED        = "USE_CASE_BUSINESS_RULE_UPDATED";
+    public static final String USE_CASE_BUSINESS_RULE_DELETED        = "USE_CASE_BUSINESS_RULE_DELETED";
+    public static final String USE_CASE_CRITERION_ADDED              = "USE_CASE_CRITERION_ADDED";
+    public static final String USE_CASE_CRITERION_UPDATED            = "USE_CASE_CRITERION_UPDATED";
+    public static final String USE_CASE_CRITERION_DELETED            = "USE_CASE_CRITERION_DELETED";
+    public static final String USE_CASE_SUPPORTING_FN_ADDED          = "USE_CASE_SUPPORTING_FN_ADDED";
+    public static final String USE_CASE_SUPPORTING_FN_REMOVED        = "USE_CASE_SUPPORTING_FN_REMOVED";
+    public static final String REQUIREMENT_FUNCTION_LINKED           = "REQUIREMENT_FUNCTION_LINKED";
+    public static final String REQUIREMENT_FUNCTION_UNLINKED         = "REQUIREMENT_FUNCTION_UNLINKED";
+    public static final String REQUIREMENT_USE_CASE_LINKED           = "REQUIREMENT_USE_CASE_LINKED";
+    public static final String REQUIREMENT_USE_CASE_UNLINKED         = "REQUIREMENT_USE_CASE_UNLINKED";
     private TraceabilityActivityActions() {}
 }

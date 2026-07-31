@@ -14,5 +14,6 @@ public class RequirementJpaEntity extends AuditableJpaEntity {
     @Column(name="non_functional_item_id") private UUID nonFunctionalItemId;
     @Column(name="scope_item_id") private UUID scopeItemId;
     @Column(name="scope_package_id") private UUID scopePackageId;
+    @Column(name="requires_use_case", nullable=false) private String requiresUseCase;
     @Version private Integer version;
 }

@@ -1,7 +1,10 @@
 package com.company.scopery.modules.traceability.appcomponent.infrastructure.persistence;
+import com.company.scopery.common.pagination.PageResult;
 import com.company.scopery.modules.traceability.appcomponent.domain.model.RegistryAppComponent;
 import com.company.scopery.modules.traceability.appcomponent.domain.model.RegistryAppComponentRepository;
 import com.company.scopery.modules.traceability.appcomponent.infrastructure.mapper.RegistryAppComponentPersistenceMapper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import java.util.*;
 @Repository
@@ -19,4 +22,12 @@ public class JpaRegistryAppComponentRepository implements RegistryAppComponentRe
         return springData.findByApplicationIdOrderByCreatedAtDesc(applicationId).stream().map(mapper::toDomain).toList();
     }
     @Override public void delete(UUID id, UUID workspaceId) { springData.deleteByIdAndWorkspaceId(id, workspaceId); }
+
+    @Override
+    public PageResult<RegistryAppComponent> searchByScreenId(UUID screenId, String query, int page, int size) {
+        String q = (query == null || query.isBlank()) ? null : query.trim();
+        var pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        return PageResult.fromSpringPage(
+                springData.searchByScreenId(screenId, q, pageable).map(mapper::toDomain));
+    }
 }

@@ -14,7 +14,8 @@ public class DefectLinkPersistenceMapper {
         DefectLinkJpaEntity e = new DefectLinkJpaEntity();
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setDefectId(d.defectId());
         e.setTargetType(d.targetType()); e.setTargetId(d.targetId()); e.setLinkType(d.linkType().name());
-        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy()); e.setVersion(d.version());
+        e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

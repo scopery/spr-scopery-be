@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -46,6 +48,7 @@ public class ImmutableAuditEventService {
         this.redactor = redactor;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void record(AuditEventType eventType, UUID actorId, String actorType,
                        String resourceType, UUID resourceRefId, UUID organizationId,
                        UUID workspaceId, Object beforeState, Object afterState, String reason) {
@@ -54,6 +57,7 @@ public class ImmutableAuditEventService {
                 organizationId, workspaceId, beforeState, afterState, reason);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void record(AuditEventType eventType, AuditSeverity severity, UUID actorId, String actorType,
                        String resourceType, UUID resourceRefId, UUID organizationId,
                        UUID workspaceId, Object beforeState, Object afterState, String reason) {

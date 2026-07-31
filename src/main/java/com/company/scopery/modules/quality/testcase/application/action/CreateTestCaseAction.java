@@ -20,10 +20,13 @@ public class CreateTestCaseAction {
         Project project = projects.findById(c.projectId()).orElseThrow(() -> ProjectExceptions.projectNotFound(c.projectId()));
         if (project.status() == ProjectStatus.ARCHIVED) throw QualityExceptions.projectArchived(c.projectId());
         if (c.code() != null && repo.existsByProjectIdAndCode(c.projectId(), c.code())) throw QualityExceptions.testCaseCodeExists(c.code());
-        var saved = repo.save(TestCase.create(project.id(), c.testSuiteId(), c.code(), c.title().trim(), c.description(),
-                QualityEnumParser.parseRequired(TestCaseType.class, c.type(), "type"),
-                QualityEnumParser.parseRequired(TestCasePriority.class, c.priority(), "priority"),
-                c.preconditions(), c.expectedResult()));
+        var type = QualityEnumParser.parseOptional(TestCaseType.class, c.type(), "type");
+        if (type == null) type = TestCaseType.FUNCTIONAL;
+        var priority = QualityEnumParser.parseOptional(TestCasePriority.class, c.priority(), "priority");
+        if (priority == null) priority = TestCasePriority.MEDIUM;
+        var automationStatus = QualityEnumParser.parseOptional(AutomationStatus.class, c.automationStatus(), "automationStatus");
+        var saved = repo.save(TestCase.create(project.id(), c.testSuiteId(), c.useCaseId(), c.code(), c.title().trim(), c.description(),
+                type, priority, c.preconditions(), c.expectedResult(), c.assigneeId(), automationStatus));
         activityLogger.logSuccess(QualityEntityTypes.TEST_CASE, saved.id(), QualityActivityActions.TEST_CASE_CREATED, "Test case created");
         return TestCaseResponse.from(saved);
     }

@@ -15,19 +15,30 @@ import com.company.scopery.modules.quality.shared.constant.QualityActivityAction
 import com.company.scopery.modules.quality.shared.constant.QualityEntityTypes;
 import com.company.scopery.modules.quality.shared.error.QualityExceptions;
 import com.company.scopery.modules.quality.shared.util.QualityEnumParser;
+import com.company.scopery.modules.quality.testrun.domain.model.TestCaseResult;
+import com.company.scopery.modules.quality.testrun.domain.model.TestCaseResultRepository;
+import com.company.scopery.modules.quality.verificationresult.domain.model.VerificationCaseResult;
+import com.company.scopery.modules.quality.verificationresult.domain.model.VerificationCaseResultRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
 @Component
 public class CreateDefectAction {
     private final ProjectRepository projects;
     private final DefectRepository repo;
+    private final TestCaseResultRepository testCaseResults;
+    private final VerificationCaseResultRepository verificationResults;
     private final QualityAuthorizationService authorization;
     private final CurrentUserAuthorizationService currentUser;
     private final QualityActivityLogger activityLogger;
-    public CreateDefectAction(ProjectRepository projects, DefectRepository repo, QualityAuthorizationService authorization,
+    public CreateDefectAction(ProjectRepository projects, DefectRepository repo,
+                              TestCaseResultRepository testCaseResults,
+                              VerificationCaseResultRepository verificationResults,
+                              QualityAuthorizationService authorization,
                               CurrentUserAuthorizationService currentUser, QualityActivityLogger activityLogger) {
-        this.projects = projects; this.repo = repo; this.authorization = authorization;
-        this.currentUser = currentUser; this.activityLogger = activityLogger;
+        this.projects = projects; this.repo = repo;
+        this.testCaseResults = testCaseResults; this.verificationResults = verificationResults;
+        this.authorization = authorization; this.currentUser = currentUser; this.activityLogger = activityLogger;
     }
     @Transactional
     public DefectResponse execute(CreateDefectCommand c) {
@@ -35,11 +46,41 @@ public class CreateDefectAction {
         Project project = projects.findById(c.projectId()).orElseThrow(() -> ProjectExceptions.projectNotFound(c.projectId()));
         if (project.status() == ProjectStatus.ARCHIVED) throw QualityExceptions.projectArchived(c.projectId());
         var actor = currentUser.resolveCurrentUser();
+
+        UUID sourceTestCaseResultId = null, sourceVerificationResultId = null;
+        UUID sourceTestRunId = null, sourceTestCaseId = null, sourceVerificationCaseId = null;
+
+        if (c.sourceTestCaseResultId() != null) {
+            TestCaseResult result = testCaseResults.findByIdAndProjectId(c.sourceTestCaseResultId(), c.projectId())
+                    .orElseThrow(() -> QualityExceptions.defectSourceResultNotFound(c.sourceTestCaseResultId()));
+            sourceTestCaseResultId = result.id();
+            sourceTestRunId = result.testRunId();
+            sourceTestCaseId = result.testCaseId();
+        } else if (c.sourceVerificationResultId() != null) {
+            VerificationCaseResult result = verificationResults.findByIdAndProjectId(c.sourceVerificationResultId(), c.projectId())
+                    .orElseThrow(() -> QualityExceptions.defectSourceResultNotFound(c.sourceVerificationResultId()));
+            sourceVerificationResultId = result.id();
+            sourceTestRunId = result.testRunId();
+            sourceVerificationCaseId = result.verificationCaseId();
+        }
+
         Defect saved = repo.save(Defect.create(project.id(), project.workspaceId(), c.code(), c.title().trim(), c.description(),
                 QualityEnumParser.parseRequired(DefectCategory.class, c.category(), "category"),
                 QualityEnumParser.parseRequired(DefectSeverity.class, c.severity(), "severity"),
                 QualityEnumParser.parseRequired(DefectPriority.class, c.priority(), "priority"),
-                actor.id(), c.reproductionSteps(), c.expectedResult(), c.actualResult(), c.sourceTestCaseResultId()));
+                actor.id(), c.reproductionSteps(), c.expectedResult(), c.actualResult(),
+                sourceTestCaseResultId, sourceVerificationResultId, sourceTestRunId, sourceTestCaseId, sourceVerificationCaseId));
+
+        if (sourceTestCaseResultId != null) {
+            final UUID resultId = sourceTestCaseResultId;
+            testCaseResults.findByIdAndProjectId(resultId, c.projectId())
+                    .ifPresent(r -> testCaseResults.save(r.withDefect(saved.id())));
+        } else if (sourceVerificationResultId != null) {
+            final UUID resultId = sourceVerificationResultId;
+            verificationResults.findByIdAndProjectId(resultId, c.projectId())
+                    .ifPresent(r -> verificationResults.save(r.withDefect(saved.id())));
+        }
+
         activityLogger.logSuccess(QualityEntityTypes.DEFECT, saved.id(), QualityActivityActions.DEFECT_CREATED, "Defect created");
         return DefectResponse.from(saved);
     }

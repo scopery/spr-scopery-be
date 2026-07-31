@@ -11,7 +11,7 @@ public class TestSuitePersistenceMapper {
         e.setId(d.id()); e.setProjectId(d.projectId()); e.setTestPlanId(d.testPlanId()); e.setDeliverableId(d.deliverableId());
         e.setScopeItemId(d.scopeItemId()); e.setName(d.name()); e.setDescription(d.description()); e.setStatus(d.status().name());
         e.setSortOrder(d.sortOrder()); e.setArchivedAt(d.archivedAt()); e.setArchivedBy(d.archivedBy());
-        e.setVersion(d.version());
+        e.setVersion(d.version() >= 0 ? d.version() : null);
         if (d.createdAt()!=null) e.setCreatedAt(d.createdAt());
         return e;
     }

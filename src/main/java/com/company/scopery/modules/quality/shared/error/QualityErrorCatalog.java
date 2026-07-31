@@ -10,6 +10,8 @@ public enum QualityErrorCatalog implements ErrorCatalog {
     TEST_CASE_CODE_EXISTS("TEST_CASE_CODE_EXISTS", "Test case code already exists", HttpStatus.CONFLICT),
     TEST_CASE_IMMUTABLE("TEST_CASE_IMMUTABLE", "Approved test case is immutable", HttpStatus.UNPROCESSABLE_ENTITY),
     TEST_STEP_NOT_FOUND("TEST_STEP_NOT_FOUND", "Test step not found", HttpStatus.NOT_FOUND),
+    TEST_CASE_STEP_NOT_FOUND("TEST_CASE_STEP_NOT_FOUND", "Test case step not found", HttpStatus.NOT_FOUND),
+    STALE_VERSION("STALE_VERSION", "Resource was modified by another request. Reload and retry.", HttpStatus.CONFLICT),
     TEST_RUN_NOT_FOUND("TEST_RUN_NOT_FOUND", "Test run not found", HttpStatus.NOT_FOUND),
     TEST_RUN_INVALID_STATUS("TEST_RUN_INVALID_STATUS", "Invalid test run status for this action", HttpStatus.UNPROCESSABLE_ENTITY),
     TEST_RESULT_NOT_FOUND("TEST_RESULT_NOT_FOUND", "Test case result not found", HttpStatus.NOT_FOUND),
@@ -27,7 +29,15 @@ public enum QualityErrorCatalog implements ErrorCatalog {
     ROLLBACK_PLAN_NOT_FOUND("ROLLBACK_PLAN_NOT_FOUND", "Rollback plan not found", HttpStatus.NOT_FOUND),
     QUALITY_ACCESS_DENIED("QUALITY_ACCESS_DENIED", "Quality access denied", HttpStatus.FORBIDDEN),
     QUALITY_PROJECT_ARCHIVED("QUALITY_PROJECT_ARCHIVED", "Cannot modify quality data for archived project", HttpStatus.UNPROCESSABLE_ENTITY),
-    QUALITY_NAME_REQUIRED("QUALITY_NAME_REQUIRED", "Name/title is required", HttpStatus.BAD_REQUEST);
+    QUALITY_NAME_REQUIRED("QUALITY_NAME_REQUIRED", "Name/title is required", HttpStatus.BAD_REQUEST),
+    VERIFICATION_CASE_NOT_FOUND("VERIFICATION_CASE_NOT_FOUND", "Verification case not found", HttpStatus.NOT_FOUND),
+    VERIFICATION_CASE_ARCHIVED("VERIFICATION_CASE_ARCHIVED", "Verification case is already archived", HttpStatus.UNPROCESSABLE_ENTITY),
+    NFR_SPECIFICATION_NOT_FOUND("NFR_SPECIFICATION_NOT_FOUND", "NFR specification not found for this requirement", HttpStatus.NOT_FOUND),
+    VERIFICATION_RESULT_NOT_FOUND("VERIFICATION_RESULT_NOT_FOUND", "Verification result not found", HttpStatus.NOT_FOUND),
+    RUN_MEMBERSHIP_SCOPE_MISMATCH("RUN_MEMBERSHIP_SCOPE_MISMATCH", "Case kind not allowed for this run scope", HttpStatus.UNPROCESSABLE_ENTITY),
+    RUN_MEMBERSHIP_RUN_CLOSED("RUN_MEMBERSHIP_RUN_CLOSED", "Cannot modify membership of a completed or cancelled run", HttpStatus.UNPROCESSABLE_ENTITY),
+    RUN_MEMBERSHIP_CASE_NOT_FOUND("RUN_MEMBERSHIP_CASE_NOT_FOUND", "Case not found in this project", HttpStatus.NOT_FOUND),
+    DEFECT_SOURCE_NOT_FOUND("DEFECT_SOURCE_NOT_FOUND", "Source result not found in this project", HttpStatus.NOT_FOUND);
     private final String code; private final String defaultMessage; private final HttpStatus httpStatus;
     QualityErrorCatalog(String c, String m, HttpStatus s) { code=c; defaultMessage=m; httpStatus=s; }
     @Override public String code() { return code; }
