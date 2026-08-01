@@ -44,6 +44,12 @@ public final class TraceabilityActivityActions {
     public static final String FUNCTION_SCREEN_UNLINKED = "FUNCTION_SCREEN_UNLINKED";
     public static final String FUNCTION_API_LINKED = "FUNCTION_API_LINKED";
     public static final String FUNCTION_API_UNLINKED = "FUNCTION_API_UNLINKED";
+    public static final String COMM_SPEC_CREATED = "COMM_SPEC_CREATED";
+    public static final String COMM_SPEC_UPDATED = "COMM_SPEC_UPDATED";
+    public static final String COMM_SPEC_MARKED_READY = "COMM_SPEC_MARKED_READY";
+    public static final String COMM_SPEC_ARCHIVED = "COMM_SPEC_ARCHIVED";
+    public static final String FUNCTION_COMM_LINKED = "FUNCTION_COMM_LINKED";
+    public static final String FUNCTION_COMM_UNLINKED = "FUNCTION_COMM_UNLINKED";
     public static final String SCREEN_COMPONENT_LINKED = "SCREEN_COMPONENT_LINKED";
     public static final String SCREEN_COMPONENT_UNLINKED = "SCREEN_COMPONENT_UNLINKED";
     public static final String NFR_SCOPE_TARGET_LINKED = "NFR_SCOPE_TARGET_LINKED";

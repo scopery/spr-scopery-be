@@ -10,7 +10,8 @@ import java.util.UUID;
 public record CandidatesResponse(UUID applicationId,
                                   List<ScreenCandidate> screens,
                                   List<ApiCandidate> apiEndpoints,
-                                  List<ComponentCandidate> components) {
+                                  List<ComponentCandidate> components,
+                                  List<CommunicationCandidate> communications) {
 
     public record ScreenCandidate(UUID id, String code, String name, String routePath) {
         public static ScreenCandidate from(RegistryScreen s) {
@@ -27,6 +28,18 @@ public record CandidatesResponse(UUID applicationId,
     public record ComponentCandidate(UUID id, String code, String name, String componentType) {
         public static ComponentCandidate from(RegistryAppComponent c) {
             return new ComponentCandidate(c.id(), c.code(), c.name(), c.componentType());
+        }
+    }
+
+    public record CommunicationCandidate(UUID id, String code, String name, String status, String triggerKey) {
+        public static CommunicationCandidate from(
+                com.company.scopery.modules.traceability.commspec.domain.model.CommunicationSpecification c) {
+            return new CommunicationCandidate(
+                    c.id(),
+                    c.code(),
+                    c.name(),
+                    c.status() != null ? c.status().name() : null,
+                    c.triggerKey());
         }
     }
 }

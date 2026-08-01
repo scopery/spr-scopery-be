@@ -25,6 +25,8 @@ public final class TraceabilityTableNames {
     public static final String FUNCTION_API = "app_function_api";
     public static final String SCREEN_COMPONENT = "app_screen_component";
     public static final String NFR_SCOPE_TARGET = "app_nfr_scope_target";
+    public static final String COMMUNICATION_SPECIFICATION = "app_communication_specification";
+    public static final String FUNCTION_COMMUNICATION = "app_function_communication";
     public static final String USE_CASE                      = "app_use_case";
     public static final String USE_CASE_SUPPORTING_FUNCTION  = "app_use_case_supporting_function";
     public static final String USE_CASE_CONDITION            = "app_use_case_condition";

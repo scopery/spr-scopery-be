@@ -12,5 +12,7 @@ public interface RegistryDataEntityRepository {
     Optional<RegistryDataEntity> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryDataEntity> findByApplicationId(UUID applicationId);
     List<RegistryDataEntity> findByApplicationIdAndModuleId(UUID applicationId, UUID moduleId);
+    /** Entities owned by a Module (mention scope). Empty moduleId → empty list. */
+    List<RegistryDataEntity> findByModuleId(UUID moduleId);
     void delete(UUID id, UUID workspaceId);
 }

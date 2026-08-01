@@ -6,22 +6,26 @@ import com.company.scopery.modules.traceability.appcomponent.domain.model.Regist
 import com.company.scopery.modules.traceability.appcomponent.domain.model.RegistryAppComponentRepository;
 import com.company.scopery.modules.traceability.appmodule.domain.model.RegistryAppModule;
 import com.company.scopery.modules.traceability.appmodule.domain.model.RegistryAppModuleRepository;
+import com.company.scopery.modules.traceability.commspec.domain.model.CommunicationSpecification;
+import com.company.scopery.modules.traceability.commspec.domain.model.CommunicationSpecificationRepository;
+import com.company.scopery.modules.traceability.dataentity.domain.model.RegistryDataEntityRepository;
 import com.company.scopery.modules.traceability.functionapi.domain.model.FunctionApi;
 import com.company.scopery.modules.traceability.functionapi.domain.model.FunctionApiRepository;
+import com.company.scopery.modules.traceability.functioncomm.domain.model.FunctionCommunication;
+import com.company.scopery.modules.traceability.functioncomm.domain.model.FunctionCommunicationRepository;
 import com.company.scopery.modules.traceability.functionscreen.domain.model.FunctionScreen;
 import com.company.scopery.modules.traceability.functionscreen.domain.model.FunctionScreenRepository;
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItem;
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
 import com.company.scopery.modules.traceability.overallstructure.application.response.ApiRef;
 import com.company.scopery.modules.traceability.overallstructure.application.response.CandidatesResponse;
+import com.company.scopery.modules.traceability.overallstructure.application.response.CommRef;
 import com.company.scopery.modules.traceability.overallstructure.application.response.ComponentRef;
 import com.company.scopery.modules.traceability.overallstructure.application.response.EntityRef;
 import com.company.scopery.modules.traceability.overallstructure.application.response.FunctionStructure;
 import com.company.scopery.modules.traceability.overallstructure.application.response.ModuleStructure;
 import com.company.scopery.modules.traceability.overallstructure.application.response.OverallStructureResponse;
 import com.company.scopery.modules.traceability.overallstructure.application.response.ScreenRef;
-import com.company.scopery.modules.traceability.dataentity.domain.model.RegistryDataEntity;
-import com.company.scopery.modules.traceability.dataentity.domain.model.RegistryDataEntityRepository;
 import com.company.scopery.modules.traceability.screen.domain.model.RegistryScreen;
 import com.company.scopery.modules.traceability.screen.domain.model.RegistryScreenRepository;
 import com.company.scopery.modules.traceability.screencomponent.domain.model.ScreenComponent;
@@ -42,30 +46,36 @@ public class OverallStructureQueryService {
     private final FunctionalItemRepository functionalItemRepo;
     private final FunctionScreenRepository functionScreenRepo;
     private final FunctionApiRepository functionApiRepo;
+    private final FunctionCommunicationRepository functionCommRepo;
     private final ScreenComponentRepository screenComponentRepo;
     private final RegistryScreenRepository screenRepo;
     private final RegistryApiEndpointRepository apiEndpointRepo;
     private final RegistryAppComponentRepository componentRepo;
     private final RegistryDataEntityRepository dataEntityRepo;
+    private final CommunicationSpecificationRepository communicationSpecRepo;
 
     public OverallStructureQueryService(RegistryAppModuleRepository moduleRepo,
                                         FunctionalItemRepository functionalItemRepo,
                                         FunctionScreenRepository functionScreenRepo,
                                         FunctionApiRepository functionApiRepo,
+                                        FunctionCommunicationRepository functionCommRepo,
                                         ScreenComponentRepository screenComponentRepo,
                                         RegistryScreenRepository screenRepo,
                                         RegistryApiEndpointRepository apiEndpointRepo,
                                         RegistryAppComponentRepository componentRepo,
-                                        RegistryDataEntityRepository dataEntityRepo) {
+                                        RegistryDataEntityRepository dataEntityRepo,
+                                        CommunicationSpecificationRepository communicationSpecRepo) {
         this.moduleRepo = moduleRepo;
         this.functionalItemRepo = functionalItemRepo;
         this.functionScreenRepo = functionScreenRepo;
         this.functionApiRepo = functionApiRepo;
+        this.functionCommRepo = functionCommRepo;
         this.screenComponentRepo = screenComponentRepo;
         this.screenRepo = screenRepo;
         this.apiEndpointRepo = apiEndpointRepo;
         this.componentRepo = componentRepo;
         this.dataEntityRepo = dataEntityRepo;
+        this.communicationSpecRepo = communicationSpecRepo;
     }
 
     @Transactional(readOnly = true)
@@ -77,36 +87,38 @@ public class OverallStructureQueryService {
 
         Set<UUID> moduleIds = modules.stream().map(RegistryAppModule::id).collect(Collectors.toSet());
 
-        // Bulk load all functional items for these modules
         List<FunctionalItem> allFunctions = functionalItemRepo.findByModuleIdIn(moduleIds);
         Map<UUID, List<FunctionalItem>> functionsByModule = allFunctions.stream()
                 .collect(Collectors.groupingBy(FunctionalItem::moduleId));
 
         Set<UUID> functionIds = allFunctions.stream().map(FunctionalItem::id).collect(Collectors.toSet());
 
-        // Bulk load function-screen and function-api links
         List<FunctionScreen> allFunctionScreens = functionIds.isEmpty()
                 ? List.of() : functionScreenRepo.findByFunctionIdIn(functionIds);
         List<FunctionApi> allFunctionApis = functionIds.isEmpty()
                 ? List.of() : functionApiRepo.findByFunctionIdIn(functionIds);
+        List<FunctionCommunication> allFunctionComms = functionIds.isEmpty()
+                ? List.of() : functionCommRepo.findByFunctionIdIn(functionIds);
 
         Map<UUID, List<FunctionScreen>> screenLinksByFunction = allFunctionScreens.stream()
                 .collect(Collectors.groupingBy(FunctionScreen::functionId));
         Map<UUID, List<FunctionApi>> apiLinksByFunction = allFunctionApis.stream()
                 .collect(Collectors.groupingBy(FunctionApi::functionId));
+        Map<UUID, List<FunctionCommunication>> commLinksByFunction = allFunctionComms.stream()
+                .collect(Collectors.groupingBy(FunctionCommunication::functionId));
 
-        // Collect all linked screen IDs, then bulk load screens
         Set<UUID> linkedScreenIds = allFunctionScreens.stream()
                 .map(FunctionScreen::screenId).collect(Collectors.toSet());
-        Set<UUID> linkedApiIds = allFunctionApis.stream()
-                .map(FunctionApi::apiEndpointId).collect(Collectors.toSet());
+        Set<UUID> linkedCommIds = allFunctionComms.stream()
+                .map(FunctionCommunication::communicationId).collect(Collectors.toSet());
 
         Map<UUID, RegistryScreen> screenById = screenRepo.findByApplicationId(applicationId).stream()
                 .collect(Collectors.toMap(RegistryScreen::id, s -> s));
         Map<UUID, RegistryApiEndpoint> apiById = apiEndpointRepo.findByApplicationId(applicationId).stream()
                 .collect(Collectors.toMap(RegistryApiEndpoint::id, a -> a));
+        Map<UUID, CommunicationSpecification> commById = communicationSpecRepo.findByIdIn(linkedCommIds).stream()
+                .collect(Collectors.toMap(CommunicationSpecification::id, c -> c, (a, b) -> a));
 
-        // Bulk load screen-component links for the linked screens
         List<ScreenComponent> allScreenComponents = linkedScreenIds.isEmpty()
                 ? List.of() : screenComponentRepo.findByScreenIdIn(linkedScreenIds);
         Map<UUID, List<ScreenComponent>> componentLinksByScreen = allScreenComponents.stream()
@@ -141,7 +153,12 @@ public class OverallStructureQueryService {
                         .map(link -> ApiRef.from(apiById.get(link.apiEndpointId())))
                         .toList();
 
-                return FunctionStructure.from(fn, screenRefs, apiRefs);
+                List<CommRef> commRefs = commLinksByFunction.getOrDefault(fn.id(), List.of()).stream()
+                        .filter(link -> commById.containsKey(link.communicationId()))
+                        .map(link -> CommRef.from(commById.get(link.communicationId())))
+                        .toList();
+
+                return FunctionStructure.from(fn, screenRefs, apiRefs, commRefs);
             }).toList();
 
             List<EntityRef> entityRefs = dataEntityRepo.findByApplicationIdAndModuleId(applicationId, module.id())
@@ -164,6 +181,11 @@ public class OverallStructureQueryService {
         List<CandidatesResponse.ComponentCandidate> components = componentRepo.findByApplicationId(applicationId)
                 .stream().map(CandidatesResponse.ComponentCandidate::from).toList();
 
-        return new CandidatesResponse(applicationId, screens, apis, components);
+        List<CandidatesResponse.CommunicationCandidate> communications =
+                communicationSpecRepo.findByApplicationId(applicationId).stream()
+                        .map(CandidatesResponse.CommunicationCandidate::from)
+                        .toList();
+
+        return new CandidatesResponse(applicationId, screens, apis, components, communications);
     }
 }

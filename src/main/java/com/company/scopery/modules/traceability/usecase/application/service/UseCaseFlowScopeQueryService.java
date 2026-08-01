@@ -4,13 +4,14 @@ import com.company.scopery.modules.traceability.apiendpoint.domain.model.Registr
 import com.company.scopery.modules.traceability.apiendpoint.domain.model.RegistryApiEndpointRepository;
 import com.company.scopery.modules.traceability.appcomponent.domain.model.RegistryAppComponent;
 import com.company.scopery.modules.traceability.appcomponent.domain.model.RegistryAppComponentRepository;
+import com.company.scopery.modules.traceability.commspec.domain.model.CommunicationSpecification;
+import com.company.scopery.modules.traceability.commspec.domain.model.CommunicationSpecificationRepository;
 import com.company.scopery.modules.traceability.dataentity.domain.model.RegistryDataEntity;
 import com.company.scopery.modules.traceability.dataentity.domain.model.RegistryDataEntityRepository;
-import com.company.scopery.modules.traceability.funcitemanchor.domain.enums.AnchorNodeType;
-import com.company.scopery.modules.traceability.funcitemanchor.domain.model.FunctionalItemAnchor;
-import com.company.scopery.modules.traceability.funcitemanchor.domain.model.FunctionalItemAnchorRepository;
 import com.company.scopery.modules.traceability.functionapi.domain.model.FunctionApi;
 import com.company.scopery.modules.traceability.functionapi.domain.model.FunctionApiRepository;
+import com.company.scopery.modules.traceability.functioncomm.domain.model.FunctionCommunication;
+import com.company.scopery.modules.traceability.functioncomm.domain.model.FunctionCommunicationRepository;
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItem;
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
 import com.company.scopery.modules.traceability.functionscreen.domain.model.FunctionScreen;
@@ -34,6 +35,7 @@ import com.company.scopery.modules.traceability.usecase.domain.model.UseCaseFlow
 import com.company.scopery.modules.traceability.usecase.domain.model.UseCaseRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,12 +63,13 @@ public class UseCaseFlowScopeQueryService {
     private final FunctionalItemRepository functionalItemRepo;
     private final FunctionScreenRepository functionScreenRepo;
     private final FunctionApiRepository functionApiRepo;
+    private final FunctionCommunicationRepository functionCommRepo;
     private final ScreenComponentRepository screenComponentRepo;
-    private final FunctionalItemAnchorRepository anchorRepo;
     private final RegistryScreenRepository screenRepo;
     private final RegistryAppComponentRepository componentRepo;
     private final RegistryApiEndpointRepository apiRepo;
     private final RegistryDataEntityRepository entityRepo;
+    private final CommunicationSpecificationRepository communicationSpecRepo;
     private final UseCaseFlowRepository flowRepo;
     private final UseCaseFlowStepRepository stepRepo;
     private final TraceabilityAuthorizationService authorization;
@@ -77,12 +80,13 @@ public class UseCaseFlowScopeQueryService {
             FunctionalItemRepository functionalItemRepo,
             FunctionScreenRepository functionScreenRepo,
             FunctionApiRepository functionApiRepo,
+            FunctionCommunicationRepository functionCommRepo,
             ScreenComponentRepository screenComponentRepo,
-            FunctionalItemAnchorRepository anchorRepo,
             RegistryScreenRepository screenRepo,
             RegistryAppComponentRepository componentRepo,
             RegistryApiEndpointRepository apiRepo,
             RegistryDataEntityRepository entityRepo,
+            CommunicationSpecificationRepository communicationSpecRepo,
             UseCaseFlowRepository flowRepo,
             UseCaseFlowStepRepository stepRepo,
             TraceabilityAuthorizationService authorization,
@@ -91,12 +95,13 @@ public class UseCaseFlowScopeQueryService {
         this.functionalItemRepo = functionalItemRepo;
         this.functionScreenRepo = functionScreenRepo;
         this.functionApiRepo = functionApiRepo;
+        this.functionCommRepo = functionCommRepo;
         this.screenComponentRepo = screenComponentRepo;
-        this.anchorRepo = anchorRepo;
         this.screenRepo = screenRepo;
         this.componentRepo = componentRepo;
         this.apiRepo = apiRepo;
         this.entityRepo = entityRepo;
+        this.communicationSpecRepo = communicationSpecRepo;
         this.flowRepo = flowRepo;
         this.stepRepo = stepRepo;
         this.authorization = authorization;
@@ -109,7 +114,7 @@ public class UseCaseFlowScopeQueryService {
         UseCase uc = requireUseCase(query.projectId(), query.useCaseId());
 
         if (uc.primaryFunctionId() == null) {
-            return new UseCaseFlowScopeResponse(query.useCaseId(), null, List.of(), List.of(), List.of());
+            return new UseCaseFlowScopeResponse(query.useCaseId(), null, List.of(), List.of(), List.of(), List.of());
         }
 
         FunctionalItem fn = functionalItemRepo.findByIdAndProjectId(uc.primaryFunctionId(), query.projectId())
@@ -137,14 +142,17 @@ public class UseCaseFlowScopeQueryService {
                 .map(a -> new UseCaseFlowScopeResponse.SimpleRef(a.id(), apiLabel(a)))
                 .toList();
 
-        List<UUID> entityIds = anchorRepo
-                .findByFunctionalItemIdAndNodeType(fn.id(), AnchorNodeType.DATA_ENTITY.name())
-                .stream()
-                .map(FunctionalItemAnchor::nodeId)
-                .toList();
-        List<UseCaseFlowScopeResponse.SimpleRef> entities = entityRepo.findByIdIn(entityIds).stream()
+        List<UseCaseFlowScopeResponse.SimpleRef> entities = moduleEntities(fn).stream()
                 .sorted(Comparator.comparing(RegistryDataEntity::name, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .map(e -> new UseCaseFlowScopeResponse.SimpleRef(e.id(), e.name()))
+                .toList();
+
+        List<UUID> commIds = functionCommRepo.findByFunctionId(fn.id()).stream()
+                .map(FunctionCommunication::communicationId)
+                .toList();
+        List<UseCaseFlowScopeResponse.SimpleRef> communications = communicationSpecRepo.findByIdIn(commIds).stream()
+                .sorted(Comparator.comparing(CommunicationSpecification::code, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .map(c -> new UseCaseFlowScopeResponse.SimpleRef(c.id(), c.name()))
                 .toList();
 
         return new UseCaseFlowScopeResponse(
@@ -152,7 +160,8 @@ public class UseCaseFlowScopeQueryService {
                 new UseCaseFlowScopeResponse.FunctionRef(fn.id(), fn.code(), fn.title()),
                 screens,
                 apis,
-                entities
+                entities,
+                communications
         );
     }
 
@@ -185,7 +194,10 @@ public class UseCaseFlowScopeQueryService {
                 items.addAll(apiOptions(fnId, null, Math.min(5, lim - items.size())));
             }
             if (types.contains("ENTITY") && items.size() < lim) {
-                items.addAll(entityOptions(fnId, null, Math.min(5, lim - items.size())));
+                items.addAll(entityOptions(query.projectId(), fnId, null, Math.min(5, lim - items.size())));
+            }
+            if (types.contains("COMMUNICATION") && items.size() < lim) {
+                items.addAll(communicationOptions(fnId, null, Math.min(5, lim - items.size())));
             }
         } else {
             if (types.contains("COMPONENT") && items.size() < lim) {
@@ -198,7 +210,10 @@ public class UseCaseFlowScopeQueryService {
                 items.addAll(apiOptions(fnId, q, lim - items.size()));
             }
             if (types.contains("ENTITY") && items.size() < lim) {
-                items.addAll(entityOptions(fnId, q, lim - items.size()));
+                items.addAll(entityOptions(query.projectId(), fnId, q, lim - items.size()));
+            }
+            if (types.contains("COMMUNICATION") && items.size() < lim) {
+                items.addAll(communicationOptions(fnId, q, lim - items.size()));
             }
         }
 
@@ -222,9 +237,12 @@ public class UseCaseFlowScopeQueryService {
                 .map(FunctionScreen::screenId).collect(Collectors.toSet());
         Set<UUID> allowedApis = functionApiRepo.findByFunctionId(query.newFunctionId()).stream()
                 .map(FunctionApi::apiEndpointId).collect(Collectors.toSet());
-        Set<UUID> allowedEntities = anchorRepo
-                .findByFunctionalItemIdAndNodeType(query.newFunctionId(), AnchorNodeType.DATA_ENTITY.name())
-                .stream().map(FunctionalItemAnchor::nodeId).collect(Collectors.toSet());
+        FunctionalItem newFn = functionalItemRepo.findByIdAndProjectId(query.newFunctionId(), query.projectId())
+                .orElseThrow(() -> TraceabilityExceptions.functionalItemNotFound(query.newFunctionId()));
+        Set<UUID> allowedEntities = moduleEntities(newFn).stream()
+                .map(RegistryDataEntity::id).collect(Collectors.toSet());
+        Set<UUID> allowedCommunications = functionCommRepo.findByFunctionId(query.newFunctionId()).stream()
+                .map(FunctionCommunication::communicationId).collect(Collectors.toSet());
         Set<UUID> allowedComponents = screenComponentRepo.findByScreenIdIn(allowedScreens).stream()
                 .map(ScreenComponent::componentId).collect(Collectors.toSet());
 
@@ -240,16 +258,18 @@ public class UseCaseFlowScopeQueryService {
                             "SCREEN", step.nextScreenId(), "Next Screen", step.nextScreenId(), step.id()));
                 }
                 for (MentionRef ref : extractMentions(step.contentJson())) {
-                    boolean inScope = switch (ref.entityType()) {
+                    String normalized = normalizeMentionType(ref.entityType());
+                    boolean inScope = switch (normalized) {
                         case "SCREEN" -> allowedScreens.contains(ref.entityId());
                         case "COMPONENT" -> allowedComponents.contains(ref.entityId());
                         case "API" -> allowedApis.contains(ref.entityId());
                         case "ENTITY" -> allowedEntities.contains(ref.entityId());
+                        case "COMMUNICATION" -> allowedCommunications.contains(ref.entityId());
                         default -> false;
                     };
                     if (!inScope) {
                         out.add(new PrimaryFunctionChangeImpactResponse.OutOfScopeMention(
-                                ref.entityType(), ref.entityId(), ref.label(), ref.screenId(), step.id()));
+                                normalized, ref.entityId(), ref.label(), ref.screenId(), step.id()));
                     }
                 }
             }
@@ -324,17 +344,139 @@ public class UseCaseFlowScopeQueryService {
                 .toList();
     }
 
-    private List<UseCaseMentionOptionsResponse.MentionOption> entityOptions(UUID fnId, String q, int limit) {
-        List<UUID> entityIds = anchorRepo
-                .findByFunctionalItemIdAndNodeType(fnId, AnchorNodeType.DATA_ENTITY.name())
-                .stream().map(FunctionalItemAnchor::nodeId).toList();
-        return entityRepo.findByIdIn(entityIds).stream()
+    private List<UseCaseMentionOptionsResponse.MentionOption> entityOptions(
+            UUID projectId, UUID fnId, String q, int limit) {
+        FunctionalItem fn = functionalItemRepo.findByIdAndProjectId(fnId, projectId).orElse(null);
+        if (fn == null) return List.of();
+        return moduleEntities(fn).stream()
                 .filter(e -> q == null || matches(q, e.name(), e.code()))
                 .sorted(Comparator.comparing(RegistryDataEntity::name, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .limit(limit)
                 .map(e -> new UseCaseMentionOptionsResponse.MentionOption(
                         "ENTITY", e.id(), e.name(), null, null, null))
                 .toList();
+    }
+
+    private List<UseCaseMentionOptionsResponse.MentionOption> communicationOptions(UUID fnId, String q, int limit) {
+        List<UUID> commIds = functionCommRepo.findByFunctionId(fnId).stream()
+                .map(FunctionCommunication::communicationId).toList();
+        return communicationSpecRepo.findByIdIn(commIds).stream()
+                .filter(c -> q == null || matches(q, c.name(), c.code(), c.triggerKey()))
+                .sorted(Comparator.comparing(CommunicationSpecification::code, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .limit(limit)
+                .map(c -> new UseCaseMentionOptionsResponse.MentionOption(
+                        "COMMUNICATION", c.id(), c.name(), null, null, null))
+                .toList();
+    }
+
+    /**
+     * Spec: Entities in mention scope = children of the Module owning the Function.
+     * If Function has no Module, entity scope is empty.
+     */
+    private List<RegistryDataEntity> moduleEntities(FunctionalItem fn) {
+        if (fn == null || fn.moduleId() == null) return List.of();
+        return entityRepo.findByModuleId(fn.moduleId());
+    }
+
+    /** Allowed entity IDs for a Function (Module-scoped). */
+    public Set<UUID> allowedEntityIds(FunctionalItem fn) {
+        return moduleEntities(fn).stream().map(RegistryDataEntity::id).collect(Collectors.toSet());
+    }
+
+    /** Mark mention attrs.outOfScope=true when entity is not in allowed sets; persist step JSON. */
+    @Transactional
+    public int markOutOfScopeMentionsOnUseCase(
+            UUID useCaseId,
+            Set<UUID> allowedScreens,
+            Set<UUID> allowedComponents,
+            Set<UUID> allowedApis,
+            Set<UUID> allowedEntities,
+            Set<UUID> allowedCommunications
+    ) {
+        int updated = 0;
+        for (var flow : flowRepo.findByUseCaseIdOrderByDisplayOrder(useCaseId)) {
+            for (UseCaseFlowStep step : stepRepo.findByFlowIdOrderByDisplayOrder(flow.id())) {
+                String next = rewriteContentOutOfScope(
+                        step.contentJson(), allowedScreens, allowedComponents, allowedApis,
+                        allowedEntities, allowedCommunications);
+                if (next != null && !Objects.equals(next, step.contentJson())) {
+                    stepRepo.save(step.withUpdated(step.stepType(), step.screenContextId(), next, step.nextScreenId()));
+                    updated++;
+                }
+            }
+        }
+        return updated;
+    }
+
+    private String rewriteContentOutOfScope(
+            String contentJson,
+            Set<UUID> allowedScreens,
+            Set<UUID> allowedComponents,
+            Set<UUID> allowedApis,
+            Set<UUID> allowedEntities,
+            Set<UUID> allowedCommunications
+    ) {
+        if (contentJson == null || contentJson.isBlank()) return contentJson;
+        try {
+            JsonNode root = objectMapper.readTree(contentJson);
+            if (root == null || !"doc".equals(textOrNull(root.get("type"))) || !(root instanceof ObjectNode)) {
+                return contentJson;
+            }
+            boolean changed = markMentionsNode(
+                    root.get("content"), allowedScreens, allowedComponents, allowedApis,
+                    allowedEntities, allowedCommunications);
+            return changed ? objectMapper.writeValueAsString(root) : contentJson;
+        } catch (Exception e) {
+            return contentJson;
+        }
+    }
+
+    private boolean markMentionsNode(
+            JsonNode nodes,
+            Set<UUID> allowedScreens,
+            Set<UUID> allowedComponents,
+            Set<UUID> allowedApis,
+            Set<UUID> allowedEntities,
+            Set<UUID> allowedCommunications
+    ) {
+        if (nodes == null || !nodes.isArray()) return false;
+        boolean changed = false;
+        for (JsonNode node : nodes) {
+            if ("mention".equals(textOrNull(node.get("type"))) && node instanceof ObjectNode mentionNode) {
+                JsonNode attrsNode = mentionNode.get("attrs");
+                if (attrsNode instanceof ObjectNode attrs) {
+                    String type = textOrNull(attrs.get("entityType"));
+                    UUID id = parseUuidOrNull(textOrNull(attrs.get("entityId")));
+                    if (type != null && id != null) {
+                        String normalized = normalizeMentionType(type);
+                        boolean inScope = switch (normalized) {
+                            case "SCREEN" -> allowedScreens.contains(id);
+                            case "COMPONENT" -> allowedComponents.contains(id);
+                            case "API" -> allowedApis.contains(id);
+                            case "ENTITY" -> allowedEntities.contains(id);
+                            case "COMMUNICATION" -> allowedCommunications.contains(id);
+                            default -> false;
+                        };
+                        boolean wasOut = attrs.has("outOfScope") && attrs.get("outOfScope").asBoolean(false);
+                        if (inScope) {
+                            if (wasOut || attrs.has("outOfScope")) {
+                                attrs.remove("outOfScope");
+                                changed = true;
+                            }
+                        } else if (!wasOut) {
+                            attrs.put("outOfScope", true);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            if (node.has("content") && markMentionsNode(
+                    node.get("content"), allowedScreens, allowedComponents, allowedApis,
+                    allowedEntities, allowedCommunications)) {
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     private Map<UUID, RegistryScreen> indexScreens(List<UUID> screenIds) {
@@ -407,15 +549,25 @@ public class UseCaseFlowScopeQueryService {
 
     private static Set<String> parseTypes(String typesCsv) {
         if (typesCsv == null || typesCsv.isBlank()) {
-            return new HashSet<>(Arrays.asList("COMPONENT", "SCREEN", "API", "ENTITY"));
+            return new HashSet<>(Arrays.asList("COMPONENT", "SCREEN", "API", "ENTITY", "COMMUNICATION"));
         }
         return Arrays.stream(typesCsv.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .map(s -> s.toUpperCase(Locale.ROOT))
-                .map(s -> "API_ENDPOINT".equals(s) ? "API" : s)
-                .map(s -> "DATA_ENTITY".equals(s) ? "ENTITY" : s)
+                .map(UseCaseFlowScopeQueryService::normalizeMentionType)
                 .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    private static String normalizeMentionType(String type) {
+        if (type == null) return "";
+        String normalized = type.toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "API_ENDPOINT" -> "API";
+            case "DATA_ENTITY" -> "ENTITY";
+            case "COMMUNICATION_SPECIFICATION", "COMM_SPEC" -> "COMMUNICATION";
+            default -> normalized;
+        };
     }
 
     private record MentionRef(String entityType, UUID entityId, String label, UUID screenId) {}

@@ -39,6 +39,11 @@ public final class TraceabilityExceptions {
     public static AppException functionScreenDuplicate(){return new AppException(TraceabilityErrorCatalog.FUNCTION_SCREEN_DUPLICATE);}
     public static AppException functionScreenNotFound(UUID functionId, UUID screenId){return new AppException(TraceabilityErrorCatalog.FUNCTION_SCREEN_NOT_FOUND,"Function-screen link not found",Map.of("functionId",functionId==null?"":functionId,"screenId",screenId==null?"":screenId));}
     public static AppException functionApiDuplicate(){return new AppException(TraceabilityErrorCatalog.FUNCTION_API_DUPLICATE);}
+    public static AppException commSpecNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.COMM_SPEC_NOT_FOUND,"Communication specification not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException commSpecCodeExists(String code){return new AppException(TraceabilityErrorCatalog.COMM_SPEC_CODE_EXISTS,"Communication specification code already exists: "+code,Map.of("code",code));}
+    public static AppException commSpecNotReady(String reason){return new AppException(TraceabilityErrorCatalog.COMM_SPEC_NOT_READY,reason==null?"Cannot mark READY":reason);}
+    public static AppException functionCommDuplicate(){return new AppException(TraceabilityErrorCatalog.FUNCTION_COMM_DUPLICATE);}
+    public static AppException functionCommNotFound(UUID functionId, UUID communicationId){return new AppException(TraceabilityErrorCatalog.FUNCTION_COMM_NOT_FOUND,"Function-communication link not found",Map.of("functionId",functionId==null?"":functionId,"communicationId",communicationId==null?"":communicationId));}
     public static AppException functionApiNotFound(UUID functionId, UUID apiEndpointId){return new AppException(TraceabilityErrorCatalog.FUNCTION_API_NOT_FOUND,"Function-api link not found",Map.of("functionId",functionId==null?"":functionId,"apiEndpointId",apiEndpointId==null?"":apiEndpointId));}
     public static AppException screenComponentDuplicate(){return new AppException(TraceabilityErrorCatalog.SCREEN_COMPONENT_DUPLICATE);}
     public static AppException screenComponentNotFound(UUID screenId, UUID componentId){return new AppException(TraceabilityErrorCatalog.SCREEN_COMPONENT_NOT_FOUND,"Screen-component link not found",Map.of("screenId",screenId==null?"":screenId,"componentId",componentId==null?"":componentId));}

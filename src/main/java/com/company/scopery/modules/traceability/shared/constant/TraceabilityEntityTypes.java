@@ -22,6 +22,8 @@ public final class TraceabilityEntityTypes {
     public static final String STRUCTURE_RELATION = "STRUCTURE_RELATION";
     public static final String FUNCTION_SCREEN = "FUNCTION_SCREEN";
     public static final String FUNCTION_API = "FUNCTION_API";
+    public static final String COMMUNICATION_SPECIFICATION = "COMMUNICATION_SPECIFICATION";
+    public static final String FUNCTION_COMMUNICATION = "FUNCTION_COMMUNICATION";
     public static final String SCREEN_COMPONENT = "SCREEN_COMPONENT";
     public static final String NFR_SCOPE_TARGET   = "NFR_SCOPE_TARGET";
     public static final String FUNCTION_WORKFLOW      = "FUNCTION_WORKFLOW";

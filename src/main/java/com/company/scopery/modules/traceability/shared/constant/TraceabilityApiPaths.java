@@ -36,7 +36,10 @@ public final class TraceabilityApiPaths {
     public static final String STRUCTURE_RELATIONS = APPLICATIONS + "/{applicationId}/structure-relations";
     public static final String FUNCTION_SCREENS = FUNCTIONAL_ITEMS + "/{functionalItemId}/screens";
     public static final String FUNCTION_APIS = FUNCTIONAL_ITEMS + "/{functionalItemId}/api-endpoints";
+    public static final String FUNCTION_COMMUNICATIONS = FUNCTIONAL_ITEMS + "/{functionalItemId}/communications";
     public static final String SCREEN_COMPONENTS = SCREEN_ITEM + "/{screenId}/components";
+    public static final String COMMUNICATION_SPECS = APPLICATIONS + "/{applicationId}/communication-specifications";
+    public static final String COMMUNICATION_SPEC_ITEM = WS + "/communication-specifications";
     public static final String OVERALL_STRUCTURE = APPLICATIONS + "/{applicationId}/overall-structure";
     public static final String OVERALL_STRUCTURE_CANDIDATES = OVERALL_STRUCTURE + "/candidates";
     public static final String NFR_SCOPE_TARGETS = NON_FUNCTIONAL_ITEMS + "/{nfrId}/scope-targets";

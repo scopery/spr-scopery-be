@@ -28,5 +28,9 @@ public class JpaRegistryDataEntityRepository implements RegistryDataEntityReposi
     @Override public List<RegistryDataEntity> findByApplicationIdAndModuleId(UUID applicationId, UUID moduleId) {
         return springData.findByApplicationIdAndModuleIdOrderByCreatedAtDesc(applicationId, moduleId).stream().map(mapper::toDomain).toList();
     }
+    @Override public List<RegistryDataEntity> findByModuleId(UUID moduleId) {
+        if (moduleId == null) return List.of();
+        return springData.findByModuleIdOrderByNameAsc(moduleId).stream().map(mapper::toDomain).toList();
+    }
     @Override public void delete(UUID id, UUID workspaceId) { springData.deleteByIdAndWorkspaceId(id, workspaceId); }
 }

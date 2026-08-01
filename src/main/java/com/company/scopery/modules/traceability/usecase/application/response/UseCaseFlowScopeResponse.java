@@ -8,7 +8,8 @@ public record UseCaseFlowScopeResponse(
         FunctionRef function,
         List<ScreenRef> screens,
         List<SimpleRef> apis,
-        List<SimpleRef> entities
+        List<SimpleRef> entities,
+        List<SimpleRef> communications
 ) {
     public record FunctionRef(UUID id, String code, String name) {}
 
