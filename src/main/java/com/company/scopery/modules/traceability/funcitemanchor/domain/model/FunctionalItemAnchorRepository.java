@@ -8,6 +8,7 @@ public interface FunctionalItemAnchorRepository {
     FunctionalItemAnchor save(FunctionalItemAnchor anchor);
     Optional<FunctionalItemAnchor> findByIdAndFunctionalItemId(UUID id, UUID functionalItemId);
     List<FunctionalItemAnchor> findByFunctionalItemId(UUID functionalItemId);
+    List<FunctionalItemAnchor> findByFunctionalItemIdAndNodeType(UUID functionalItemId, String nodeType);
     boolean existsByFunctionalItemIdAndNodeTypeAndNodeId(UUID functionalItemId, String nodeType, UUID nodeId);
     List<FunctionalItemAnchor> findByProjectId(UUID projectId);
     List<FunctionalItemAnchor> findByNodeTypeAndNodeIdAndProjectId(String nodeType, UUID nodeId, UUID projectId);

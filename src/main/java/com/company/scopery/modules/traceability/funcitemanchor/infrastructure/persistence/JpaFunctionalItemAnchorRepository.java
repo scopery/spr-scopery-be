@@ -40,6 +40,12 @@ public class JpaFunctionalItemAnchorRepository implements FunctionalItemAnchorRe
     }
 
     @Override
+    public List<FunctionalItemAnchor> findByFunctionalItemIdAndNodeType(UUID functionalItemId, String nodeType) {
+        return springData.findByFunctionalItemIdAndNodeTypeOrderByCreatedAtAsc(functionalItemId, nodeType)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public boolean existsByFunctionalItemIdAndNodeTypeAndNodeId(UUID functionalItemId, String nodeType, UUID nodeId) {
         return springData.existsByFunctionalItemIdAndNodeTypeAndNodeId(functionalItemId, nodeType, nodeId);
     }

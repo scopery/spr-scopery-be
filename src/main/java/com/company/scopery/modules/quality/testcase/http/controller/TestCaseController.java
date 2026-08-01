@@ -7,9 +7,14 @@ import com.company.scopery.modules.quality.testcase.application.command.*;
 import com.company.scopery.modules.quality.testcase.application.response.*;
 import com.company.scopery.modules.quality.testcase.application.service.TestCaseQueryService;
 import com.company.scopery.modules.quality.testcase.http.request.*;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 @RestController @RequestMapping(QualityApiPaths.TEST_CASES) @Tag(name="Quality - Test Cases")
@@ -23,18 +28,21 @@ public class TestCaseController {
     private final UpdateRequirementLinksAction updateReqLinks;
     private final UpdateUseCaseLinksAction updateUcLinks;
     private final TestCaseQueryService query;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
     public TestCaseController(CreateTestCaseAction create, UpdateTestCaseAction update,
             ApproveTestCaseAction approve, ArchiveTestCaseAction archive,
             BatchUpdateTestCasesAction batchUpdate, BatchCreateTestCasesAction batchCreate,
             UpdateRequirementLinksAction updateReqLinks, UpdateUseCaseLinksAction updateUcLinks,
-            TestCaseQueryService query) {
+            TestCaseQueryService query, BulkJobService bulkJobService, ObjectMapper objectMapper) {
         this.create=create; this.update=update; this.approve=approve; this.archive=archive;
         this.batchUpdate=batchUpdate; this.batchCreate=batchCreate;
         this.updateReqLinks=updateReqLinks; this.updateUcLinks=updateUcLinks; this.query=query;
+        this.bulkJobService=bulkJobService; this.objectMapper=objectMapper;
     }
     @PostMapping @Operation(summary="Create test case")
     public ApiResponse<TestCaseResponse> create(@PathVariable UUID projectId, @Valid @RequestBody CreateTestCaseRequest r) {
-        return ApiResponse.success(create.execute(new CreateTestCaseCommand(projectId, r.testSuiteId(), r.useCaseId(), r.code(), r.title(), r.description(), r.type(), r.priority(), r.preconditions(), r.expectedResult(), r.assigneeId(), r.automationStatus())));
+        return ApiResponse.success(create.execute(toCreateCommand(projectId, r)));
     }
     @GetMapping @Operation(summary="List test cases")
     public ApiResponse<PageResponse<TestCaseListItemResponse>> list(@PathVariable UUID projectId,
@@ -60,7 +68,7 @@ public class TestCaseController {
     @PatchMapping("/{testCaseId}") @Operation(summary="Update test case")
     public ApiResponse<TestCaseResponse> update(@PathVariable UUID projectId, @PathVariable UUID testCaseId,
             @RequestBody UpdateTestCaseRequest r) {
-        return ApiResponse.success(update.execute(new UpdateTestCaseCommand(projectId, testCaseId, r.title(), r.description(), r.type(), r.priority(), r.status(), r.useCaseId(), r.assigneeId(), r.automationStatus(), r.preconditions(), r.expectedResult(), r.version())));
+        return ApiResponse.success(update.execute(new UpdateTestCaseCommand(projectId, testCaseId, r.title(), r.description(), r.code(), r.type(), r.priority(), r.status(), r.useCaseId(), r.assigneeId(), r.automationStatus(), r.preconditions(), r.expectedResult(), r.version())));
     }
     @PostMapping("/{testCaseId}/approve") @Operation(summary="Approve test case")
     public ApiResponse<TestCaseResponse> approve(@PathVariable UUID projectId, @PathVariable UUID testCaseId) { return ApiResponse.success(approve.execute(projectId, testCaseId)); }
@@ -79,6 +87,41 @@ public class TestCaseController {
     public ApiResponse<BatchCreateResult> batchCreate(@PathVariable UUID projectId, @Valid @RequestBody BatchCreateTestCasesRequest r) {
         var commands = r.items().stream().map(i -> new CreateTestCaseCommand(projectId, i.testSuiteId(), i.useCaseId(), i.code(), i.title(), i.description(), i.type(), i.priority(), i.preconditions(), i.expectedResult(), i.assigneeId(), i.automationStatus())).toList();
         return ApiResponse.success(batchCreate.execute(projectId, commands));
+    }
+    @PostMapping("/bulk") @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary="Bulk create test cases (async — poll GET /api/bulk-jobs/{id} for status). Optional steps[] are applied by BE after each shell.")
+    public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID projectId, @Valid @RequestBody BulkCreateTestCasesRequest r) {
+        var items = r.items().stream().map(i -> toCreateCommand(projectId, i)).toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new BulkCreateTestCasesCommand(projectId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateTestCasesJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
+    }
+
+    private static CreateTestCaseCommand toCreateCommand(UUID projectId, CreateTestCaseRequest r) {
+        var steps = r.steps() == null
+                ? null
+                : r.steps().stream()
+                        .map(s -> new CreateTestCaseCommand.NestedStep(
+                                s.action(), s.expectedResult(), s.screenId(), s.componentId()))
+                        .toList();
+        return new CreateTestCaseCommand(
+                projectId,
+                r.testSuiteId(),
+                r.useCaseId(),
+                r.code(),
+                r.title(),
+                r.description(),
+                r.type(),
+                r.priority(),
+                r.preconditions(),
+                r.expectedResult(),
+                r.assigneeId(),
+                r.automationStatus(),
+                steps);
     }
     @GetMapping("/{testCaseId}/traceability") @Operation(summary="Get test case traceability")
     public ApiResponse<TestCaseTraceabilityResponse> traceability(@PathVariable UUID projectId, @PathVariable UUID testCaseId) {

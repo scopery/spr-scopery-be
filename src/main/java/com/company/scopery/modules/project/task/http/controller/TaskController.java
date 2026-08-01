@@ -9,11 +9,17 @@ import com.company.scopery.modules.project.task.application.command.*;
 import com.company.scopery.modules.project.task.application.query.SearchTaskQuery;
 import com.company.scopery.modules.project.task.application.response.TaskResponse;
 import com.company.scopery.modules.project.task.application.service.TaskQueryService;
+import com.company.scopery.modules.project.task.http.request.BulkCreateTaskRequest;
 import com.company.scopery.modules.project.task.http.request.CreateTaskRequest;
 import com.company.scopery.modules.project.task.http.request.UpdateTaskRequest;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,6 +38,8 @@ public class TaskController {
     private final CancelTaskAction cancelTaskAction;
     private final ArchiveTaskAction archiveTaskAction;
     private final ReopenTaskAction reopenTaskAction;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public TaskController(TaskQueryService taskQueryService,
                           CreateTaskAction createTaskAction,
@@ -41,7 +49,9 @@ public class TaskController {
                           CompleteTaskAction completeTaskAction,
                           CancelTaskAction cancelTaskAction,
                           ArchiveTaskAction archiveTaskAction,
-                          ReopenTaskAction reopenTaskAction) {
+                          ReopenTaskAction reopenTaskAction,
+                          BulkJobService bulkJobService,
+                          ObjectMapper objectMapper) {
         this.taskQueryService = taskQueryService;
         this.createTaskAction = createTaskAction;
         this.updateTaskAction = updateTaskAction;
@@ -51,6 +61,8 @@ public class TaskController {
         this.cancelTaskAction = cancelTaskAction;
         this.archiveTaskAction = archiveTaskAction;
         this.reopenTaskAction = reopenTaskAction;
+        this.bulkJobService = bulkJobService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping
@@ -74,6 +86,27 @@ public class TaskController {
                 request.priority()
         );
         return ApiResponse.success(createTaskAction.execute(cmd));
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk create tasks (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> bulkCreateTask(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody BulkCreateTaskRequest request) {
+        var items = request.items().stream()
+                .map(i -> new CreateTaskCommand(projectId, i.projectPhaseId(), i.wbsNodeId(),
+                        i.code(), i.title(), i.description(), i.inChargeUserId(),
+                        i.plannedRoleCode(), i.plannedRoleName(), i.estimateHours(),
+                        i.plannedStartDate(), i.dueDate(), i.priority()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new BulkCreateTaskCommand(projectId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateTaskJobHandler.JOB_TYPE, request.items().size(), payload)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @GetMapping("/{id}")

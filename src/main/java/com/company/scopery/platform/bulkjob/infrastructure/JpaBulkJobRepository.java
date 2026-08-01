@@ -1,12 +1,16 @@
 package com.company.scopery.platform.bulkjob.infrastructure;
 
+import com.company.scopery.platform.bulkjob.BulkJobFailure;
 import com.company.scopery.platform.bulkjob.BulkJobRecord;
 import com.company.scopery.platform.bulkjob.BulkJobRepository;
 import com.company.scopery.platform.bulkjob.BulkJobStatus;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,10 +18,14 @@ import java.util.UUID;
 @Repository
 public class JpaBulkJobRepository implements BulkJobRepository {
 
-    private final SpringDataBulkJobJpaRepository springData;
+    private static final TypeReference<List<BulkJobFailure>> FAILURE_LIST_TYPE = new TypeReference<>() {};
 
-    public JpaBulkJobRepository(SpringDataBulkJobJpaRepository springData) {
+    private final SpringDataBulkJobJpaRepository springData;
+    private final ObjectMapper objectMapper;
+
+    public JpaBulkJobRepository(SpringDataBulkJobJpaRepository springData, ObjectMapper objectMapper) {
         this.springData = springData;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -64,6 +72,19 @@ public class JpaBulkJobRepository implements BulkJobRepository {
         springData.findById(id).ifPresent(e -> {
             e.setSucceededItems(succeeded);
             e.setFailedItems(failed);
+            springData.saveAndFlush(e);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void updateProgressWithFailure(UUID id, int succeeded, int failed, BulkJobFailure failure) {
+        springData.findById(id).ifPresent(e -> {
+            e.setSucceededItems(succeeded);
+            e.setFailedItems(failed);
+            List<BulkJobFailure> existing = parseFailures(e.getFailuresJson());
+            existing.add(failure);
+            e.setFailuresJson(serializeFailures(existing));
             springData.saveAndFlush(e);
         });
     }
@@ -132,6 +153,7 @@ public class JpaBulkJobRepository implements BulkJobRepository {
                 e.getPayloadJson(),
                 e.getResultSummary(),
                 e.getErrorMessage(),
+                parseFailures(e.getFailuresJson()),
                 e.getCreatedAt(),
                 e.getUpdatedAt()
         );
@@ -149,9 +171,27 @@ public class JpaBulkJobRepository implements BulkJobRepository {
         e.setPayloadJson(job.payloadJson());
         e.setResultSummary(job.resultSummary());
         e.setErrorMessage(job.errorMessage());
+        e.setFailuresJson("[]");
         if (job.createdAt() != null) {
             e.setCreatedAt(job.createdAt());
         }
         return e;
+    }
+
+    private List<BulkJobFailure> parseFailures(String json) {
+        if (json == null || json.isBlank()) return new ArrayList<>();
+        try {
+            return objectMapper.readValue(json, FAILURE_LIST_TYPE);
+        } catch (Exception ex) {
+            return new ArrayList<>();
+        }
+    }
+
+    private String serializeFailures(List<BulkJobFailure> failures) {
+        try {
+            return objectMapper.writeValueAsString(failures);
+        } catch (Exception ex) {
+            return "[]";
+        }
     }
 }

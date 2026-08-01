@@ -1,6 +1,8 @@
 package com.company.scopery.modules.traceability.functionalitem.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.modules.traceability.businessrule.application.command.CreateBusinessRuleCommand;
+import com.company.scopery.modules.traceability.businessrule.http.request.CreateBusinessRuleRequest;
 import com.company.scopery.modules.traceability.functionalitem.application.action.BulkCreateFunctionalItemJobHandler;
 import com.company.scopery.modules.traceability.functionalitem.application.action.CreateFunctionalItemAction;
 import com.company.scopery.modules.traceability.functionalitem.application.action.DeleteFunctionalItemAction;
@@ -81,7 +83,8 @@ public class FunctionalItemController {
                 r.description(),
                 r.priority(),
                 r.type(),
-                r.acceptanceCriteria()
+                r.acceptanceCriteria(),
+                toBusinessRuleCommands(r.businessRules())
         )));
     }
 
@@ -96,7 +99,8 @@ public class FunctionalItemController {
                 .map(item -> new CreateFunctionalItemCommand(
                         projectId, item.workspaceId(), item.moduleId(),
                         item.code(), item.title(), item.description(),
-                        item.priority(), item.type(), item.acceptanceCriteria()))
+                        item.priority(), item.type(), item.acceptanceCriteria(),
+                        toBusinessRuleCommands(item.businessRules())))
                 .toList();
         try {
             String payload = objectMapper.writeValueAsString(new BulkCreateFunctionalItemCommand(projectId, items));
@@ -184,5 +188,12 @@ public class FunctionalItemController {
                         request.toCreate(),
                         request.toUpdate(),
                         request.archiveUnmatched())));
+    }
+
+    private List<CreateBusinessRuleCommand> toBusinessRuleCommands(List<CreateBusinessRuleRequest> rules) {
+        if (rules == null || rules.isEmpty()) return List.of();
+        return rules.stream()
+                .map(r -> new CreateBusinessRuleCommand(null, null, r.code(), r.title(), r.description(), r.severity()))
+                .toList();
     }
 }

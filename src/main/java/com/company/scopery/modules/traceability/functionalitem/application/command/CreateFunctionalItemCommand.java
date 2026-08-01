@@ -1,5 +1,7 @@
 package com.company.scopery.modules.traceability.functionalitem.application.command;
 
+import com.company.scopery.modules.traceability.businessrule.application.command.CreateBusinessRuleCommand;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -12,5 +14,6 @@ public record CreateFunctionalItemCommand(
         String description,
         String priority,
         String type,
-        List<String> acceptanceCriteria
+        List<String> acceptanceCriteria,
+        List<CreateBusinessRuleCommand> businessRules
 ) {}

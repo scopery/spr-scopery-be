@@ -1,5 +1,6 @@
 package com.company.scopery.modules.project.task.http.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,5 +21,5 @@ public record CreateTaskRequest(
         @NotNull @DecimalMin("0.01") BigDecimal estimateHours,
         LocalDate plannedStartDate,
         LocalDate dueDate,
-        String priority
+        @Schema(allowableValues = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}, example = "MEDIUM") String priority
 ) {}

@@ -28,7 +28,19 @@ public class UpdateTestCaseAction {
         var priority = c.priority() != null ? QualityEnumParser.parseRequired(TestCasePriority.class, c.priority(), "priority") : tc.priority();
         var status = c.status() != null ? QualityEnumParser.parseRequired(TestCaseStatus.class, c.status(), "status") : tc.status();
         var automationStatus = c.automationStatus() != null ? QualityEnumParser.parseRequired(AutomationStatus.class, c.automationStatus(), "automationStatus") : tc.automationStatus();
+
+        String nextCode = tc.code();
+        if (c.code() != null) {
+            nextCode = c.code().isBlank() ? null : c.code().trim();
+            if (nextCode != null
+                    && !nextCode.equals(tc.code())
+                    && repo.existsByProjectIdAndCode(c.projectId(), nextCode)) {
+                throw QualityExceptions.testCaseCodeExists(nextCode);
+            }
+        }
+
         var updated = tc.update(
+                nextCode,
                 c.title() != null ? c.title().trim() : tc.title(),
                 c.description() != null ? c.description() : tc.description(),
                 type, priority, status,

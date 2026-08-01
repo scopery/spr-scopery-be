@@ -68,6 +68,7 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     USE_CASE_SUPPORTING_FN_DUPLICATE("USE_CASE_SUPPORTING_FN_DUPLICATE", "Function already linked as supporting function", HttpStatus.CONFLICT),
     USE_CASE_SUPPORTING_FN_NOT_FOUND("USE_CASE_SUPPORTING_FN_NOT_FOUND", "Supporting function link not found", HttpStatus.NOT_FOUND),
     USE_CASE_SCREEN_NOT_LINKED("USE_CASE_SCREEN_NOT_LINKED", "Screen is not linked to the primary function of this use case", HttpStatus.UNPROCESSABLE_ENTITY),
+    USE_CASE_FUNCTION_REQUIRED("USE_CASE_FUNCTION_REQUIRED", "Use case must have a parent Function for structured flow mentions", HttpStatus.UNPROCESSABLE_ENTITY),
     REQUIREMENT_FUNCTION_DUPLICATE("REQUIREMENT_FUNCTION_DUPLICATE", "Requirement already linked to this function", HttpStatus.CONFLICT),
     REQUIREMENT_FUNCTION_NOT_FOUND("REQUIREMENT_FUNCTION_NOT_FOUND", "Requirement-function link not found", HttpStatus.NOT_FOUND),
     REQUIREMENT_USE_CASE_DUPLICATE("REQUIREMENT_USE_CASE_DUPLICATE", "Requirement already linked to this use case", HttpStatus.CONFLICT),

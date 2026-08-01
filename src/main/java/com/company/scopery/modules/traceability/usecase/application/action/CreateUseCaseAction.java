@@ -23,23 +23,28 @@ public class CreateUseCaseAction {
     private final FunctionalItemRepository functionalItems;
     private final TraceabilityAuthorizationService authorization;
     private final TraceabilityActivityLogger activityLogger;
+    private final ApplyUseCaseNestedPartsAction applyNested;
 
     public CreateUseCaseAction(UseCaseRepository useCaseRepo,
                                FunctionalItemRepository functionalItems,
                                TraceabilityAuthorizationService authorization,
-                               TraceabilityActivityLogger activityLogger) {
+                               TraceabilityActivityLogger activityLogger,
+                               ApplyUseCaseNestedPartsAction applyNested) {
         this.useCaseRepo = useCaseRepo;
         this.functionalItems = functionalItems;
         this.authorization = authorization;
         this.activityLogger = activityLogger;
+        this.applyNested = applyNested;
     }
 
     @Transactional
     public UseCaseDetailResponse execute(CreateUseCaseCommand c) {
         authorization.requireCreate(c.projectId());
 
-        var fn = functionalItems.findByIdAndProjectId(c.primaryFunctionId(), c.projectId())
-                .orElseThrow(() -> TraceabilityExceptions.functionalItemNotFound(c.primaryFunctionId()));
+        var fn = c.primaryFunctionId() != null
+                ? functionalItems.findByIdAndProjectId(c.primaryFunctionId(), c.projectId())
+                        .orElseThrow(() -> TraceabilityExceptions.functionalItemNotFound(c.primaryFunctionId()))
+                : null;
 
         if (useCaseRepo.existsByProjectIdAndKey(c.projectId(), c.key())) {
             throw TraceabilityExceptions.useCaseKeyExists(c.key());
@@ -52,8 +57,10 @@ public class CreateUseCaseAction {
         activityLogger.logSuccess(TraceabilityEntityTypes.USE_CASE, saved.id(),
                 TraceabilityActivityActions.USE_CASE_CREATED, "Use case created: " + saved.key());
 
+        applyNested.applyFromCreateCommand(c, saved.id());
+
         return new UseCaseDetailResponse(
-                UseCaseResponse.from(saved, fn.title()),
+                UseCaseResponse.from(saved, fn != null ? fn.title() : null),
                 List.of(), List.of(), List.of(), List.of(), List.of());
     }
 }

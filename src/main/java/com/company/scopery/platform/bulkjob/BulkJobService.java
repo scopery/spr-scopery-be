@@ -33,6 +33,7 @@ public class BulkJobService {
                 payloadJson,
                 null,
                 null,
+                List.of(),
                 Instant.now(),
                 Instant.now()
         );
@@ -62,6 +63,10 @@ public class BulkJobService {
 
     public void updateProgress(UUID id, int succeeded, int failed) {
         repository.updateProgress(id, succeeded, failed);
+    }
+
+    public void updateProgressWithFailure(UUID id, int succeeded, int failed, BulkJobFailure failure) {
+        repository.updateProgressWithFailure(id, succeeded, failed, failure);
     }
 
     private String resolveActorUsername() {

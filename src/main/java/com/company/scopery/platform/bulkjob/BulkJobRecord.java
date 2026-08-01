@@ -1,6 +1,7 @@
 package com.company.scopery.platform.bulkjob;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record BulkJobRecord(
@@ -14,6 +15,7 @@ public record BulkJobRecord(
         String payloadJson,
         String resultSummary,
         String errorMessage,
+        List<BulkJobFailure> failures,
         Instant createdAt,
         Instant updatedAt
 ) {}

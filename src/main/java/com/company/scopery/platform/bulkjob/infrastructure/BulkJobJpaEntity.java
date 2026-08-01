@@ -47,6 +47,9 @@ public class BulkJobJpaEntity extends AuditableJpaEntity {
     @Column(name = "error_message", columnDefinition = "text")
     private String errorMessage;
 
+    @Column(name = "failures_json", columnDefinition = "text")
+    private String failuresJson;
+
     @Column(name = "leased_by", length = 100)
     private String leasedBy;
 

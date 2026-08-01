@@ -1,8 +1,16 @@
 package com.company.scopery.modules.traceability.appcomponent.domain.model;
+
 import com.company.scopery.common.pagination.PageResult;
-import java.util.List; import java.util.Optional; import java.util.UUID;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 public interface RegistryAppComponentRepository {
     RegistryAppComponent save(RegistryAppComponent e);
+    Optional<RegistryAppComponent> findById(UUID id);
+    List<RegistryAppComponent> findByIdIn(Collection<UUID> ids);
     Optional<RegistryAppComponent> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryAppComponent> findByApplicationId(UUID applicationId);
     void delete(UUID id, UUID workspaceId);

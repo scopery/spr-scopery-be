@@ -9,5 +9,7 @@ public record UpdateUseCaseCommand(
         String goal,
         String primaryActorName,
         String triggerText,
-        String status
+        String status,
+        /** When non-null, set as the Use Case primary Function. Null = leave unchanged. */
+        UUID primaryFunctionId
 ) {}

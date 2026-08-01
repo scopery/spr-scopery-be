@@ -10,14 +10,20 @@ import com.company.scopery.modules.traceability.requirement.application.response
 import com.company.scopery.modules.traceability.requirement.application.response.LinkableUseCaseResponse;
 import com.company.scopery.modules.traceability.requirement.application.response.RequirementResponse;
 import com.company.scopery.modules.traceability.requirement.application.service.RequirementQueryService;
+import com.company.scopery.modules.traceability.requirement.http.request.BulkCreateRequirementRequest;
 import com.company.scopery.modules.traceability.requirement.http.request.CreateRequirementRequest;
 import com.company.scopery.modules.traceability.requirement.http.request.LinkTestCasesRequest;
 import com.company.scopery.modules.traceability.requirement.http.request.UpdateRequirementRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.modules.traceability.tracelink.application.response.BatchTraceLinkResponse;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +44,8 @@ public class RequirementController {
     private final LinkTestCasesToRequirementAction linkTestCases;
     private final SetRequiresUseCaseAction setRequiresUseCase;
     private final RequirementQueryService query;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public RequirementController(CreateRequirementAction create, UpdateRequirementAction update,
                                   ApproveRequirementAction approve, RejectRequirementAction reject,
@@ -46,10 +54,13 @@ public class RequirementController {
                                   ArchiveRequirementAction archive,
                                   LinkTestCasesToRequirementAction linkTestCases,
                                   SetRequiresUseCaseAction setRequiresUseCase,
-                                  RequirementQueryService query) {
+                                  RequirementQueryService query,
+                                  BulkJobService bulkJobService,
+                                  ObjectMapper objectMapper) {
         this.create = create; this.update = update; this.approve = approve; this.reject = reject;
         this.defer = defer; this.markImplemented = markImplemented; this.archive = archive;
         this.linkTestCases = linkTestCases; this.setRequiresUseCase = setRequiresUseCase; this.query = query;
+        this.bulkJobService = bulkJobService; this.objectMapper = objectMapper;
     }
 
     @PostMapping
@@ -59,6 +70,25 @@ public class RequirementController {
         return ApiResponse.success(create.execute(new CreateRequirementCommand(
                 projectId, r.applicationId(), r.code(), r.title(), r.description(),
                 r.requirementType(), r.priority(), r.functionalItemId(), r.nonFunctionalItemId(), r.scopeItemId(), r.scopePackageId())));
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk create requirements (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID projectId,
+                                                   @Valid @RequestBody BulkCreateRequirementRequest r) {
+        var items = r.items().stream()
+                .map(i -> new CreateRequirementCommand(projectId, i.applicationId(), i.code(), i.title(),
+                        i.description(), i.requirementType(), i.priority(), i.functionalItemId(),
+                        i.nonFunctionalItemId(), i.scopeItemId(), i.scopePackageId()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new BulkCreateRequirementCommand(projectId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateRequirementJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @GetMapping

@@ -1,5 +1,6 @@
 package com.company.scopery.modules.project.wbs.http.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.UUID;
@@ -10,6 +11,6 @@ public record CreateWbsNodeRequest(
         String description,
         UUID phaseId,
         UUID parentId,
-        @NotBlank String nodeType,
+        @NotBlank @Schema(allowableValues = {"WORK_PACKAGE", "DELIVERABLE", "TASK_GROUP"}, example = "WORK_PACKAGE") String nodeType,
         int sortOrder
 ) {}

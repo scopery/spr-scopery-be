@@ -58,6 +58,7 @@ public final class TraceabilityExceptions {
     public static AppException useCaseSupportingFnDuplicate(){return new AppException(TraceabilityErrorCatalog.USE_CASE_SUPPORTING_FN_DUPLICATE);}
     public static AppException useCaseSupportingFnNotFound(UUID useCaseId, UUID functionId){return new AppException(TraceabilityErrorCatalog.USE_CASE_SUPPORTING_FN_NOT_FOUND,"Supporting function link not found",Map.of("useCaseId",useCaseId==null?"":useCaseId,"functionId",functionId==null?"":functionId));}
     public static AppException useCaseScreenNotLinked(UUID screenId){return new AppException(TraceabilityErrorCatalog.USE_CASE_SCREEN_NOT_LINKED,"Screen not linked to primary function: "+screenId,Map.of("screenId",screenId==null?"":screenId));}
+    public static AppException useCaseFunctionRequired(UUID useCaseId){return new AppException(TraceabilityErrorCatalog.USE_CASE_FUNCTION_REQUIRED,"Use case must have a parent Function",Map.of("useCaseId",useCaseId==null?"":useCaseId));}
     public static AppException requirementFunctionDuplicate(){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_FUNCTION_DUPLICATE);}
     public static AppException requirementFunctionNotFound(UUID reqId, UUID fnId){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_FUNCTION_NOT_FOUND,"Requirement-function link not found",Map.of("requirementId",reqId==null?"":reqId,"functionId",fnId==null?"":fnId));}
     public static AppException requirementUseCaseDuplicate(){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_DUPLICATE);}

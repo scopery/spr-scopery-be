@@ -51,9 +51,13 @@ public class AddFlowStepAction {
         flowRepo.findByIdAndUseCaseId(c.flowId(), c.useCaseId())
                 .orElseThrow(() -> TraceabilityExceptions.useCaseFlowNotFound(c.flowId()));
 
-        if (c.screenContextId() != null
-                && !functionScreenRepo.existsByFunctionIdAndScreenId(useCase.primaryFunctionId(), c.screenContextId())) {
-            throw TraceabilityExceptions.useCaseScreenNotLinked(c.screenContextId());
+        if (c.screenContextId() != null) {
+            if (useCase.primaryFunctionId() == null) {
+                throw TraceabilityExceptions.useCaseFunctionRequired(c.useCaseId());
+            }
+            if (!functionScreenRepo.existsByFunctionIdAndScreenId(useCase.primaryFunctionId(), c.screenContextId())) {
+                throw TraceabilityExceptions.useCaseScreenNotLinked(c.screenContextId());
+            }
         }
 
         UseCaseFlowStepType stepType = TraceabilityEnumParser.parseRequired(UseCaseFlowStepType.class, c.stepType(), "stepType");

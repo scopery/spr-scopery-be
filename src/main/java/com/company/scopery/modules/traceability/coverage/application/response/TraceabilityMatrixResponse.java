@@ -42,8 +42,16 @@ public record TraceabilityMatrixResponse(
             Instant latestResultAt,
             long openDefectCount,
             Previews previews,
-            PreviewMore previewMore
+            PreviewMore previewMore,
+            long functionsCoveredByUseCase,
+            long useCasesWithTests,
+            ExecutionSummary executionSummary,
+            String functionLayerStatus,
+            String useCaseLayerStatus,
+            String testLayerStatus
     ) {}
+
+    public record ExecutionSummary(long passed, long failed, long blocked, long notRun) {}
 
     public record Previews(
             List<PreviewObject> functions,

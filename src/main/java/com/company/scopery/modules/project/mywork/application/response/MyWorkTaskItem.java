@@ -22,5 +22,7 @@ public record MyWorkTaskItem(
         String projectPhaseName,
         UUID wbsNodeId,
         boolean isOverdue,
-        Instant updatedAt
+        Instant updatedAt,
+        Instant completedAt,
+        UUID completedBy
 ) {}

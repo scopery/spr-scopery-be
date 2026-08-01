@@ -36,7 +36,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final String[] SKIP_PREFIXES = {
         "/actuator/",
         "/swagger-ui",
-        "/v3/api-docs"
+        "/v3/api-docs",
+        // Polling an accepted bulk job is not a client create burst.
+        "/api/bulk-jobs"
     };
 
     private final RedisTemplate<String, Object> redisTemplate;

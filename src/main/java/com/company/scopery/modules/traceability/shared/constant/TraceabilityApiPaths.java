@@ -44,6 +44,7 @@ public final class TraceabilityApiPaths {
     // Use Case CRUD
     public static final String USE_CASES                    = BASE + "/use-cases";
     public static final String USE_CASE                     = USE_CASES + "/{useCaseId}";
+    public static final String USE_CASE_NESTED_IMPORT       = USE_CASE + "/nested-import";
     // Use Case sub-resources
     public static final String USE_CASE_CONDITIONS          = USE_CASE + "/conditions";
     public static final String USE_CASE_CONDITION           = USE_CASE_CONDITIONS + "/{conditionId}";
@@ -58,6 +59,9 @@ public final class TraceabilityApiPaths {
     public static final String USE_CASE_CRITERION           = USE_CASE_CRITERIA + "/{criterionId}";
     public static final String USE_CASE_SUPPORTING_FNS      = USE_CASE + "/supporting-functions";
     public static final String USE_CASE_SUPPORTING_FN       = USE_CASE_SUPPORTING_FNS + "/{functionId}";
+    public static final String USE_CASE_FLOW_SCOPE          = USE_CASE + "/flow-scope";
+    public static final String USE_CASE_MENTION_OPTIONS     = USE_CASE + "/mention-options";
+    public static final String USE_CASE_PRIMARY_FN_IMPACT   = USE_CASE + "/primary-function-change-impact";
     // Use Cases scoped under a Function
     public static final String FUNCTION_USE_CASES           = FUNCTIONAL_ITEMS + "/{functionalItemId}/use-cases";
     // Requirement <-> Function links
@@ -72,6 +76,12 @@ public final class TraceabilityApiPaths {
     public static final String TRACEABILITY_REQ_DETAIL       = BASE + "/traceability/requirements/{requirementId}";
     public static final String TRACEABILITY_REQ_HISTORY      = BASE + "/traceability/requirements/{requirementId}/history";
     public static final String TRACEABILITY_GAPS             = BASE + "/traceability/gaps";
+    public static final String TRACEABILITY_OVERVIEW         = BASE + "/traceability/overview";
+    public static final String TRACEABILITY_FUNCTIONS        = BASE + "/traceability/functions";
+    public static final String TRACEABILITY_USE_CASES        = BASE + "/traceability/use-cases";
+    public static final String TRACEABILITY_IMPLEMENTATION   = BASE + "/traceability/implementation";
+    public static final String TRACEABILITY_NFR              = BASE + "/traceability/nfr-verification";
+    public static final String TRACEABILITY_EXPLORER         = BASE + "/traceability/explorer";
     public static final String REQUIREMENT_REQUIRES_USE_CASE = REQUIREMENTS + "/{requirementId}/requires-use-case";
     private TraceabilityApiPaths() {}
 }

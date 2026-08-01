@@ -14,8 +14,26 @@ public record RequirementTraceDetailResponse(
         List<TraceObject> implementationObjects,
         List<TraceObject> testCases,
         List<GapItem> gaps,
-        Instant generatedAt
+        Instant generatedAt,
+        /** Req → Function → Use Case → Test Case tree (transitive). */
+        List<CoverageChainFunction> coverageChain
 ) {
+    public RequirementTraceDetailResponse(
+            RequirementInfo requirement,
+            String coverageStatus,
+            List<String> gapCodes,
+            CoverageScore coverageScore,
+            List<TraceObject> functions,
+            List<TraceObject> useCases,
+            List<TraceObject> implementationObjects,
+            List<TraceObject> testCases,
+            List<GapItem> gaps,
+            Instant generatedAt
+    ) {
+        this(requirement, coverageStatus, gapCodes, coverageScore, functions, useCases,
+                implementationObjects, testCases, gaps, generatedAt, List.of());
+    }
+
     public record RequirementInfo(
             UUID id,
             String code,
@@ -46,5 +64,15 @@ public record RequirementTraceDetailResponse(
             String message,
             String recommendedAction,
             TraceObject relatedObject
+    ) {}
+
+    public record CoverageChainFunction(
+            TraceObject function,
+            List<CoverageChainUseCase> useCases
+    ) {}
+
+    public record CoverageChainUseCase(
+            TraceObject useCase,
+            List<TraceObject> testCases
     ) {}
 }

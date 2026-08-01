@@ -53,9 +53,13 @@ public class UpdateFlowStepAction {
         var step = stepRepo.findByIdAndFlowId(c.stepId(), c.flowId())
                 .orElseThrow(() -> TraceabilityExceptions.useCaseFlowStepNotFound(c.stepId()));
 
-        if (c.screenContextId() != null
-                && !functionScreenRepo.existsByFunctionIdAndScreenId(useCase.primaryFunctionId(), c.screenContextId())) {
-            throw TraceabilityExceptions.useCaseScreenNotLinked(c.screenContextId());
+        if (c.screenContextId() != null) {
+            if (useCase.primaryFunctionId() == null) {
+                throw TraceabilityExceptions.useCaseFunctionRequired(c.useCaseId());
+            }
+            if (!functionScreenRepo.existsByFunctionIdAndScreenId(useCase.primaryFunctionId(), c.screenContextId())) {
+                throw TraceabilityExceptions.useCaseScreenNotLinked(c.screenContextId());
+            }
         }
 
         UseCaseFlowStepType stepType = TraceabilityEnumParser.parseRequired(UseCaseFlowStepType.class, c.stepType(), "stepType");

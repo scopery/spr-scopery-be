@@ -21,5 +21,9 @@ public class JpaRegistryScreenRepository implements RegistryScreenRepository {
     @Override public Optional<RegistryScreen> findById(UUID id) {
         return springData.findById(id).map(mapper::toDomain);
     }
+    @Override public List<RegistryScreen> findByIdIn(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return springData.findAllById(ids).stream().map(mapper::toDomain).toList();
+    }
     @Override public boolean existsById(UUID id) { return springData.existsById(id); }
 }

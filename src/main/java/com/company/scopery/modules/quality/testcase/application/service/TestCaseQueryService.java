@@ -6,6 +6,7 @@ import com.company.scopery.modules.quality.shared.error.QualityExceptions;
 import com.company.scopery.modules.quality.testcase.application.response.*;
 import com.company.scopery.modules.quality.testcase.domain.model.TestCaseListRow;
 import com.company.scopery.modules.quality.testcase.domain.model.TestCaseRepository;
+import com.company.scopery.modules.quality.teststep.application.response.TestCaseStepResponse;
 import com.company.scopery.modules.quality.teststep.domain.model.TestCaseStepRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,14 +44,19 @@ public class TestCaseQueryService {
     public TestCaseDetailResponse getDetail(UUID projectId, UUID testCaseId) {
         authorization.requireTestView(projectId);
         var tc = repo.findByIdAndProjectId(testCaseId, projectId).orElseThrow(() -> QualityExceptions.testCaseNotFound(testCaseId));
-        long stepCount = stepRepo.countActiveByTestCaseId(testCaseId);
+        var steps = stepRepo.findByTestCaseIdOrderBySortOrder(testCaseId).stream()
+                .filter(s -> s.archivedAt() == null)
+                .map(TestCaseStepResponse::from)
+                .map(s -> (Object) s)
+                .toList();
+        long stepCount = steps.size();
         var reqCount = coverageRepo.findByProjectIdAndTestCaseIdAndTargetType(projectId, testCaseId, "REQUIREMENT").stream().filter(c -> c.archivedAt() == null).count();
         var ucCount = coverageRepo.findByProjectIdAndTestCaseIdAndTargetType(projectId, testCaseId, "USE_CASE").stream().filter(c -> c.archivedAt() == null).count();
         return new TestCaseDetailResponse(tc.id(), tc.projectId(), tc.code(), tc.title(), tc.description(),
                 tc.type().name(), tc.priority().name(), tc.status().name(), tc.assigneeId(),
                 tc.automationStatus() != null ? tc.automationStatus().name() : "MANUAL",
                 tc.preconditions(), tc.expectedResult(), stepCount, reqCount, ucCount,
-                null, null, 0L, List.of(), tc.createdAt(), tc.updatedAt(), (long) tc.version(), tc.useCaseId());
+                null, null, 0L, steps, tc.createdAt(), tc.updatedAt(), (long) tc.version(), tc.useCaseId());
     }
 
     @Transactional(readOnly = true)

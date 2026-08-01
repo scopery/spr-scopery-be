@@ -15,6 +15,13 @@ public class JpaRegistryAppComponentRepository implements RegistryAppComponentRe
         this.springData=springData; this.mapper=mapper;
     }
     @Override public RegistryAppComponent save(RegistryAppComponent e) { return mapper.toDomain(springData.saveAndFlush(mapper.toJpaEntity(e))); }
+    @Override public Optional<RegistryAppComponent> findById(UUID id) {
+        return springData.findById(id).map(mapper::toDomain);
+    }
+    @Override public List<RegistryAppComponent> findByIdIn(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return springData.findAllById(ids).stream().map(mapper::toDomain).toList();
+    }
     @Override public Optional<RegistryAppComponent> findByIdAndWorkspaceId(UUID id, UUID workspaceId) {
         return springData.findByIdAndWorkspaceId(id, workspaceId).map(mapper::toDomain);
     }

@@ -16,6 +16,8 @@ public interface BulkJobRepository {
 
     void updateProgress(UUID id, int succeeded, int failed);
 
+    void updateProgressWithFailure(UUID id, int succeeded, int failed, BulkJobFailure failure);
+
     void markSucceeded(UUID id, String resultSummary);
 
     void markPartial(UUID id, String resultSummary);

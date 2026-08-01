@@ -30,6 +30,13 @@ public record TestCase(UUID id, UUID projectId, UUID testSuiteId, UUID useCaseId
     public TestCase update(String title, String description, TestCaseType type, TestCasePriority priority,
                            TestCaseStatus status, String preconditions, String expectedResult,
                            UUID useCaseId, UUID assigneeId, AutomationStatus automationStatus) {
+        return update(code, title, description, type, priority, status, preconditions, expectedResult,
+                useCaseId, assigneeId, automationStatus);
+    }
+
+    public TestCase update(String code, String title, String description, TestCaseType type, TestCasePriority priority,
+                           TestCaseStatus status, String preconditions, String expectedResult,
+                           UUID useCaseId, UUID assigneeId, AutomationStatus automationStatus) {
         return new TestCase(id, projectId, testSuiteId, useCaseId != null ? useCaseId : this.useCaseId,
                 code, title, description, type, priority,
                 status != null ? status : this.status, preconditions, expectedResult,

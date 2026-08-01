@@ -12,6 +12,10 @@ public class JpaRegistryApiEndpointRepository implements RegistryApiEndpointRepo
     }
     @Override public RegistryApiEndpoint save(RegistryApiEndpoint e) { return mapper.toDomain(springData.saveAndFlush(mapper.toJpaEntity(e))); }
     @Override public Optional<RegistryApiEndpoint> findById(UUID id) { return springData.findById(id).map(mapper::toDomain); }
+    @Override public List<RegistryApiEndpoint> findByIdIn(Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return springData.findAllById(ids).stream().map(mapper::toDomain).toList();
+    }
     @Override public Optional<RegistryApiEndpoint> findByIdAndApplicationId(UUID id, UUID applicationId) {
         return springData.findByIdAndApplicationId(id, applicationId).map(mapper::toDomain);
     }

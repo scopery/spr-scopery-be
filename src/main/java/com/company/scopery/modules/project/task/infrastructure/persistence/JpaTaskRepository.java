@@ -15,7 +15,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -180,7 +182,18 @@ public class JpaTaskRepository implements TaskRepository {
                             cb.isNotNull(root.get("dueDate")),
                             cb.lessThanOrEqualTo(root.get("plannedStartDate"), dateTo),
                             cb.greaterThanOrEqualTo(root.get("dueDate"), dateFrom));
-                    predicates.add(cb.or(dueDateInWindow, startDateInWindow, spanOverlaps));
+                    if (!excludeTerminal) {
+                        // includeCompleted=true: also match tasks completed (UTC) within the window
+                        Instant windowStart = dateFrom.atStartOfDay(ZoneOffset.UTC).toInstant();
+                        Instant windowEnd = dateTo.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+                        Predicate completedInWindow = cb.and(
+                                cb.isNotNull(root.<Instant>get("completedAt")),
+                                cb.greaterThanOrEqualTo(root.<Instant>get("completedAt"), windowStart),
+                                cb.lessThan(root.<Instant>get("completedAt"), windowEnd));
+                        predicates.add(cb.or(dueDateInWindow, startDateInWindow, spanOverlaps, completedInWindow));
+                    } else {
+                        predicates.add(cb.or(dueDateInWindow, startDateInWindow, spanOverlaps));
+                    }
                 }
             }
 

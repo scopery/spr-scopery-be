@@ -13,6 +13,9 @@ public interface SpringDataFunctionalItemAnchorJpaRepository
 
     List<FunctionalItemAnchorJpaEntity> findByFunctionalItemIdOrderByCreatedAtAsc(UUID functionalItemId);
 
+    List<FunctionalItemAnchorJpaEntity> findByFunctionalItemIdAndNodeTypeOrderByCreatedAtAsc(
+            UUID functionalItemId, String nodeType);
+
     Optional<FunctionalItemAnchorJpaEntity> findByIdAndFunctionalItemId(UUID id, UUID functionalItemId);
 
     boolean existsByFunctionalItemIdAndNodeTypeAndNodeId(UUID functionalItemId, String nodeType, UUID nodeId);

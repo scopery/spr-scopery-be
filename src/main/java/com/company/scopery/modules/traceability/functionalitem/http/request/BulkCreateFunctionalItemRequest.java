@@ -7,6 +7,6 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record BulkCreateFunctionalItemRequest(
-        @NotNull @Size(min = 1, max = 100)
+        @NotNull @Size(min = 1, max = 500)
         List<@Valid CreateFunctionalItemRequest> items
 ) {}

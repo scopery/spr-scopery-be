@@ -7,5 +7,7 @@ public record UpdateUseCaseRequest(
         String goal,
         String primaryActorName,
         String triggerText,
-        @NotBlank String status
+        @NotBlank String status,
+        /** Optional — set/clear which Function is primary for this Use Case. */
+        String primaryFunctionId
 ) {}

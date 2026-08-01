@@ -49,4 +49,10 @@ public record UseCase(
                 key, name, goal, primaryActorName, triggerText,
                 status, completenessStatus, displayOrder, version, createdAt, updatedAt);
     }
+
+    public UseCase withPrimaryFunctionId(UUID primaryFunctionId) {
+        return new UseCase(id, projectId, primaryFunctionId,
+                key, name, goal, primaryActorName, triggerText,
+                status, completenessStatus, displayOrder, version, createdAt, updatedAt);
+    }
 }

@@ -1,36 +1,26 @@
 package com.company.scopery.modules.project.projectphase.application.action;
 
 import com.company.scopery.modules.project.projectphase.application.command.BulkCreateProjectPhaseCommand;
-import com.company.scopery.platform.bulkjob.BulkJobHandler;
-import com.company.scopery.platform.bulkjob.BulkJobRecord;
+import com.company.scopery.modules.project.projectphase.application.command.CreateProjectPhaseCommand;
+import com.company.scopery.platform.bulkjob.AbstractBulkCreateJobHandler;
 import com.company.scopery.platform.bulkjob.BulkJobService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class BulkCreateProjectPhaseJobHandler implements BulkJobHandler {
+public class BulkCreateProjectPhaseJobHandler extends AbstractBulkCreateJobHandler<CreateProjectPhaseCommand> {
 
     public static final String JOB_TYPE = "BULK_CREATE_PROJECT_PHASE";
 
-    private static final Logger log = LoggerFactory.getLogger(BulkCreateProjectPhaseJobHandler.class);
+    private final CreateProjectPhaseAction createAction;
 
-    private final BulkCreateProjectPhaseAction action;
-    private final BulkJobService bulkJobService;
-    private final ObjectMapper objectMapper;
-
-    public BulkCreateProjectPhaseJobHandler(BulkCreateProjectPhaseAction action,
+    public BulkCreateProjectPhaseJobHandler(CreateProjectPhaseAction createAction,
                                              BulkJobService bulkJobService,
                                              ObjectMapper objectMapper) {
-        this.action = action;
-        this.bulkJobService = bulkJobService;
-        this.objectMapper = objectMapper;
+        super(bulkJobService, objectMapper);
+        this.createAction = createAction;
     }
 
     @Override
@@ -39,26 +29,17 @@ public class BulkCreateProjectPhaseJobHandler implements BulkJobHandler {
     }
 
     @Override
-    public void process(BulkJobRecord job) {
-        SecurityContext savedCtx = SecurityContextHolder.getContext();
-        try {
-            setSecurityContext(job.actorUsername());
-            BulkCreateProjectPhaseCommand cmd = objectMapper.readValue(
-                    job.payloadJson(), BulkCreateProjectPhaseCommand.class);
-            action.execute(cmd);
-            bulkJobService.markSucceeded(job.id(), null);
-        } catch (Exception e) {
-            log.error("[BulkCreateProjectPhaseJobHandler] jobId={} failed: {}", job.id(), e.getMessage());
-            bulkJobService.markFailed(job.id(), e.getMessage());
-        } finally {
-            SecurityContextHolder.setContext(savedCtx);
-        }
+    protected List<CreateProjectPhaseCommand> parseItems(String payloadJson) throws Exception {
+        return objectMapper.readValue(payloadJson, BulkCreateProjectPhaseCommand.class).items();
     }
 
-    private void setSecurityContext(String username) {
-        if (username == null) return;
-        SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-        ctx.setAuthentication(new UsernamePasswordAuthenticationToken(username, null, List.of()));
-        SecurityContextHolder.setContext(ctx);
+    @Override
+    protected void createOne(CreateProjectPhaseCommand item) {
+        createAction.execute(item);
+    }
+
+    @Override
+    protected String extractIdentity(CreateProjectPhaseCommand item) {
+        return item.code();
     }
 }

@@ -26,7 +26,7 @@ public class UseCaseJpaEntity extends AuditableJpaEntity {
     @Column(name = "project_id", nullable = false)
     private UUID projectId;
 
-    @Column(name = "primary_function_id", nullable = false)
+    @Column(name = "primary_function_id")
     private UUID primaryFunctionId;
 
     @Column(nullable = false, length = 50)

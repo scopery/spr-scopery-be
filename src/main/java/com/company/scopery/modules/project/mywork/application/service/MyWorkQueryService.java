@@ -185,7 +185,9 @@ public class MyWorkQueryService {
                 phase != null ? phase.name() : null,
                 t.wbsNodeId(),
                 isOverdue,
-                t.updatedAt());
+                t.updatedAt(),
+                t.completedAt(),
+                t.completedBy());
     }
 
     // ─── Empty response ───────────────────────────────────────────────────────

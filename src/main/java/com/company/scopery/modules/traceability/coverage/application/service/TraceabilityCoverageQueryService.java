@@ -38,13 +38,28 @@ public class TraceabilityCoverageQueryService {
                 FROM app_requirement_function
                 GROUP BY requirement_id
             ),
-            uc_agg AS (
-                SELECT ruc.requirement_id,
-                       COUNT(*) AS uc_count,
-                       COUNT(*) FILTER (WHERE uc.completeness_status IN ('READY_FOR_REVIEW','COMPLETE')) AS complete_uc_count
+            -- Direct Req↔UC OR UC reachable via linked Functions (primary / supporting).
+            req_uc AS (
+                SELECT ruc.requirement_id, ruc.use_case_id
                 FROM app_requirement_use_case ruc
-                JOIN app_use_case uc ON uc.id = ruc.use_case_id
-                GROUP BY ruc.requirement_id
+                UNION
+                SELECT rf.requirement_id, uc.id AS use_case_id
+                FROM app_requirement_function rf
+                JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                UNION
+                SELECT rf.requirement_id, sf.use_case_id
+                FROM app_requirement_function rf
+                JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+            ),
+            uc_agg AS (
+                SELECT ru.requirement_id,
+                       COUNT(DISTINCT ru.use_case_id) AS uc_count,
+                       COUNT(DISTINCT ru.use_case_id) FILTER (
+                           WHERE uc.completeness_status IN ('READY_FOR_REVIEW','COMPLETE')
+                       ) AS complete_uc_count
+                FROM req_uc ru
+                JOIN app_use_case uc ON uc.id = ru.use_case_id
+                GROUP BY ru.requirement_id
             ),
             impl_agg AS (
                 SELECT DISTINCT rf.requirement_id
@@ -52,27 +67,49 @@ public class TraceabilityCoverageQueryService {
                 WHERE EXISTS (SELECT 1 FROM app_function_screen fs WHERE fs.function_id = rf.function_id)
                    OR EXISTS (SELECT 1 FROM app_function_api fa WHERE fa.function_id = rf.function_id)
             ),
-            tc_agg AS (
-                SELECT tl.source_id AS requirement_id, COUNT(DISTINCT tl.target_id) AS tc_count
+            -- Direct Req↔TC (TESTED_BY / coverage) OR TC under rolled-up Use Cases.
+            req_tc AS (
+                SELECT tl.source_id AS requirement_id, tl.target_id AS test_case_id
                 FROM traceability_link tl
                 WHERE tl.source_type = 'REQUIREMENT'
                   AND tl.link_type = 'TESTED_BY'
                   AND tl.status = 'ACTIVE'
                   AND tl.project_id = :projectId
-                GROUP BY tl.source_id
+                UNION
+                SELECT cov.target_id AS requirement_id, cov.test_case_id
+                FROM quality_test_case_coverage cov
+                WHERE cov.target_type = 'REQUIREMENT'
+                  AND cov.project_id = :projectId
+                  AND cov.archived_at IS NULL
+                UNION
+                SELECT ru.requirement_id, tc.id AS test_case_id
+                FROM req_uc ru
+                JOIN quality_test_case tc ON tc.use_case_id = ru.use_case_id
+                  AND tc.project_id = :projectId
+                UNION
+                SELECT ru.requirement_id, cov.test_case_id
+                FROM req_uc ru
+                JOIN quality_test_case_coverage cov
+                  ON cov.target_type = 'USE_CASE'
+                 AND cov.target_id = ru.use_case_id
+                 AND cov.project_id = :projectId
+                 AND cov.archived_at IS NULL
+            ),
+            tc_agg AS (
+                SELECT requirement_id, COUNT(DISTINCT test_case_id) AS tc_count
+                FROM req_tc
+                GROUP BY requirement_id
             ),
             latest_res AS (
-                SELECT DISTINCT ON (tl.source_id)
-                    tl.source_id AS requirement_id,
+                SELECT DISTINCT ON (rt.requirement_id)
+                    rt.requirement_id,
                     tcr.result_status AS result,
                     tcr.executed_at AS result_at
-                FROM traceability_link tl
-                JOIN quality_test_case_result tcr ON tcr.test_case_id = tl.target_id AND tcr.project_id = :projectId
-                WHERE tl.source_type = 'REQUIREMENT'
-                  AND tl.link_type = 'TESTED_BY'
-                  AND tl.status = 'ACTIVE'
-                  AND tl.project_id = :projectId
-                ORDER BY tl.source_id, tcr.executed_at DESC NULLS LAST
+                FROM req_tc rt
+                JOIN quality_test_case_result tcr
+                  ON tcr.test_case_id = rt.test_case_id
+                 AND tcr.project_id = :projectId
+                ORDER BY rt.requirement_id, tcr.executed_at DESC NULLS LAST
             ),
             cov AS (
                 SELECT
@@ -119,11 +156,11 @@ public class TraceabilityCoverageQueryService {
                     COUNT(*) FILTER (WHERE has_impl)                                            AS has_impl,
                     COUNT(*) FILTER (WHERE tc_count > 0)                                       AS has_tc,
                     COUNT(*) FILTER (WHERE requires_uc AND fn_count = 0)                       AS missing_fn,
-                    COUNT(*) FILTER (WHERE requires_uc AND uc_count = 0)                       AS missing_uc,
-                    COUNT(*) FILTER (WHERE NOT has_impl)                                       AS missing_impl,
-                    COUNT(*) FILTER (WHERE tc_count = 0)                                       AS missing_tc,
-                    COUNT(*) FILTER (WHERE latest_result = 'FAILED')                           AS failed_tc,
-                    COUNT(*) FILTER (WHERE latest_result = 'BLOCKED')                          AS blocked,
+                    COUNT(*) FILTER (WHERE requires_uc AND fn_count > 0 AND uc_count = 0)       AS missing_uc,
+                    COUNT(*) FILTER (WHERE fn_count > 0 AND NOT has_impl)                       AS missing_impl,
+                    COUNT(*) FILTER (WHERE fn_count > 0 AND (NOT requires_uc OR uc_count > 0) AND tc_count = 0) AS missing_tc,
+                    COUNT(*) FILTER (WHERE tc_count > 0 AND latest_result = 'FAILED')           AS failed_tc,
+                    COUNT(*) FILTER (WHERE tc_count > 0 AND latest_result = 'BLOCKED')          AS blocked,
                     requirement_type
                 FROM cov
                 GROUP BY ROLLUP(requirement_type)
@@ -288,6 +325,9 @@ public class TraceabilityCoverageQueryService {
         Map<UUID, List<TraceabilityMatrixResponse.PreviewObject>> ucPreviews = loadUseCasePreviews(pageIds);
         Map<UUID, List<TraceabilityMatrixResponse.PreviewObject>> implPreviews = loadImplPreviews(pageIds);
         Map<UUID, List<TraceabilityMatrixResponse.PreviewObject>> tcPreviews = loadTestCasePreviews(pageIds, projectId);
+        Map<UUID, long[]> ratios = loadRequirementCoverageRatios(pageIds, projectId);
+        Map<UUID, TraceabilityMatrixResponse.ExecutionSummary> executions =
+                loadRequirementExecutionSummaries(pageIds, projectId);
 
         List<TraceabilityMatrixResponse.MatrixItem> items = new ArrayList<>();
         for (RawRow row : page) {
@@ -298,20 +338,36 @@ public class TraceabilityCoverageQueryService {
             List<TraceabilityMatrixResponse.PreviewObject> tcs = tcPreviews.getOrDefault(rid, List.of());
 
             TraceabilityMatrixResponse.Previews previews = new TraceabilityMatrixResponse.Previews(
-                    fns.stream().limit(2).toList(),
-                    ucs.stream().limit(2).toList(),
+                    fns,
+                    ucs,
                     impls.stream().limit(2).toList(),
-                    tcs.stream().limit(2).toList()
+                    tcs.stream().limit(5).toList()
             );
             TraceabilityMatrixResponse.PreviewMore more = new TraceabilityMatrixResponse.PreviewMore(
-                    Math.max(0, row.fnCount() - 2),
-                    Math.max(0, row.ucCount() - 2),
+                    Math.max(0, fns.size() > 0 ? row.fnCount() - fns.size() : 0),
+                    Math.max(0, ucs.size() > 0 ? row.ucCount() - ucs.size() : 0),
                     Math.max(0, row.implCount() - 2),
-                    Math.max(0, row.tcCount() - 2)
+                    Math.max(0, row.tcCount() - Math.min(5, tcs.size()))
             );
 
             boolean requiresUcResolved = "YES".equals(row.requiresUseCase()) ||
                     ("AUTO".equals(row.requiresUseCase()) && "FUNCTIONAL".equals(row.requirementType()));
+
+            long[] ratio = ratios.getOrDefault(rid, new long[]{0L, 0L});
+            long fnsCovered = ratio[0];
+            long ucsWithTests = ratio[1];
+            TraceabilityMatrixResponse.ExecutionSummary exec =
+                    executions.getOrDefault(rid, new TraceabilityMatrixResponse.ExecutionSummary(0, 0, 0, 0));
+
+            String fnStatus = layerStatus(row.fnCount() == 0, row.fnCount() > 0, false);
+            String ucStatus = !requiresUcResolved
+                    ? "NOT_APPLICABLE"
+                    : row.fnCount() == 0
+                        ? "NOT_EVALUATED"
+                        : layerStatus(row.ucCount() == 0, fnsCovered >= row.fnCount() && row.fnCount() > 0, fnsCovered > 0);
+            String tcStatus = row.fnCount() == 0 || (requiresUcResolved && row.ucCount() == 0)
+                    ? "NOT_EVALUATED"
+                    : layerStatus(row.tcCount() == 0, ucsWithTests >= row.ucCount() && row.ucCount() > 0, ucsWithTests > 0);
 
             items.add(new TraceabilityMatrixResponse.MatrixItem(
                     rid, row.code(), row.title(), row.requirementType(), row.priority(),
@@ -319,7 +375,9 @@ public class TraceabilityCoverageQueryService {
                     row.coverageStatus(), row.gapCodes(),
                     row.fnCount(), row.ucCount(), row.implCount(), row.tcCount(),
                     row.latestResult(), row.latestResultAt(), 0L,
-                    previews, more
+                    previews, more,
+                    fnsCovered, ucsWithTests, exec,
+                    fnStatus, ucStatus, tcStatus
             ));
         }
 
@@ -424,11 +482,13 @@ public class TraceabilityCoverageQueryService {
         RequirementTraceDetailResponse.CoverageScore coverageScore = new RequirementTraceDetailResponse.CoverageScore(scorePct, layers);
 
         List<RequirementTraceDetailResponse.GapItem> gapItems = buildGapItems(gapCodes, reqInfo);
+        List<RequirementTraceDetailResponse.CoverageChainFunction> coverageChain =
+                buildCoverageChain(requirementId, projectId, functions);
 
         return new RequirementTraceDetailResponse(
                 reqInfo, coverageStatus, gapCodes, coverageScore,
                 functions, useCases, implObjects, testCases,
-                gapItems, Instant.now()
+                gapItems, Instant.now(), coverageChain
         );
     }
 
@@ -563,13 +623,33 @@ public class TraceabilityCoverageQueryService {
                                           boolean hasImpl, long tcCount, String latestResult,
                                           boolean requiresUc, String requirementType) {
         List<String> gaps = new ArrayList<>();
-        if (requiresUc && fnCount == 0) gaps.add("MISSING_FUNCTION");
-        if (requiresUc && ucCount == 0) gaps.add("MISSING_USE_CASE");
-        if (requiresUc && ucCount > 0 && cucCount == 0) gaps.add("INCOMPLETE_USE_CASE");
+
+        // Dependency stacking: only emit the first actionable missing tier.
+        // Downstream layers are NOT_EVALUATED (omitted from gapCodes).
+        if (requiresUc && fnCount == 0) {
+            gaps.add("MISSING_FUNCTION");
+            return gaps;
+        }
+
+        if (requiresUc && ucCount == 0) {
+            gaps.add("MISSING_USE_CASE");
+            // Implementation is a parallel branch from Function — evaluate when Function exists.
+            if (!hasImpl) gaps.add("MISSING_IMPLEMENTATION");
+            return gaps;
+        }
+
+        if (requiresUc && cucCount == 0) {
+            gaps.add("INCOMPLETE_USE_CASE");
+        }
+
         if (!hasImpl) gaps.add("MISSING_IMPLEMENTATION");
-        if (tcCount == 0) gaps.add("MISSING_TEST");
-        if ("FAILED".equals(latestResult)) gaps.add("TEST_FAILED");
-        if ("BLOCKED".equals(latestResult)) gaps.add("BLOCKED");
+
+        if (tcCount == 0) {
+            gaps.add("MISSING_TEST");
+        } else {
+            if ("FAILED".equals(latestResult)) gaps.add("TEST_FAILED");
+            if ("BLOCKED".equals(latestResult)) gaps.add("BLOCKED");
+        }
         return gaps;
     }
 
@@ -643,11 +723,25 @@ public class TraceabilityCoverageQueryService {
     private Map<UUID, List<TraceabilityMatrixResponse.PreviewObject>> loadUseCasePreviews(List<UUID> reqIds) {
         if (reqIds.isEmpty()) return Map.of();
         String sql = """
-                SELECT ruc.requirement_id, uc.id, uc.key, uc.name, uc.completeness_status
-                FROM app_requirement_use_case ruc
-                JOIN app_use_case uc ON uc.id = ruc.use_case_id
-                WHERE ruc.requirement_id = ANY(:reqIds)
-                ORDER BY ruc.requirement_id, uc.key
+                WITH req_uc AS (
+                    SELECT ruc.requirement_id, ruc.use_case_id
+                    FROM app_requirement_use_case ruc
+                    WHERE ruc.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, uc.id AS use_case_id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, sf.use_case_id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                )
+                SELECT DISTINCT ru.requirement_id, uc.id, uc.key, uc.name
+                FROM req_uc ru
+                JOIN app_use_case uc ON uc.id = ru.use_case_id
+                ORDER BY ru.requirement_id, uc.key
                 """;
         List<Object[]> rows = em.createNativeQuery(sql)
                 .setParameter("reqIds", reqIds.toArray(new UUID[0]))
@@ -705,15 +799,54 @@ public class TraceabilityCoverageQueryService {
     private Map<UUID, List<TraceabilityMatrixResponse.PreviewObject>> loadTestCasePreviews(List<UUID> reqIds, UUID projectId) {
         if (reqIds.isEmpty()) return Map.of();
         String sql = """
-                SELECT tl.source_id, tc.id, tc.code, tc.title
-                FROM traceability_link tl
-                JOIN quality_test_case tc ON tc.id = tl.target_id
-                WHERE tl.source_type = 'REQUIREMENT'
-                  AND tl.link_type = 'TESTED_BY'
-                  AND tl.status = 'ACTIVE'
-                  AND tl.project_id = :projectId
-                  AND tl.source_id = ANY(:reqIds)
-                ORDER BY tl.source_id, tc.code
+                WITH req_uc AS (
+                    SELECT ruc.requirement_id, ruc.use_case_id
+                    FROM app_requirement_use_case ruc
+                    WHERE ruc.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, uc.id AS use_case_id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, sf.use_case_id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                ),
+                req_tc AS (
+                    SELECT tl.source_id AS requirement_id, tl.target_id AS test_case_id
+                    FROM traceability_link tl
+                    WHERE tl.source_type = 'REQUIREMENT'
+                      AND tl.link_type = 'TESTED_BY'
+                      AND tl.status = 'ACTIVE'
+                      AND tl.project_id = :projectId
+                      AND tl.source_id = ANY(:reqIds)
+                    UNION
+                    SELECT cov.target_id AS requirement_id, cov.test_case_id
+                    FROM quality_test_case_coverage cov
+                    WHERE cov.target_type = 'REQUIREMENT'
+                      AND cov.project_id = :projectId
+                      AND cov.archived_at IS NULL
+                      AND cov.target_id = ANY(:reqIds)
+                    UNION
+                    SELECT ru.requirement_id, tc.id
+                    FROM req_uc ru
+                    JOIN quality_test_case tc ON tc.use_case_id = ru.use_case_id
+                      AND tc.project_id = :projectId
+                    UNION
+                    SELECT ru.requirement_id, cov.test_case_id
+                    FROM req_uc ru
+                    JOIN quality_test_case_coverage cov
+                      ON cov.target_type = 'USE_CASE'
+                     AND cov.target_id = ru.use_case_id
+                     AND cov.project_id = :projectId
+                     AND cov.archived_at IS NULL
+                )
+                SELECT DISTINCT rt.requirement_id, tc.id, tc.code, tc.title
+                FROM req_tc rt
+                JOIN quality_test_case tc ON tc.id = rt.test_case_id
+                ORDER BY rt.requirement_id, tc.code
                 """;
         List<Object[]> rows = em.createNativeQuery(sql)
                 .setParameter("projectId", projectId)
@@ -749,10 +882,24 @@ public class TraceabilityCoverageQueryService {
     @SuppressWarnings("unchecked")
     private List<RequirementTraceDetailResponse.TraceObject> loadDetailUseCases(UUID requirementId) {
         String sql = """
+                WITH req_uc AS (
+                    SELECT ruc.use_case_id
+                    FROM app_requirement_use_case ruc
+                    WHERE ruc.requirement_id = :reqId
+                    UNION
+                    SELECT uc.id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                    WHERE rf.requirement_id = :reqId
+                    UNION
+                    SELECT sf.use_case_id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+                    WHERE rf.requirement_id = :reqId
+                )
                 SELECT uc.id, uc.key, uc.name, uc.completeness_status
-                FROM app_requirement_use_case ruc
-                JOIN app_use_case uc ON uc.id = ruc.use_case_id
-                WHERE ruc.requirement_id = :reqId
+                FROM req_uc ru
+                JOIN app_use_case uc ON uc.id = ru.use_case_id
                 ORDER BY uc.key
                 """;
         List<Object[]> rows = em.createNativeQuery(sql).setParameter("reqId", requirementId).getResultList();
@@ -800,17 +947,56 @@ public class TraceabilityCoverageQueryService {
     @SuppressWarnings("unchecked")
     private List<RequirementTraceDetailResponse.TraceObject> loadDetailTestCases(UUID requirementId, UUID projectId) {
         String sql = """
+                WITH req_uc AS (
+                    SELECT ruc.use_case_id
+                    FROM app_requirement_use_case ruc
+                    WHERE ruc.requirement_id = :reqId
+                    UNION
+                    SELECT uc.id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                    WHERE rf.requirement_id = :reqId
+                    UNION
+                    SELECT sf.use_case_id
+                    FROM app_requirement_function rf
+                    JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+                    WHERE rf.requirement_id = :reqId
+                ),
+                req_tc AS (
+                    SELECT tl.target_id AS test_case_id
+                    FROM traceability_link tl
+                    WHERE tl.source_id = :reqId
+                      AND tl.source_type = 'REQUIREMENT'
+                      AND tl.link_type = 'TESTED_BY'
+                      AND tl.status = 'ACTIVE'
+                      AND tl.project_id = :projectId
+                    UNION
+                    SELECT cov.test_case_id
+                    FROM quality_test_case_coverage cov
+                    WHERE cov.target_type = 'REQUIREMENT'
+                      AND cov.target_id = :reqId
+                      AND cov.project_id = :projectId
+                      AND cov.archived_at IS NULL
+                    UNION
+                    SELECT tc.id
+                    FROM req_uc ru
+                    JOIN quality_test_case tc ON tc.use_case_id = ru.use_case_id
+                      AND tc.project_id = :projectId
+                    UNION
+                    SELECT cov.test_case_id
+                    FROM req_uc ru
+                    JOIN quality_test_case_coverage cov
+                      ON cov.target_type = 'USE_CASE'
+                     AND cov.target_id = ru.use_case_id
+                     AND cov.project_id = :projectId
+                     AND cov.archived_at IS NULL
+                )
                 SELECT tc.id, tc.code, tc.title,
                        (SELECT tcr.result_status FROM quality_test_case_result tcr
                         WHERE tcr.test_case_id = tc.id AND tcr.project_id = :projectId
                         ORDER BY tcr.executed_at DESC NULLS LAST LIMIT 1) AS latest_result
-                FROM traceability_link tl
-                JOIN quality_test_case tc ON tc.id = tl.target_id
-                WHERE tl.source_id = :reqId
-                  AND tl.source_type = 'REQUIREMENT'
-                  AND tl.link_type = 'TESTED_BY'
-                  AND tl.status = 'ACTIVE'
-                  AND tl.project_id = :projectId
+                FROM req_tc rt
+                JOIN quality_test_case tc ON tc.id = rt.test_case_id
                 ORDER BY tc.code
                 """;
         List<Object[]> rows = em.createNativeQuery(sql)
@@ -820,6 +1006,206 @@ public class TraceabilityCoverageQueryService {
         return rows.stream().map(r -> new RequirementTraceDetailResponse.TraceObject(
                 toUUID(r[0]), "TEST_CASE", str(r[1]), str(r[2]), "TESTED_BY", null, str(r[3])
         )).collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<RequirementTraceDetailResponse.CoverageChainFunction> buildCoverageChain(
+            UUID requirementId,
+            UUID projectId,
+            List<RequirementTraceDetailResponse.TraceObject> functions
+    ) {
+        if (functions.isEmpty()) return List.of();
+
+        List<RequirementTraceDetailResponse.CoverageChainFunction> chain = new ArrayList<>();
+        for (RequirementTraceDetailResponse.TraceObject fn : functions) {
+            String perFnUcSql = """
+                    SELECT uc.id, uc.key, uc.name, uc.completeness_status FROM (
+                        SELECT uc.id, uc.key, uc.name, uc.completeness_status
+                        FROM app_use_case uc
+                        WHERE uc.primary_function_id = :fnId
+                        UNION
+                        SELECT uc.id, uc.key, uc.name, uc.completeness_status
+                        FROM app_use_case_supporting_function sf
+                        JOIN app_use_case uc ON uc.id = sf.use_case_id
+                        WHERE sf.function_id = :fnId
+                        UNION
+                        SELECT uc.id, uc.key, uc.name, uc.completeness_status
+                        FROM app_requirement_use_case ruc
+                        JOIN app_use_case uc ON uc.id = ruc.use_case_id
+                        WHERE ruc.requirement_id = :reqId
+                          AND uc.primary_function_id = :fnId
+                    ) uc
+                    ORDER BY uc.key
+                    """;
+            List<Object[]> ucRows = em.createNativeQuery(perFnUcSql)
+                    .setParameter("fnId", fn.id())
+                    .setParameter("reqId", requirementId)
+                    .getResultList();
+
+            List<RequirementTraceDetailResponse.CoverageChainUseCase> ucNodes = new ArrayList<>();
+            for (Object[] ur : ucRows) {
+                UUID ucId = toUUID(ur[0]);
+                RequirementTraceDetailResponse.TraceObject ucObj = new RequirementTraceDetailResponse.TraceObject(
+                        ucId, "USE_CASE", str(ur[1]), str(ur[2]), "COVERED_BY", str(ur[3]), null
+                );
+                String tcSql = """
+                        SELECT tc.id, tc.code, tc.title, tc.latest_result FROM (
+                            SELECT tc.id, tc.code, tc.title,
+                                   (SELECT tcr.result_status FROM quality_test_case_result tcr
+                                    WHERE tcr.test_case_id = tc.id AND tcr.project_id = :projectId
+                                    ORDER BY tcr.executed_at DESC NULLS LAST LIMIT 1) AS latest_result
+                            FROM quality_test_case tc
+                            WHERE tc.project_id = :projectId
+                              AND tc.use_case_id = :ucId
+                            UNION
+                            SELECT tc.id, tc.code, tc.title,
+                                   (SELECT tcr.result_status FROM quality_test_case_result tcr
+                                    WHERE tcr.test_case_id = tc.id AND tcr.project_id = :projectId
+                                    ORDER BY tcr.executed_at DESC NULLS LAST LIMIT 1) AS latest_result
+                            FROM quality_test_case_coverage cov
+                            JOIN quality_test_case tc ON tc.id = cov.test_case_id
+                            WHERE cov.project_id = :projectId
+                              AND cov.target_type = 'USE_CASE'
+                              AND cov.target_id = :ucId
+                              AND cov.archived_at IS NULL
+                        ) tc
+                        ORDER BY tc.code
+                        """;
+                List<Object[]> tcRows = em.createNativeQuery(tcSql)
+                        .setParameter("projectId", projectId)
+                        .setParameter("ucId", ucId)
+                        .getResultList();
+                List<RequirementTraceDetailResponse.TraceObject> tcs = tcRows.stream()
+                        .map(tr -> new RequirementTraceDetailResponse.TraceObject(
+                                toUUID(tr[0]), "TEST_CASE", str(tr[1]), str(tr[2]), "TESTED_BY", null, str(tr[3])
+                        ))
+                        .collect(Collectors.toList());
+                ucNodes.add(new RequirementTraceDetailResponse.CoverageChainUseCase(ucObj, tcs));
+            }
+            chain.add(new RequirementTraceDetailResponse.CoverageChainFunction(fn, ucNodes));
+        }
+        return chain;
+    }
+
+    private static String layerStatus(boolean missing, boolean complete, boolean partial) {
+        if (missing) return "MISSING";
+        if (complete) return "COMPLETE";
+        if (partial) return "PARTIAL";
+        return "NOT_EVALUATED";
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<UUID, long[]> loadRequirementCoverageRatios(List<UUID> reqIds, UUID projectId) {
+        Map<UUID, long[]> map = new HashMap<>();
+        if (reqIds.isEmpty()) return map;
+        for (UUID id : reqIds) map.put(id, new long[]{0L, 0L});
+
+        String fnCoveredSql = """
+                SELECT rf.requirement_id, COUNT(DISTINCT rf.function_id)
+                FROM app_requirement_function rf
+                WHERE rf.requirement_id = ANY(:reqIds)
+                  AND (
+                    EXISTS (SELECT 1 FROM app_use_case uc WHERE uc.primary_function_id = rf.function_id
+                            AND uc.status <> 'ARCHIVED')
+                    OR EXISTS (SELECT 1 FROM app_use_case_supporting_function sf WHERE sf.function_id = rf.function_id)
+                    OR EXISTS (
+                        SELECT 1 FROM app_requirement_use_case ruc
+                        JOIN app_use_case uc ON uc.id = ruc.use_case_id
+                        WHERE ruc.requirement_id = rf.requirement_id
+                          AND uc.primary_function_id = rf.function_id
+                    )
+                  )
+                GROUP BY rf.requirement_id
+                """;
+        for (Object[] r : (List<Object[]>) em.createNativeQuery(fnCoveredSql)
+                .setParameter("reqIds", reqIds.toArray(new UUID[0])).getResultList()) {
+            map.computeIfAbsent(toUUID(r[0]), k -> new long[]{0L, 0L})[0] = toLong(r[1]);
+        }
+
+        String ucTestedSql = """
+                WITH req_uc AS (
+                    SELECT ruc.requirement_id, ruc.use_case_id FROM app_requirement_use_case ruc
+                    WHERE ruc.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, uc.id FROM app_requirement_function rf
+                    JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, sf.use_case_id FROM app_requirement_function rf
+                    JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                )
+                SELECT ru.requirement_id, COUNT(DISTINCT ru.use_case_id)
+                FROM req_uc ru
+                WHERE EXISTS (
+                    SELECT 1 FROM quality_test_case tc
+                    WHERE tc.use_case_id = ru.use_case_id AND tc.project_id = :projectId
+                ) OR EXISTS (
+                    SELECT 1 FROM quality_test_case_coverage cov
+                    WHERE cov.target_type = 'USE_CASE' AND cov.target_id = ru.use_case_id
+                      AND cov.project_id = :projectId AND cov.archived_at IS NULL
+                )
+                GROUP BY ru.requirement_id
+                """;
+        for (Object[] r : (List<Object[]>) em.createNativeQuery(ucTestedSql)
+                .setParameter("reqIds", reqIds.toArray(new UUID[0]))
+                .setParameter("projectId", projectId).getResultList()) {
+            map.computeIfAbsent(toUUID(r[0]), k -> new long[]{0L, 0L})[1] = toLong(r[1]);
+        }
+        return map;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<UUID, TraceabilityMatrixResponse.ExecutionSummary> loadRequirementExecutionSummaries(
+            List<UUID> reqIds, UUID projectId) {
+        Map<UUID, TraceabilityMatrixResponse.ExecutionSummary> map = new HashMap<>();
+        if (reqIds.isEmpty()) return map;
+        String sql = """
+                WITH req_uc AS (
+                    SELECT ruc.requirement_id, ruc.use_case_id FROM app_requirement_use_case ruc
+                    WHERE ruc.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, uc.id FROM app_requirement_function rf
+                    JOIN app_use_case uc ON uc.primary_function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                    UNION
+                    SELECT rf.requirement_id, sf.use_case_id FROM app_requirement_function rf
+                    JOIN app_use_case_supporting_function sf ON sf.function_id = rf.function_id
+                    WHERE rf.requirement_id = ANY(:reqIds)
+                ),
+                req_tc AS (
+                    SELECT tl.source_id AS requirement_id, tl.target_id AS test_case_id
+                    FROM traceability_link tl
+                    WHERE tl.source_type = 'REQUIREMENT' AND tl.link_type = 'TESTED_BY'
+                      AND tl.status = 'ACTIVE' AND tl.project_id = :projectId
+                      AND tl.source_id = ANY(:reqIds)
+                    UNION
+                    SELECT ru.requirement_id, tc.id FROM req_uc ru
+                    JOIN quality_test_case tc ON tc.use_case_id = ru.use_case_id AND tc.project_id = :projectId
+                ),
+                latest AS (
+                    SELECT DISTINCT ON (rt.requirement_id, rt.test_case_id)
+                        rt.requirement_id, rt.test_case_id, tcr.result_status
+                    FROM req_tc rt
+                    LEFT JOIN quality_test_case_result tcr
+                      ON tcr.test_case_id = rt.test_case_id AND tcr.project_id = :projectId
+                    ORDER BY rt.requirement_id, rt.test_case_id, tcr.executed_at DESC NULLS LAST
+                )
+                SELECT requirement_id,
+                       COUNT(*) FILTER (WHERE result_status = 'PASSED') AS passed,
+                       COUNT(*) FILTER (WHERE result_status = 'FAILED') AS failed,
+                       COUNT(*) FILTER (WHERE result_status = 'BLOCKED') AS blocked,
+                       COUNT(*) FILTER (WHERE result_status IS NULL OR result_status NOT IN ('PASSED','FAILED','BLOCKED')) AS not_run
+                FROM latest
+                GROUP BY requirement_id
+                """;
+        for (Object[] r : (List<Object[]>) em.createNativeQuery(sql)
+                .setParameter("reqIds", reqIds.toArray(new UUID[0]))
+                .setParameter("projectId", projectId).getResultList()) {
+            map.put(toUUID(r[0]), new TraceabilityMatrixResponse.ExecutionSummary(
+                    toLong(r[1]), toLong(r[2]), toLong(r[3]), toLong(r[4])));
+        }
+        return map;
     }
 
     // -------------------------------------------------------------------------

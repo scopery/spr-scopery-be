@@ -7,6 +7,6 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record BulkCreateRegistryAppModuleRequest(
-        @NotNull @Size(min = 1, max = 100)
+        @NotNull @Size(min = 1, max = 500)
         List<@Valid CreateRegistryAppModuleRequest> items
 ) {}

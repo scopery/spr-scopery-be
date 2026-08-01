@@ -1,36 +1,26 @@
 package com.company.scopery.modules.traceability.screen.application.action;
 
 import com.company.scopery.modules.traceability.screen.application.command.BulkCreateRegistryScreenCommand;
-import com.company.scopery.platform.bulkjob.BulkJobHandler;
-import com.company.scopery.platform.bulkjob.BulkJobRecord;
+import com.company.scopery.modules.traceability.screen.application.command.CreateRegistryScreenCommand;
+import com.company.scopery.platform.bulkjob.AbstractBulkCreateJobHandler;
 import com.company.scopery.platform.bulkjob.BulkJobService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class BulkCreateRegistryScreenJobHandler implements BulkJobHandler {
+public class BulkCreateRegistryScreenJobHandler extends AbstractBulkCreateJobHandler<CreateRegistryScreenCommand> {
 
     public static final String JOB_TYPE = "BULK_CREATE_REGISTRY_SCREEN";
 
-    private static final Logger log = LoggerFactory.getLogger(BulkCreateRegistryScreenJobHandler.class);
+    private final CreateRegistryScreenAction createAction;
 
-    private final BulkCreateRegistryScreenAction action;
-    private final BulkJobService bulkJobService;
-    private final ObjectMapper objectMapper;
-
-    public BulkCreateRegistryScreenJobHandler(BulkCreateRegistryScreenAction action,
+    public BulkCreateRegistryScreenJobHandler(CreateRegistryScreenAction createAction,
                                                BulkJobService bulkJobService,
                                                ObjectMapper objectMapper) {
-        this.action = action;
-        this.bulkJobService = bulkJobService;
-        this.objectMapper = objectMapper;
+        super(bulkJobService, objectMapper);
+        this.createAction = createAction;
     }
 
     @Override
@@ -39,26 +29,17 @@ public class BulkCreateRegistryScreenJobHandler implements BulkJobHandler {
     }
 
     @Override
-    public void process(BulkJobRecord job) {
-        SecurityContext savedCtx = SecurityContextHolder.getContext();
-        try {
-            setSecurityContext(job.actorUsername());
-            BulkCreateRegistryScreenCommand cmd = objectMapper.readValue(
-                    job.payloadJson(), BulkCreateRegistryScreenCommand.class);
-            action.execute(cmd);
-            bulkJobService.markSucceeded(job.id(), null);
-        } catch (Exception e) {
-            log.error("[BulkCreateRegistryScreenJobHandler] jobId={} failed: {}", job.id(), e.getMessage());
-            bulkJobService.markFailed(job.id(), e.getMessage());
-        } finally {
-            SecurityContextHolder.setContext(savedCtx);
-        }
+    protected List<CreateRegistryScreenCommand> parseItems(String payloadJson) throws Exception {
+        return objectMapper.readValue(payloadJson, BulkCreateRegistryScreenCommand.class).items();
     }
 
-    private void setSecurityContext(String username) {
-        if (username == null) return;
-        SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-        ctx.setAuthentication(new UsernamePasswordAuthenticationToken(username, null, List.of()));
-        SecurityContextHolder.setContext(ctx);
+    @Override
+    protected void createOne(CreateRegistryScreenCommand item) {
+        createAction.execute(item);
+    }
+
+    @Override
+    protected String extractIdentity(CreateRegistryScreenCommand item) {
+        return item.code();
     }
 }
