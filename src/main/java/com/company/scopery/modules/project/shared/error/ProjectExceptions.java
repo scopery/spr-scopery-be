@@ -588,6 +588,22 @@ public final class ProjectExceptions {
                 "Unsupported Gantt export format: " + format, Map.of("format", format));
     }
 
+    public static AppException timelineInvalidDateRange() {
+        return new AppException(ProjectErrorCatalog.TIMELINE_INVALID_DATE_RANGE);
+    }
+
+    public static AppException timelineInvalidGranularity() {
+        return new AppException(ProjectErrorCatalog.TIMELINE_INVALID_GRANULARITY);
+    }
+
+    public static AppException timelineInvalidProgressPercent() {
+        return new AppException(ProjectErrorCatalog.TIMELINE_INVALID_PROGRESS_PERCENT);
+    }
+
+    public static AppException timelineInvalidAllocation() {
+        return new AppException(ProjectErrorCatalog.TIMELINE_INVALID_ALLOCATION);
+    }
+
     public static AppException postBaselineEditBlocked(UUID projectId) {
         return new AppException(ProjectErrorCatalog.POST_BASELINE_EDIT_BLOCKED,
                 "Direct edit blocked after current baseline; create a ChangeRequest",

@@ -33,6 +33,13 @@ public final class ProjectApiPaths {
     public static final String GANTT_TASK_CLEAR_OVERRIDE = GANTT + "/tasks/{taskId}/clear-override";
     public static final String MILESTONES = BASE + "/{projectId}/milestones";
 
+    // Timeline cell buckets
+    public static final String TIMELINE = BASE + "/{projectId}/timeline";
+    public static final String PROGRESS_SNAPSHOTS = BASE + "/{projectId}/progress-snapshots";
+    public static final String TASK_PROGRESS_SNAPSHOTS = TASKS + "/{taskId}/progress-snapshots";
+    public static final String DAILY_ALLOCATIONS = BASE + "/{projectId}/daily-allocations";
+    public static final String TASK_DAILY_ALLOCATIONS = TASKS + "/{taskId}/daily-allocations";
+
     /** Owner tick-grant permissions for members on a PROJECT IAM resource. */
     public static final String PROJECT_MEMBER_PERMISSIONS = BASE + "/{projectId}/member-permissions";
     public static final String PROJECT_MEMBER_PERMISSIONS_BY_USER =

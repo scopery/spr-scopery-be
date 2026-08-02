@@ -19,6 +19,10 @@ public final class ProjectTableNames {
     public static final String PROJECT_MILESTONE = "project_milestone";
     public static final String TASK_SCHEDULE_OVERRIDE = "project_task_schedule_override";
 
+    // Timeline cell buckets
+    public static final String TASK_DAILY_ALLOCATION = "project_task_daily_allocation";
+    public static final String TASK_PROGRESS_SNAPSHOT = "project_task_progress_snapshot";
+
     // Phase 11 — templates
     public static final String PROJECT_TEMPLATE                = "project_template";
     public static final String PROJECT_TEMPLATE_VERSION        = "project_template_version";

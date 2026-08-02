@@ -36,3 +36,4 @@ System rights for AI Agent use `IamSystemAuthorizationService` / `AiAgentSecurit
 
 - Generate IAM coverage matrix from controllers + authorization call sites.
 - Add integration tests that assert 403 when right is missing (not only 401 unauthenticated).
+- **Nav hide + capability packs:** see [`NAV_CAPABILITY_MATRIX.md`](./NAV_CAPABILITY_MATRIX.md) (full phased implementation + verify checklist).

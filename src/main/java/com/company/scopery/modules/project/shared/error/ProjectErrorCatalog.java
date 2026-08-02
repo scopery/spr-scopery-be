@@ -291,6 +291,16 @@ public enum ProjectErrorCatalog implements ErrorCatalog {
     GANTT_RECALCULATION_FAILED("GANTT_RECALCULATION_FAILED", "Gantt recalculation failed", HttpStatus.UNPROCESSABLE_ENTITY),
     GANTT_INVALID_EXPORT_FORMAT("GANTT_INVALID_EXPORT_FORMAT", "Gantt export format must be CSV or JSON", HttpStatus.BAD_REQUEST),
 
+    // Timeline cell buckets
+    TIMELINE_INVALID_DATE_RANGE(
+            "TIMELINE_INVALID_DATE_RANGE", "Timeline from/to range is invalid", HttpStatus.BAD_REQUEST),
+    TIMELINE_INVALID_GRANULARITY(
+            "TIMELINE_INVALID_GRANULARITY", "Timeline granularity must be DAY, WEEK, MONTH, or QUARTER", HttpStatus.BAD_REQUEST),
+    TIMELINE_INVALID_PROGRESS_PERCENT(
+            "TIMELINE_INVALID_PROGRESS_PERCENT", "Progress percent must be between 0 and 100", HttpStatus.BAD_REQUEST),
+    TIMELINE_INVALID_ALLOCATION(
+            "TIMELINE_INVALID_ALLOCATION", "Daily allocation payload is invalid", HttpStatus.BAD_REQUEST),
+
     POST_BASELINE_EDIT_BLOCKED(
             "POST_BASELINE_EDIT_BLOCKED",
             "Direct edit blocked after current baseline; create a ChangeRequest",
