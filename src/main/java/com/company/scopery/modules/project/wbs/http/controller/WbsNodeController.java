@@ -147,7 +147,13 @@ public class WbsNodeController {
             @Valid @RequestBody UpdateWbsNodeRequest request) {
 
         UpdateWbsNodeCommand command = new UpdateWbsNodeCommand(
-                id, projectId, request.title(), request.description(), request.nodeType());
+                id,
+                projectId,
+                request.title(),
+                request.description(),
+                request.nodeType(),
+                request.plannedStartDate(),
+                request.plannedEndDate());
 
         WbsNodeResponse response = updateAction.execute(command);
         return ResponseEntity.ok(ApiResponse.success(response));

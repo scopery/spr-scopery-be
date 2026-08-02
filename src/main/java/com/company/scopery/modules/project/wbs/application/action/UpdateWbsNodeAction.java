@@ -57,7 +57,17 @@ public class UpdateWbsNodeAction {
         WbsNodeType nodeType = ProjectEnumParser.parseRequired(
                 WbsNodeType.class, cmd.nodeType(), "WBS_NODE_INVALID_TYPE", "nodeType");
 
-        WbsNode updated = node.update(cmd.title(), cmd.description(), nodeType);
+        if (cmd.plannedStartDate() != null && cmd.plannedEndDate() != null
+                && cmd.plannedEndDate().isBefore(cmd.plannedStartDate())) {
+            throw ProjectExceptions.wbsNodeInvalidDateRange();
+        }
+
+        WbsNode updated = node.update(
+                cmd.title(),
+                cmd.description(),
+                nodeType,
+                cmd.plannedStartDate(),
+                cmd.plannedEndDate());
         WbsNode saved = wbsNodeRepository.save(updated);
 
         platformPublisher.enqueueWbs(saved, "WBS_NODE_UPDATED");

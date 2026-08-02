@@ -347,23 +347,32 @@ public class GanttQueryService {
             }
         }
 
+        // Two-pass: register all WBS item ids first so child→parent links work
+        // regardless of list order (parent may appear after child in the query).
         Map<UUID, String> wbsItemIds = new HashMap<>();
         for (WbsNode node : wbsList) {
-            String wbsItemId = "WBS:" + node.id();
-            wbsItemIds.put(node.id(), wbsItemId);
-            String parentItemId = node.parentId() != null
-                    ? wbsItemIds.getOrDefault(node.parentId(),
-                    phaseItemIds.getOrDefault(node.projectPhaseId(), projectItemId))
-                    : phaseItemIds.getOrDefault(node.projectPhaseId(), projectItemId);
-            LocalDate start = null;
-            LocalDate end = null;
+            wbsItemIds.put(node.id(), "WBS:" + node.id());
+        }
+        for (WbsNode node : wbsList) {
+            String wbsItemId = wbsItemIds.get(node.id());
+            String parentItemId;
+            if (node.parentId() != null && wbsItemIds.containsKey(node.parentId())) {
+                parentItemId = wbsItemIds.get(node.parentId());
+            } else {
+                parentItemId = phaseItemIds.getOrDefault(node.projectPhaseId(), projectItemId);
+            }
+            LocalDate rollupStart = null;
+            LocalDate rollupEnd = null;
             for (Task t : subtreeTasks(node, wbsList, taskList)) {
                 GanttTaskDateResolver.EffectiveTaskDates effective = effectiveByTask.get(t.id());
                 if (effective != null) {
-                    start = minDate(start, effective.start());
-                    end = maxDate(end, effective.end());
+                    rollupStart = minDate(rollupStart, effective.start());
+                    rollupEnd = maxDate(rollupEnd, effective.end());
                 }
             }
+            // Prefer stored planning-element dates when set; otherwise roll up from child tasks.
+            LocalDate start = node.plannedStartDate() != null ? node.plannedStartDate() : rollupStart;
+            LocalDate end = node.plannedEndDate() != null ? node.plannedEndDate() : rollupEnd;
             items.add(new GanttItemResponse(
                     wbsItemId, GanttItemType.WBS_NODE.name(), "WBS_NODE", node.id(),
                     parentItemId, node.title(), start, end,

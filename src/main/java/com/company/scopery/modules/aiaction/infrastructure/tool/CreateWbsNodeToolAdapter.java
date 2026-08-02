@@ -42,8 +42,8 @@ public class CreateWbsNodeToolAdapter implements AiActionToolAdapter {
 
     @Override
     public String description() {
-        return "Create a new WBS (Work Breakdown Structure) node in a project. Use when the user asks to add a work package, deliverable, or task group to a project's WBS. "
-                + "Required: projectId, projectPhaseId, title, nodeType (WORK_PACKAGE/DELIVERABLE/TASK_GROUP). Optional: parentId, description.";
+        return "Create a new WBS (Work Breakdown Structure) node in a project. Use when the user asks to add a work package, milestone, or task group to a project's WBS. "
+                + "Required: projectId, projectPhaseId, title, nodeType (WORK_PACKAGE/TASK_GROUP/MILESTONE). Optional: parentId, description.";
     }
 
     @Override
@@ -68,7 +68,7 @@ public class CreateWbsNodeToolAdapter implements AiActionToolAdapter {
                     },
                     "nodeType": {
                       "type": "string",
-                      "enum": ["WORK_PACKAGE", "DELIVERABLE", "TASK_GROUP"],
+                      "enum": ["WORK_PACKAGE", "TASK_GROUP", "MILESTONE"],
                       "description": "The type of WBS node."
                     },
                     "parentId": {
@@ -115,7 +115,7 @@ public class CreateWbsNodeToolAdapter implements AiActionToolAdapter {
         try {
             WbsNodeType.valueOf(nodeType.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return new AiActionDryRunResult(false, List.of("Invalid nodeType — must be WORK_PACKAGE, DELIVERABLE, or TASK_GROUP"), null, false, null);
+            return new AiActionDryRunResult(false, List.of("Invalid nodeType — must be WORK_PACKAGE, TASK_GROUP, or MILESTONE"), null, false, null);
         }
         String diffJson = "{\"projectId\":\"" + projectId + "\",\"title\":\"" + title + "\",\"nodeType\":\"" + nodeType + "\"}";
         return new AiActionDryRunResult(true, List.of(), null, false, diffJson);

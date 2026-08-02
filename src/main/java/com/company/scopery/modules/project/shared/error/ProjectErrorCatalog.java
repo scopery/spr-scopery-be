@@ -108,6 +108,8 @@ public enum ProjectErrorCatalog implements ErrorCatalog {
             "WBS_NODE_CIRCULAR_PARENT", "Setting this parent would create a circular relationship", HttpStatus.UNPROCESSABLE_ENTITY),
     WBS_NODE_PROJECT_MISMATCH(
             "WBS_NODE_PROJECT_MISMATCH", "WBS node does not belong to the specified project", HttpStatus.UNPROCESSABLE_ENTITY),
+    WBS_NODE_INVALID_DATE_RANGE(
+            "WBS_NODE_INVALID_DATE_RANGE", "WBS end date must not be before start date", HttpStatus.BAD_REQUEST),
     PROJECT_WBS_PATH_MISMATCH(
             "PROJECT_WBS_PATH_MISMATCH", "WBS node path does not match the parent project", HttpStatus.UNPROCESSABLE_ENTITY),
     PROJECT_WBS_ACCESS_DENIED(

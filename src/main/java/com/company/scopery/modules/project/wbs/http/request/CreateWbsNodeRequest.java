@@ -11,6 +11,6 @@ public record CreateWbsNodeRequest(
         String description,
         UUID phaseId,
         UUID parentId,
-        @NotBlank @Schema(allowableValues = {"WORK_PACKAGE", "DELIVERABLE", "TASK_GROUP"}, example = "WORK_PACKAGE") String nodeType,
+        @NotBlank @Schema(allowableValues = {"WORK_PACKAGE", "TASK_GROUP", "MILESTONE"}, example = "WORK_PACKAGE") String nodeType,
         int sortOrder
 ) {}

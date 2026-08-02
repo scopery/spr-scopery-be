@@ -1,5 +1,6 @@
 package com.company.scopery.modules.project.wbs.application.command;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record UpdateWbsNodeCommand(
@@ -7,5 +8,7 @@ public record UpdateWbsNodeCommand(
         UUID projectId,
         String title,
         String description,
-        String nodeType
+        String nodeType,
+        LocalDate plannedStartDate,
+        LocalDate plannedEndDate
 ) {}

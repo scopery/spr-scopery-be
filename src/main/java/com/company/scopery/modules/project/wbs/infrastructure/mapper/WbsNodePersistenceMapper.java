@@ -22,6 +22,8 @@ public class WbsNodePersistenceMapper {
                 entity.getLevel() != null ? entity.getLevel() : 0,
                 entity.getPath(),
                 entity.getSortOrder() != null ? entity.getSortOrder() : 0,
+                entity.getPlannedStartDate(),
+                entity.getPlannedEndDate(),
                 WbsNodeStatus.valueOf(entity.getStatus()),
                 entity.getVersion() != null ? entity.getVersion() : 0,
                 entity.getCreatedAt(),
@@ -42,6 +44,8 @@ public class WbsNodePersistenceMapper {
         entity.setLevel(domain.level());
         entity.setPath(domain.path());
         entity.setSortOrder(domain.sortOrder());
+        entity.setPlannedStartDate(domain.plannedStartDate());
+        entity.setPlannedEndDate(domain.plannedEndDate());
         entity.setStatus(domain.status().name());
         if (domain.createdAt() != null) {
             entity.setCreatedAt(domain.createdAt());

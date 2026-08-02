@@ -3,6 +3,7 @@ package com.company.scopery.modules.project.wbs.application.response;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNode;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record WbsNodeResponse(
@@ -17,6 +18,8 @@ public record WbsNodeResponse(
         int level,
         String path,
         int sortOrder,
+        LocalDate plannedStartDate,
+        LocalDate plannedEndDate,
         String status,
         int version,
         Instant createdAt,
@@ -36,6 +39,8 @@ public record WbsNodeResponse(
                 n.level(),
                 n.path(),
                 n.sortOrder(),
+                n.plannedStartDate(),
+                n.plannedEndDate(),
                 n.status().name(),
                 n.version(),
                 n.createdAt(),

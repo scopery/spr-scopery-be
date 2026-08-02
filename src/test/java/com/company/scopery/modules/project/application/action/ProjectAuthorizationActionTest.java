@@ -365,7 +365,7 @@ class ProjectAuthorizationActionTest {
                 wbsNodeRepository, activityLogger, authorizationService, mutationGuard, platformPublisher);
 
         assertForbidden(() -> action.execute(
-                new UpdateWbsNodeCommand(wbsId, projectId, "New Title", null, "WORK_PACKAGE")));
+                new UpdateWbsNodeCommand(wbsId, projectId, "New Title", null, "WORK_PACKAGE", null, null)));
     }
 
     @Test
@@ -408,7 +408,7 @@ class ProjectAuthorizationActionTest {
         when(wbsNodeRepository.findById(wbsId)).thenReturn(Optional.of(wbsNode()));
         when(wbsNodeRepository.findById(foreignParentId)).thenReturn(Optional.of(
                 new WbsNode(foreignParentId, otherProjectId, phaseId, null, "OTHER", "Other", null,
-                        WbsNodeType.WORK_PACKAGE, 1, "OTHER", 1, WbsNodeStatus.ACTIVE, 0,
+                        WbsNodeType.WORK_PACKAGE, 1, "OTHER", 1, null, null, WbsNodeStatus.ACTIVE, 0,
                         Instant.now(), Instant.now())));
 
         MoveWbsNodeAction action = new MoveWbsNodeAction(
@@ -548,7 +548,7 @@ class ProjectAuthorizationActionTest {
         UUID foreignWbsId = UUID.randomUUID();
         Instant now = Instant.now();
         WbsNode foreignWbs = new WbsNode(foreignWbsId, otherProjectId, phaseId, null, "OTHER", "Other", null,
-                WbsNodeType.WORK_PACKAGE, 1, "OTHER", 1, WbsNodeStatus.ACTIVE, 0, now, now);
+                WbsNodeType.WORK_PACKAGE, 1, "OTHER", 1, null, null, WbsNodeStatus.ACTIVE, 0, now, now);
 
         when(projectPhaseRepository.findById(phaseId)).thenReturn(Optional.of(activePhase()));
         when(wbsNodeRepository.findById(foreignWbsId)).thenReturn(Optional.of(foreignWbs));
@@ -928,7 +928,7 @@ class ProjectAuthorizationActionTest {
     private WbsNode wbsNode() {
         Instant now = Instant.now();
         return new WbsNode(wbsId, projectId, phaseId, null, "WBS_1", "Title", null,
-                WbsNodeType.WORK_PACKAGE, 1, "WBS_1", 1, WbsNodeStatus.ACTIVE, 0, now, now);
+                WbsNodeType.WORK_PACKAGE, 1, "WBS_1", 1, null, null, WbsNodeStatus.ACTIVE, 0, now, now);
     }
 
     private Task task(UUID assigneeId) {

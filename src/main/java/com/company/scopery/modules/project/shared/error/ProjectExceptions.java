@@ -193,6 +193,10 @@ public final class ProjectExceptions {
                 Map.of("nodeId", nodeId, "projectId", projectId));
     }
 
+    public static AppException wbsNodeInvalidDateRange() {
+        return new AppException(ProjectErrorCatalog.WBS_NODE_INVALID_DATE_RANGE);
+    }
+
     public static AppException taskProjectMismatch(UUID taskId, UUID projectId) {
         return new AppException(ProjectErrorCatalog.TASK_PROJECT_MISMATCH,
                 "Task " + taskId + " does not belong to project " + projectId,

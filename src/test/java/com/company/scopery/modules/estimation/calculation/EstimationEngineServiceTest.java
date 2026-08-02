@@ -301,12 +301,12 @@ class EstimationEngineServiceTest {
                 WbsNodeType.TASK_GROUP, 0, "/1", 1);
         parent = new WbsNode(parentWbsId, parent.projectId(), parent.projectPhaseId(), parent.parentId(),
                 parent.code(), parent.title(), parent.description(), parent.nodeType(), parent.level(),
-                parent.path(), parent.sortOrder(), WbsNodeStatus.ACTIVE, 0, null, null);
+                parent.path(), parent.sortOrder(), null, null, WbsNodeStatus.ACTIVE, 0, null, null);
         WbsNode child = WbsNode.create(projectId, phaseId, parentWbsId, "1.1", "Child", null,
                 WbsNodeType.WORK_PACKAGE, 1, "/1/1.1", 1);
         child = new WbsNode(childWbsId, child.projectId(), child.projectPhaseId(), child.parentId(),
                 child.code(), child.title(), child.description(), child.nodeType(), child.level(),
-                child.path(), child.sortOrder(), WbsNodeStatus.ACTIVE, 0, null, null);
+                child.path(), child.sortOrder(), null, null, WbsNodeStatus.ACTIVE, 0, null, null);
         return List.of(parent, child);
     }
 

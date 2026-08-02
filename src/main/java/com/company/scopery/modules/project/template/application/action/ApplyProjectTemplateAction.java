@@ -371,8 +371,8 @@ public class ApplyProjectTemplateAction {
         }
         return switch (type) {
             case WORK_PACKAGE -> WbsNodeType.WORK_PACKAGE;
-            case DELIVERABLE -> WbsNodeType.DELIVERABLE;
             case TASK_GROUP -> WbsNodeType.TASK_GROUP;
+            case MILESTONE -> WbsNodeType.MILESTONE;
         };
     }
 }

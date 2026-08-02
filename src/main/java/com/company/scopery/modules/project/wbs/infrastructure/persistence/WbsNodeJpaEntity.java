@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
@@ -61,6 +62,12 @@ public class WbsNodeJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
+
+    @Column(name = "planned_start_date")
+    private LocalDate plannedStartDate;
+
+    @Column(name = "planned_end_date")
+    private LocalDate plannedEndDate;
 
     @Column(name = "status", nullable = false, length = 50)
     private String status;

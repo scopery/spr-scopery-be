@@ -560,7 +560,7 @@ class ProjectBusinessRulesActionTest {
     private WbsNode wbsNode(UUID id, UUID ownerProjectId, UUID ownerPhaseId, UUID parentId) {
         Instant now = Instant.now();
         return new WbsNode(id, ownerProjectId, ownerPhaseId, parentId, "WBS_1", "Title", null,
-                WbsNodeType.WORK_PACKAGE, 1, "WBS_1", 1, WbsNodeStatus.ACTIVE, 0, now, now);
+                WbsNodeType.WORK_PACKAGE, 1, "WBS_1", 1, null, null, WbsNodeStatus.ACTIVE, 0, now, now);
     }
 
     private Task task(UUID id, TaskStatus status) {
