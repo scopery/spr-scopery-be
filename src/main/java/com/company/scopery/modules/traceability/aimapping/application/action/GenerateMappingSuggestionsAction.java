@@ -180,7 +180,10 @@ public class GenerateMappingSuggestionsAction {
                                MappingPromptResolverService.ResolvedPrompt resolvedPrompt) {
         MappingSummary sourceSummary = summaryBuilderService.getOrBuildSummary(
                 source.sourceType(), source.id());
-        if (sourceSummary == null) return 0;
+        if (sourceSummary == null) {
+            log.warn("Skipping source {} ({}): summary could not be built", source.id(), source.sourceType());
+            return 0;
+        }
 
         List<CandidateResult> candidateResults = candidateRetrievalService.findCandidates(
                 command.relationType(), command.projectId(),
@@ -202,7 +205,11 @@ public class GenerateMappingSuggestionsAction {
         }
 
         if (scoredCandidates.isEmpty()) {
-            return 0;
+            log.warn("Candidates found for source {} but none had buildable summaries; recording NO_MATCH",
+                    source.id());
+            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
+            suggestionRepository.save(noMatch);
+            return 1;
         }
 
         String inputJson = promptBuilderService.buildInputJson(sourceSummary, scoredCandidates);
