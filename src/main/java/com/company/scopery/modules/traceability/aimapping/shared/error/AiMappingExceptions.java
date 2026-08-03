@@ -53,7 +53,7 @@ public final class AiMappingExceptions {
 
     public static AppException noDeploymentConfigured() {
         return new AppException(AiMappingErrorCatalog.MAPPING_NO_DEPLOYMENT_CONFIGURED,
-                "Configure scopery.ai-mapping.default-model-deployment-id to enable AI mapping suggestions.",
+                "No ACTIVE default model deployment found. In AI Agent Admin → Deployments, activate a deployment and Set default.",
                 Map.of());
     }
 

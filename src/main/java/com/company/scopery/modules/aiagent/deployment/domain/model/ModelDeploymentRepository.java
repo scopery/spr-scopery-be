@@ -24,6 +24,8 @@ public interface ModelDeploymentRepository {
 
     List<ModelDeployment> findAllByStatus(ModelDeploymentStatus status);
 
+    Optional<ModelDeployment> findDefault();
+
     boolean existsActiveByModelId(UUID modelId);
 
     boolean existsActiveByProviderId(UUID providerId);

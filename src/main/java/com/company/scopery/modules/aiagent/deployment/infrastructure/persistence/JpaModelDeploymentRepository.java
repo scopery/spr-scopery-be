@@ -53,6 +53,11 @@ public class JpaModelDeploymentRepository implements ModelDeploymentRepository {
     }
 
     @Override
+    public Optional<ModelDeployment> findDefault() {
+        return springDataRepository.findDefault().map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsActiveByModelId(UUID modelId) {
         return springDataRepository.existsByModelIdAndStatus(modelId, ModelDeploymentStatus.ACTIVE.name());
     }

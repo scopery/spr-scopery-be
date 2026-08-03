@@ -87,7 +87,7 @@ public class AgentController {
     public ResponseEntity<ApiResponse<PageResponse<AgentResponse>>> searchAgents(
             @Parameter(description = "Filter by name or code (partial, case-insensitive)")
                 @RequestParam(required = false) String keyword,
-            @Parameter(description = "Filter by agent type (EXTRACTION, CLASSIFICATION, SUMMARIZATION, GENERATION, VALIDATION, RECOMMENDATION, OTHER)")
+            @Parameter(description = "Filter by agent type (EXTRACTION, CLASSIFICATION, SUMMARIZATION, GENERATION, VALIDATION, RECOMMENDATION, SYSTEM, OTHER)")
                 @RequestParam(required = false) String type,
             @Parameter(description = "Filter by status (ACTIVE, INACTIVE, DEPRECATED)")
                 @RequestParam(required = false) String status,

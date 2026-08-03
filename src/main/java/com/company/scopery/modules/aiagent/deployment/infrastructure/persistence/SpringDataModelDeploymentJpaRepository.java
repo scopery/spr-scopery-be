@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SpringDataModelDeploymentJpaRepository
@@ -28,6 +29,9 @@ public interface SpringDataModelDeploymentJpaRepository
     boolean existsActiveByProviderId(@Param("providerId") UUID providerId);
 
     List<ModelDeploymentJpaEntity> findByStatus(String status);
+
+    @Query("SELECT d FROM ModelDeploymentJpaEntity d WHERE d.isDefault = true AND d.status = 'ACTIVE'")
+    Optional<ModelDeploymentJpaEntity> findDefault();
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

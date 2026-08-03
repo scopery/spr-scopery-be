@@ -109,14 +109,14 @@ public class GenerateMappingSuggestionsAction {
             throw AiMappingExceptions.runStillRunning(command.projectId(), command.relationType().name());
         }
 
-        UUID deploymentId = command.modelDeploymentId() != null
-                ? command.modelDeploymentId() : properties.getDefaultModelDeploymentId();
-        if (deploymentId == null) {
-            throw AiMappingExceptions.noDeploymentConfigured();
+        ModelDeployment deployment;
+        if (command.modelDeploymentId() != null) {
+            deployment = deploymentRepository.findById(command.modelDeploymentId())
+                    .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
+        } else {
+            deployment = deploymentRepository.findDefault()
+                    .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
         }
-
-        ModelDeployment deployment = deploymentRepository.findById(deploymentId)
-                .orElseThrow(() -> AiMappingExceptions.noDeploymentConfigured());
         AiModel aiModel = aiModelRepository.findById(deployment.modelId())
                 .orElseThrow(() -> AiMappingExceptions.noDeploymentConfigured());
         Provider provider = providerRepository.findById(aiModel.providerId())
@@ -130,7 +130,7 @@ public class GenerateMappingSuggestionsAction {
         MappingRun run = MappingRun.create(
                 command.projectId(), command.relationType(),
                 command.scope() != null ? command.scope() : MappingScope.UNMAPPED,
-                deploymentId, promptCode, properties.getCandidateLimit(), command.requestedBy());
+                deployment.id(), promptCode, properties.getCandidateLimit(), command.requestedBy());
         run = runRepository.save(run);
 
         List<UnmappedSource> sources;

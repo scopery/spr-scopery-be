@@ -69,7 +69,6 @@ scopery:
     max-age-seconds: ${CORS_MAX_AGE_SECONDS:3600}
 
   ai-mapping:
-    default-model-deployment-id: ${AI_MAPPING_DEPLOYMENT_ID:}
     candidate-limit: ${AI_MAPPING_CANDIDATE_LIMIT:5}
     batch-size: ${AI_MAPPING_BATCH_SIZE:15}
     embedding-model: ${AI_MAPPING_EMBEDDING_MODEL:text-embedding-3-small}
