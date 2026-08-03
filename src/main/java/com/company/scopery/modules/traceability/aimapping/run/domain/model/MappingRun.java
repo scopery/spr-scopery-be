@@ -22,6 +22,7 @@ public record MappingRun(
         Instant completedAt,
         MappingRunStatus status,
         Integer sourceCount,
+        int processedSourceCount,
         Integer suggestionCount,
         String tokenUsageJson,
         Instant createdAt,
@@ -36,7 +37,24 @@ public record MappingRun(
                 modelDeploymentId, promptKey, 1, 1, candidateLimit,
                 requestedBy, null, null,
                 MappingRunStatus.PENDING,
-                null, null, null,
+                null, 0, null, null,
                 now, now);
+    }
+
+    public MappingRun withProgress(MappingRunStatus status,
+                                   Integer sourceCount,
+                                   int processedSourceCount,
+                                   Integer suggestionCount,
+                                   String tokenUsageJson,
+                                   Instant startedAt,
+                                   Instant completedAt) {
+        return new MappingRun(
+                id, projectId, relationType, scope,
+                modelDeploymentId, promptKey, promptVersion, summaryVersion,
+                candidateLimit, requestedBy,
+                startedAt, completedAt, status,
+                sourceCount, processedSourceCount, suggestionCount, tokenUsageJson,
+                createdAt, Instant.now()
+        );
     }
 }

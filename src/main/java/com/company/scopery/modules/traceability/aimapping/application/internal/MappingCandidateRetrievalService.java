@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -126,8 +127,8 @@ public class MappingCandidateRetrievalService {
                 fts_scored AS (
                     SELECT uc.id,
                            ts_rank(
-                               to_tsvector('english', COALESCE(uc.name,'') || ' ' || COALESCE(uc.goal,'')),
-                               plainto_tsquery('english', ?)
+                               to_tsvector('simple', COALESCE(uc.name,'') || ' ' || COALESCE(uc.goal,'')),
+                               plainto_tsquery('simple', ?)
                            ) AS score
                     FROM app_use_case uc
                     WHERE uc.project_id = ?::uuid
@@ -185,8 +186,8 @@ public class MappingCandidateRetrievalService {
                 + "fts_scored AS (\n"
                 + "    SELECT fi.id,\n"
                 + "           ts_rank(\n"
-                + "               to_tsvector('english', COALESCE(fi.title,'') || ' ' || COALESCE(fi.description,'')),\n"
-                + "               plainto_tsquery('english', ?)\n"
+                + "               to_tsvector('simple', COALESCE(fi.title,'') || ' ' || COALESCE(fi.description,'')),\n"
+                + "               plainto_tsquery('simple', ?)\n"
                 + "           ) AS score\n"
                 + "    FROM app_functional_item fi\n"
                 + "    WHERE fi.project_id = ?::uuid\n"
@@ -228,13 +229,49 @@ public class MappingCandidateRetrievalService {
     private List<CandidateResult> queryCandidates(String sql, SummaryEntityType targetType,
                                                     UUID projectId, UUID sourceId,
                                                     String searchText, int limit) {
-        return jdbc.query(sql,
+        List<CandidateResult> found = jdbc.query(sql,
                 (rs, n) -> new CandidateResult(
                         UUID.fromString(rs.getString("id")),
                         targetType,
                         rs.getDouble("rrf_score"),
                         rs.getInt("final_rank")
                 ),
-                sourceId.toString(), searchText, projectId.toString(), projectId.toString(), limit);
+                sourceId.toString(),
+                searchText != null ? searchText : "",
+                projectId.toString(),
+                projectId.toString(),
+                limit);
+        if (!found.isEmpty()) {
+            return found;
+        }
+        // Lexical/vector miss (common with short VI titles) — give AI a recent pool.
+        return fallbackCandidates(targetType, projectId, limit);
+    }
+
+    private List<CandidateResult> fallbackCandidates(SummaryEntityType targetType, UUID projectId, int limit) {
+        String sql = switch (targetType) {
+            case FUNCTION -> """
+                    SELECT id FROM app_functional_item
+                    WHERE project_id = ?::uuid AND status != 'ARCHIVED'
+                    ORDER BY updated_at DESC NULLS LAST, created_at DESC
+                    LIMIT ?
+                    """;
+            case USE_CASE -> """
+                    SELECT id FROM app_use_case
+                    WHERE project_id = ?::uuid AND status NOT IN ('ARCHIVED', 'DEPRECATED')
+                    ORDER BY updated_at DESC NULLS LAST, created_at DESC
+                    LIMIT ?
+                    """;
+            default -> null;
+        };
+        if (sql == null) return List.of();
+        List<UUID> ids = jdbc.query(sql,
+                (rs, n) -> UUID.fromString(rs.getString("id")),
+                projectId.toString(), limit);
+        List<CandidateResult> out = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i++) {
+            out.add(new CandidateResult(ids.get(i), targetType, 0.01, i + 1));
+        }
+        return out;
     }
 }

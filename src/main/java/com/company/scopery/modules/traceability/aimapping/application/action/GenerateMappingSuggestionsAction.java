@@ -39,6 +39,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -52,10 +54,10 @@ import java.util.UUID;
 public class GenerateMappingSuggestionsAction {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateMappingSuggestionsAction.class);
-    private static final BigDecimal HIGH_SCORE_THRESHOLD = new BigDecimal("0.88");
-    private static final BigDecimal HIGH_MARGIN_THRESHOLD = new BigDecimal("0.15");
-    private static final BigDecimal MEDIUM_SCORE_THRESHOLD = new BigDecimal("0.72");
-    private static final BigDecimal MEDIUM_MARGIN_THRESHOLD = new BigDecimal("0.08");
+    private static final BigDecimal HIGH_SCORE_THRESHOLD = new BigDecimal("0.75");
+    private static final BigDecimal HIGH_MARGIN_THRESHOLD = new BigDecimal("0.08");
+    private static final BigDecimal MEDIUM_SCORE_THRESHOLD = new BigDecimal("0.55");
+    private static final BigDecimal MEDIUM_MARGIN_THRESHOLD = new BigDecimal("0.04");
 
     // CLAUDE.md §21 documented exception: no @Transactional because AI provider calls can
     // take seconds and must not hold a DB transaction open. Run status transitions are each
@@ -73,6 +75,7 @@ public class GenerateMappingSuggestionsAction {
     private final AiMappingProperties properties;
     private final AiMappingActivityLogger activityLogger;
     private final ObjectMapper objectMapper;
+    private final TaskExecutor taskExecutor;
 
     public GenerateMappingSuggestionsAction(
             MappingRunRepository runRepository,
@@ -87,7 +90,8 @@ public class GenerateMappingSuggestionsAction {
             MappingPromptResolverService promptResolverService,
             AiMappingProperties properties,
             AiMappingActivityLogger activityLogger,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            @Qualifier("aiMappingTaskExecutor") TaskExecutor taskExecutor) {
         this.runRepository = runRepository;
         this.suggestionRepository = suggestionRepository;
         this.deploymentRepository = deploymentRepository;
@@ -101,8 +105,14 @@ public class GenerateMappingSuggestionsAction {
         this.properties = properties;
         this.activityLogger = activityLogger;
         this.objectMapper = objectMapper;
+        this.taskExecutor = taskExecutor;
     }
 
+    /**
+     * Starts a mapping run and returns immediately with status=RUNNING.
+     * Sources are processed asynchronously; clients poll GET …/runs/{runId}
+     * for processedSourceCount / sourceCount progress.
+     */
     public MappingRunResponse execute(GenerateMappingCommand command) {
         if (runRepository.existsByProjectIdAndRelationTypeAndStatus(
                 command.projectId(), command.relationType(), MappingRunStatus.RUNNING)) {
@@ -121,11 +131,12 @@ public class GenerateMappingSuggestionsAction {
                 .orElseThrow(() -> AiMappingExceptions.noDeploymentConfigured());
         Provider provider = providerRepository.findById(aiModel.providerId())
                 .orElseThrow(() -> AiMappingExceptions.noDeploymentConfigured());
-        AiProviderAdapter adapter = adapterRegistry.getAdapter(provider.code().value());
+        // Validate adapter exists up-front (fail fast before async work).
+        adapterRegistry.getAdapter(provider.code().value());
 
         String promptCode = resolvePromptCode(command.relationType());
-        MappingPromptResolverService.ResolvedPrompt resolvedPrompt =
-                promptResolverService.resolveByTemplateCode(promptCode);
+        // Resolve prompt early so missing templates fail before the run starts.
+        promptResolverService.resolveByTemplateCode(promptCode);
 
         MappingRun run = MappingRun.create(
                 command.projectId(), command.relationType(),
@@ -139,39 +150,148 @@ public class GenerateMappingSuggestionsAction {
                     command.relationType(), command.projectId(), properties.getBatchSize() * 10);
         } catch (Exception e) {
             log.error("Failed to find unmapped sources for run {}: {}", run.id(), e.getMessage(), e);
-            run = updateRunStatus(run, MappingRunStatus.FAILED, 0, 0, null);
+            run = persistProgress(run, MappingRunStatus.FAILED, 0, 0, 0, null);
             return MappingRunResponse.from(run);
         }
 
-        run = updateRunStatus(run, MappingRunStatus.RUNNING, sources.size(), null, null);
+        Instant now = Instant.now();
+        if (sources.isEmpty()) {
+            run = persistProgress(run, MappingRunStatus.COMPLETED, 0, 0, 0,
+                    buildTokenUsageJson(0, 0));
+            activityLogger.logSuccess(
+                    AiMappingEntityTypes.MAPPING_RUN, run.id(),
+                    AiMappingActivityActions.GENERATE_MAPPING_RUN,
+                    "Generated 0 suggestions (no unmapped sources) for " + command.relationType().name());
+            return MappingRunResponse.from(run);
+        }
 
-        int totalSuggestions = 0;
-        int totalInputTokens = 0;
-        int totalOutputTokens = 0;
+        run = run.withProgress(
+                MappingRunStatus.RUNNING,
+                sources.size(),
+                0,
+                0,
+                null,
+                now,
+                null);
+        run = runRepository.save(run);
 
-        List<List<UnmappedSource>> batches = partitionIntoBatches(sources, properties.getBatchSize());
+        log.info("Mapping run {} accepted async: {} sources ({})",
+                run.id(), sources.size(), command.relationType());
+        final UUID runId = run.id();
+        final List<UnmappedSource> sourceSnapshot = List.copyOf(sources);
+        taskExecutor.execute(() -> processSourcesAsync(runId, command, sourceSnapshot));
 
-        for (List<UnmappedSource> batch : batches) {
-            for (UnmappedSource source : batch) {
+        return MappingRunResponse.from(run);
+    }
+
+    public void processSourcesAsync(UUID runId, GenerateMappingCommand command, List<UnmappedSource> sources) {
+        log.info("Mapping run {} worker started ({} sources)", runId, sources.size());
+        MappingRun run = runRepository.findById(runId)
+                .orElse(null);
+        if (run == null) {
+            log.error("Mapping run {} disappeared before async processing", runId);
+            return;
+        }
+
+        try {
+            ModelDeployment deployment = deploymentRepository.findById(run.modelDeploymentId())
+                    .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
+            AiModel aiModel = aiModelRepository.findById(deployment.modelId())
+                    .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
+            Provider provider = providerRepository.findById(aiModel.providerId())
+                    .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
+            AiProviderAdapter adapter = adapterRegistry.getAdapter(provider.code().value());
+            MappingPromptResolverService.ResolvedPrompt resolvedPrompt =
+                    promptResolverService.resolveByTemplateCode(run.promptKey());
+
+            // Prefetch summaries for all sources so embedding work is front-loaded
+            // and per-source loops hit cache instead of N sequential embeds.
+            log.info("Mapping run {}: warming summaries for {} sources", runId, sources.size());
+            for (UnmappedSource source : sources) {
                 try {
-                    int count = processSource(source, command, run, adapter, aiModel, provider,
-                            resolvedPrompt);
+                    summaryBuilderService.getOrBuildSummary(source.sourceType(), source.id());
+                } catch (Exception e) {
+                    log.warn("Failed to warm summary for source {}: {}", source.id(), e.getMessage());
+                }
+            }
+
+            int totalSuggestions = 0;
+            int processed = 0;
+
+            for (UnmappedSource source : sources) {
+                try {
+                    int count = processSource(source, command, run, adapter, aiModel, provider, resolvedPrompt);
                     totalSuggestions += count;
                 } catch (Exception e) {
                     log.warn("Failed to process source {} in run {}: {}", source.id(), run.id(), e.getMessage());
+                    try {
+                        suggestionRepository.save(buildNoMatchSuggestion(source, run));
+                        totalSuggestions += 1;
+                    } catch (Exception ignore) {
+                        // keep going
+                    }
                 }
+                processed += 1;
+                run = persistProgress(
+                        run,
+                        MappingRunStatus.RUNNING,
+                        sources.size(),
+                        processed,
+                        totalSuggestions,
+                        null);
+            }
+
+            String tokenUsage = buildTokenUsageJson(0, 0);
+            run = persistProgress(
+                    run,
+                    MappingRunStatus.COMPLETED,
+                    sources.size(),
+                    processed,
+                    totalSuggestions,
+                    tokenUsage);
+
+            activityLogger.logSuccess(
+                    AiMappingEntityTypes.MAPPING_RUN, run.id(),
+                    AiMappingActivityActions.GENERATE_MAPPING_RUN,
+                    "Generated " + totalSuggestions + " suggestions for " + command.relationType().name());
+        } catch (Exception e) {
+            log.error("Async mapping run {} failed: {}", runId, e.getMessage(), e);
+            try {
+                MappingRun current = runRepository.findById(runId).orElse(run);
+                persistProgress(
+                        current,
+                        MappingRunStatus.FAILED,
+                        current.sourceCount(),
+                        current.processedSourceCount(),
+                        current.suggestionCount(),
+                        null);
+            } catch (Exception persistErr) {
+                log.error("Failed to mark mapping run {} as FAILED: {}", runId, persistErr.getMessage());
             }
         }
+    }
 
-        String tokenUsage = buildTokenUsageJson(totalInputTokens, totalOutputTokens);
-        run = updateRunStatus(run, MappingRunStatus.COMPLETED, sources.size(), totalSuggestions, tokenUsage);
-
-        activityLogger.logSuccess(
-                AiMappingEntityTypes.MAPPING_RUN, run.id(),
-                AiMappingActivityActions.GENERATE_MAPPING_RUN,
-                "Generated " + totalSuggestions + " suggestions for " + command.relationType().name());
-
-        return MappingRunResponse.from(run);
+    private MappingRun persistProgress(MappingRun run,
+                                       MappingRunStatus status,
+                                       Integer sourceCount,
+                                       int processedSourceCount,
+                                       Integer suggestionCount,
+                                       String tokenUsage) {
+        Instant startedAt = run.startedAt() != null
+                ? run.startedAt()
+                : (status == MappingRunStatus.RUNNING || status == MappingRunStatus.COMPLETED
+                        ? Instant.now() : null);
+        Instant completedAt = (status == MappingRunStatus.COMPLETED || status == MappingRunStatus.FAILED)
+                ? Instant.now()
+                : run.completedAt();
+        return runRepository.save(run.withProgress(
+                status,
+                sourceCount != null ? sourceCount : run.sourceCount(),
+                processedSourceCount,
+                suggestionCount != null ? suggestionCount : run.suggestionCount(),
+                tokenUsage != null ? tokenUsage : run.tokenUsageJson(),
+                startedAt,
+                completedAt));
     }
 
     private int processSource(UnmappedSource source, GenerateMappingCommand command,
@@ -225,25 +345,69 @@ public class GenerateMappingSuggestionsAction {
             aiResponse = adapter.call(aiRequest);
         } catch (Exception e) {
             log.error("AI call failed for source {} in run {}: {}", source.id(), run.id(), e.getMessage());
-            throw AiMappingExceptions.aiCallFailed(e.getMessage());
+            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
+            suggestionRepository.save(noMatch);
+            return 1;
         }
 
         List<Map<String, Object>> aiResults = parseAiResponse(aiResponse.outputText());
         List<MappingSuggestion> suggestions = buildSuggestions(source, run, scoredCandidates, aiResults);
+        if (suggestions.isEmpty()) {
+            // Prompt often returns NO_MATCH / empty suggestions, or parser miss —
+            // always persist a row so the UI is not empty after a long run.
+            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
+            suggestionRepository.save(noMatch);
+            return 1;
+        }
         suggestionRepository.saveAll(suggestions);
         return suggestions.size();
     }
 
+    /**
+     * Accepts seed prompt schema:
+     * <pre>{ "results": [ { "sourceId", "decision", "suggestions": [ { "targetId", "score", ... } ] } ] }</pre>
+     * plus flatter shapes ({suggestions:[...]} or a bare array).
+     */
     private List<Map<String, Object>> parseAiResponse(String outputText) {
         if (outputText == null || outputText.isBlank()) return List.of();
         String json = extractJson(outputText);
         try {
             Object parsed = objectMapper.readValue(json, Object.class);
-            if (parsed instanceof List) {
-                return objectMapper.convertValue(parsed, new TypeReference<>() {});
+            if (parsed instanceof List<?> list) {
+                return objectMapper.convertValue(list, new TypeReference<>() {});
             }
-            if (parsed instanceof Map<?, ?> map && map.containsKey("suggestions")) {
-                return objectMapper.convertValue(map.get("suggestions"), new TypeReference<>() {});
+            if (parsed instanceof Map<?, ?> map) {
+                if (map.containsKey("results")) {
+                    List<Map<String, Object>> results =
+                            objectMapper.convertValue(map.get("results"), new TypeReference<>() {});
+                    List<Map<String, Object>> flattened = new ArrayList<>();
+                    for (Map<String, Object> result : results) {
+                        Object decision = result.get("decision");
+                        if (decision != null && "NO_MATCH".equalsIgnoreCase(decision.toString())) {
+                            continue;
+                        }
+                        Object nested = result.get("suggestions");
+                        if (nested instanceof List<?> sugList) {
+                            for (Object item : sugList) {
+                                if (item instanceof Map<?, ?> itemMap) {
+                                    Map<String, Object> copy = objectMapper.convertValue(itemMap, new TypeReference<>() {});
+                                    if (!copy.containsKey("decision") && result.get("decision") != null) {
+                                        copy.put("decision", result.get("decision"));
+                                    }
+                                    flattened.add(copy);
+                                }
+                            }
+                        }
+                    }
+                    return flattened;
+                }
+                if (map.containsKey("suggestions")) {
+                    return objectMapper.convertValue(map.get("suggestions"), new TypeReference<>() {});
+                }
+                // Single suggestion object
+                if (map.containsKey("targetId")) {
+                    return List.of(objectMapper.convertValue(map, new TypeReference<>() {}));
+                }
             }
         } catch (Exception e) {
             log.warn("Failed to parse AI response JSON: {}", e.getMessage());
@@ -277,14 +441,20 @@ public class GenerateMappingSuggestionsAction {
             if (matched == null) continue;
 
             BigDecimal aiScore = getBigDecimal(result, "aiScore");
+            if (aiScore == null) {
+                aiScore = getBigDecimal(result, "score"); // seed prompt field name
+            }
             BigDecimal secondBestScore = getBigDecimal(result, "secondBestScore");
             BigDecimal scoreMargin = aiScore != null && secondBestScore != null
                     ? aiScore.subtract(secondBestScore) : null;
             String decisionStr = getString(result, "decision");
             SuggestionDecision decision = decisionStr != null
                     ? safeDecision(decisionStr) : SuggestionDecision.SUGGEST;
-            ConfidenceBand confidence = calculateConfidenceBand(aiScore, scoreMargin,
-                    getString(result, "warnings"));
+            if (decision == SuggestionDecision.NO_MATCH) {
+                continue;
+            }
+            ConfidenceBand confidence = parseConfidenceBand(getString(result, "confidenceBand"))
+                    .orElseGet(() -> calculateConfidenceBand(aiScore, scoreMargin, toJson(result.get("warnings"))));
             String reasonCodesJson = toJson(result.get("reasonCodes"));
             String evidenceJson = toJson(result.get("evidence"));
             String warningsJson = toJson(result.get("warnings"));
@@ -305,6 +475,15 @@ public class GenerateMappingSuggestionsAction {
             suggestions.add(suggestion);
         }
         return suggestions;
+    }
+
+    private java.util.Optional<ConfidenceBand> parseConfidenceBand(String raw) {
+        if (raw == null || raw.isBlank()) return java.util.Optional.empty();
+        try {
+            return java.util.Optional.of(ConfidenceBand.valueOf(raw.trim().toUpperCase()));
+        } catch (Exception e) {
+            return java.util.Optional.empty();
+        }
     }
 
     private MappingSuggestion buildNoMatchSuggestion(UnmappedSource source, MappingRun run) {
@@ -336,24 +515,6 @@ public class GenerateMappingSuggestionsAction {
         return ConfidenceBand.LOW;
     }
 
-    private MappingRun updateRunStatus(MappingRun run, MappingRunStatus status,
-                                        Integer sourceCount, Integer suggestionCount,
-                                        String tokenUsage) {
-        MappingRun updated = new MappingRun(
-                run.id(), run.projectId(), run.relationType(), run.scope(),
-                run.modelDeploymentId(), run.promptKey(), run.promptVersion(), run.summaryVersion(),
-                run.candidateLimit(), run.requestedBy(),
-                status == MappingRunStatus.RUNNING ? Instant.now() : run.startedAt(),
-                status == MappingRunStatus.COMPLETED || status == MappingRunStatus.FAILED ? Instant.now() : run.completedAt(),
-                status,
-                sourceCount != null ? sourceCount : run.sourceCount(),
-                suggestionCount != null ? suggestionCount : run.suggestionCount(),
-                tokenUsage != null ? tokenUsage : run.tokenUsageJson(),
-                run.createdAt(), run.updatedAt()
-        );
-        return runRepository.save(updated);
-    }
-
     private String renderPrompt(MappingPromptResolverService.ResolvedPrompt resolved, String inputJson) {
         String userPart = resolved.userPromptTemplate() != null
                 ? resolved.userPromptTemplate().replace("{{INPUT_JSON}}", inputJson)
@@ -370,14 +531,6 @@ public class GenerateMappingSuggestionsAction {
             case FUNCTION_TO_USE_CASE -> AiMappingPromptKeys.UC_FUNCTION_PROMPT_CODE;
             case USE_CASE_TO_TEST_CASE -> AiMappingPromptKeys.TC_UC_PROMPT_CODE;
         };
-    }
-
-    private static <T> List<List<T>> partitionIntoBatches(List<T> items, int batchSize) {
-        List<List<T>> batches = new ArrayList<>();
-        for (int i = 0; i < items.size(); i += batchSize) {
-            batches.add(items.subList(i, Math.min(i + batchSize, items.size())));
-        }
-        return batches;
     }
 
     private String buildTokenUsageJson(int inputTokens, int outputTokens) {

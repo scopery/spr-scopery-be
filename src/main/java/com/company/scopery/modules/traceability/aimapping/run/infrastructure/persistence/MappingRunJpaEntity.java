@@ -70,6 +70,9 @@ public class MappingRunJpaEntity extends AuditableJpaEntity {
     @Column(name = "source_count")
     private Integer sourceCount;
 
+    @Column(name = "processed_source_count", nullable = false)
+    private int processedSourceCount;
+
     @Column(name = "suggestion_count")
     private Integer suggestionCount;
 

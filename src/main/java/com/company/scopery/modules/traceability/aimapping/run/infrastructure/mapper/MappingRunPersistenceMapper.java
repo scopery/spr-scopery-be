@@ -26,6 +26,7 @@ public class MappingRunPersistenceMapper {
                 entity.getCompletedAt(),
                 MappingRunStatus.valueOf(entity.getStatus()),
                 entity.getSourceCount(),
+                entity.getProcessedSourceCount(),
                 entity.getSuggestionCount(),
                 entity.getTokenUsageJson(),
                 entity.getCreatedAt(),
@@ -49,6 +50,7 @@ public class MappingRunPersistenceMapper {
         entity.setCompletedAt(domain.completedAt());
         entity.setStatus(domain.status().name());
         entity.setSourceCount(domain.sourceCount());
+        entity.setProcessedSourceCount(domain.processedSourceCount());
         entity.setSuggestionCount(domain.suggestionCount());
         entity.setTokenUsageJson(domain.tokenUsageJson());
         if (domain.createdAt() != null) {
