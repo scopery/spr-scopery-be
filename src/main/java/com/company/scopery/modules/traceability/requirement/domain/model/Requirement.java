@@ -45,11 +45,8 @@ public record Requirement(UUID id, UUID projectId, UUID workspaceId, UUID applic
     public Requirement update(String title, String description, RequirementPriority priority, RequirementType type,
                               UUID applicationId, UUID functionalItemId, UUID nonFunctionalItemId, UUID scopeItemId,
                               UUID scopePackageId, String requiresUseCase) {
-        if (status == RequirementStatus.ARCHIVED) {
-            throw TraceabilityExceptions.requirementImmutable();
-        }
         // Approved: content (title/description/priority/type/requiresUseCase) stays immutable,
-        // but catalog/scope link FKs may still change (Requirement ↔ Function / NFR linking).
+        // but catalog/scope link FKs may still change. Archived remains editable (soft-hide only).
         boolean changingContent =
                 (title != null && !title.isBlank() && !title.trim().equals(this.title))
                 || (description != null && !java.util.Objects.equals(description, this.description))

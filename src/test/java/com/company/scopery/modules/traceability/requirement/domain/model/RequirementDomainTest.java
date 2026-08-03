@@ -52,9 +52,10 @@ class RequirementDomainTest {
     }
 
     @Test
-    void archived_blocksAnyUpdate() {
+    void archived_allowsContentUpdate() {
         var archived = draft().archive();
-        assertThrows(AppException.class, () ->
-                archived.update(null, null, null, null, null, UUID.randomUUID(), null, null, null, null));
+        var updated = archived.update("Restored title", null, null, null, null, null, null, null, null, null);
+        assertEquals(RequirementStatus.ARCHIVED, updated.status());
+        assertEquals("Restored title", updated.title());
     }
 }
