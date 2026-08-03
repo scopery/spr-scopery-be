@@ -440,12 +440,13 @@ public class GenerateMappingSuggestionsAction {
                     .findFirst().orElse(null);
             if (matched == null) continue;
 
-            BigDecimal aiScore = getBigDecimal(result, "aiScore");
-            if (aiScore == null) {
-                aiScore = getBigDecimal(result, "score"); // seed prompt field name
+            BigDecimal aiScoreRaw = getBigDecimal(result, "aiScore");
+            if (aiScoreRaw == null) {
+                aiScoreRaw = getBigDecimal(result, "score"); // seed prompt field name
             }
+            final BigDecimal aiScore = aiScoreRaw;
             BigDecimal secondBestScore = getBigDecimal(result, "secondBestScore");
-            BigDecimal scoreMargin = aiScore != null && secondBestScore != null
+            final BigDecimal scoreMargin = aiScore != null && secondBestScore != null
                     ? aiScore.subtract(secondBestScore) : null;
             String decisionStr = getString(result, "decision");
             SuggestionDecision decision = decisionStr != null
