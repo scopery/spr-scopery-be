@@ -2,15 +2,16 @@ package com.company.scopery.modules.traceability.aimapping.application.action;
 
 import com.company.scopery.modules.traceability.aimapping.application.command.ApplyMappingDraftCommand;
 import com.company.scopery.modules.traceability.aimapping.application.response.ApplyMappingDraftResponse;
-import com.company.scopery.modules.traceability.aimapping.run.domain.enums.MappingRelationType;
 import com.company.scopery.modules.traceability.aimapping.run.domain.model.MappingRunRepository;
 import com.company.scopery.modules.traceability.aimapping.shared.activity.AiMappingActivityLogger;
 import com.company.scopery.modules.traceability.aimapping.shared.constant.AiMappingActivityActions;
 import com.company.scopery.modules.traceability.aimapping.shared.constant.AiMappingEntityTypes;
 import com.company.scopery.modules.traceability.aimapping.shared.error.AiMappingExceptions;
 import com.company.scopery.modules.traceability.aimapping.suggestion.domain.enums.SuggestionDecision;
+import com.company.scopery.modules.traceability.aimapping.suggestion.domain.enums.SuggestionReviewStatus;
 import com.company.scopery.modules.traceability.aimapping.suggestion.domain.model.MappingSuggestion;
 import com.company.scopery.modules.traceability.aimapping.suggestion.domain.model.MappingSuggestionRepository;
+import com.company.scopery.modules.traceability.aimapping.summary.domain.enums.SummaryEntityType;
 import com.company.scopery.modules.traceability.usecase.domain.model.RequirementFunctionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Types;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class ApplyMappingDraftAction {
@@ -56,11 +59,24 @@ public class ApplyMappingDraftAction {
         int skippedStale = 0;
         int skippedConflict = 0;
         int failed = 0;
+        List<UUID> expiredIds = new ArrayList<>();
 
         for (MappingSuggestion suggestion : accepted) {
             if (suggestion.decision() == SuggestionDecision.NO_MATCH || suggestion.targetId() == null) {
                 continue;
             }
+
+            // Staleness check: if source entity was updated since the suggestion was generated,
+            // mark it EXPIRED instead of applying — stale suggestions may map to a changed entity.
+            if (suggestion.sourceVersion() != null) {
+                int currentVersion = loadCurrentEntityVersion(suggestion.sourceType(), suggestion.sourceId());
+                if (currentVersion > suggestion.sourceVersion()) {
+                    expiredIds.add(suggestion.id());
+                    skippedStale++;
+                    continue;
+                }
+            }
+
             try {
                 boolean applied = applySuggestion(suggestion);
                 if (applied) {
@@ -74,6 +90,11 @@ public class ApplyMappingDraftAction {
             }
         }
 
+        if (!expiredIds.isEmpty()) {
+            suggestionRepository.bulkUpdateReviewStatus(expiredIds, SuggestionReviewStatus.EXPIRED, null, Instant.now());
+            log.info("Marked {} stale suggestions as EXPIRED for run {}", expiredIds.size(), command.runId());
+        }
+
         if (created > 0) {
             activityLogger.logSuccess(
                     AiMappingEntityTypes.MAPPING_RUN, command.runId(),
@@ -85,28 +106,24 @@ public class ApplyMappingDraftAction {
     }
 
     private boolean applySuggestion(MappingSuggestion suggestion) {
-        MappingRelationType relationType = suggestion.relationType();
-        return switch (relationType) {
+        return switch (suggestion.relationType()) {
             case REQUIREMENT_TO_FUNCTION -> applyRequirementFunction(suggestion);
-            case FUNCTION_TO_USE_CASE -> applyUseCaseFunction(suggestion);
-            case USE_CASE_TO_TEST_CASE -> applyTestCaseUseCase(suggestion);
+            case FUNCTION_TO_USE_CASE    -> applyUseCaseFunction(suggestion);
+            case USE_CASE_TO_TEST_CASE   -> applyTestCaseUseCase(suggestion);
         };
     }
 
     private boolean applyRequirementFunction(MappingSuggestion s) {
-        if (requirementFunctionRepository.exists(s.sourceId(), s.targetId())) {
-            return false;
-        }
+        if (requirementFunctionRepository.exists(s.sourceId(), s.targetId())) return false;
         requirementFunctionRepository.link(s.sourceId(), s.targetId());
         return true;
     }
 
     private boolean applyUseCaseFunction(MappingSuggestion s) {
-        String checkSql = "SELECT primary_function_id FROM app_use_case WHERE id = ?::uuid";
-        List<Object> result = jdbc.queryForList(checkSql, Object.class, s.sourceId().toString());
-        if (!result.isEmpty() && result.get(0) != null) {
-            return false;
-        }
+        List<Object> result = jdbc.queryForList(
+                "SELECT primary_function_id FROM app_use_case WHERE id = ?::uuid",
+                Object.class, s.sourceId().toString());
+        if (!result.isEmpty() && result.get(0) != null) return false;
         jdbc.update("UPDATE app_use_case SET primary_function_id = ?::uuid, updated_at = ? WHERE id = ?::uuid",
                 new Object[]{s.targetId().toString(), Instant.now(), s.sourceId().toString()},
                 new int[]{Types.VARCHAR, Types.TIMESTAMP, Types.VARCHAR});
@@ -114,14 +131,24 @@ public class ApplyMappingDraftAction {
     }
 
     private boolean applyTestCaseUseCase(MappingSuggestion s) {
-        String checkSql = "SELECT use_case_id FROM quality_test_case WHERE id = ?::uuid";
-        List<Object> result = jdbc.queryForList(checkSql, Object.class, s.sourceId().toString());
-        if (!result.isEmpty() && result.get(0) != null) {
-            return false;
-        }
+        List<Object> result = jdbc.queryForList(
+                "SELECT use_case_id FROM quality_test_case WHERE id = ?::uuid",
+                Object.class, s.sourceId().toString());
+        if (!result.isEmpty() && result.get(0) != null) return false;
         jdbc.update("UPDATE quality_test_case SET use_case_id = ?::uuid, updated_at = ? WHERE id = ?::uuid",
                 new Object[]{s.targetId().toString(), Instant.now(), s.sourceId().toString()},
                 new int[]{Types.VARCHAR, Types.TIMESTAMP, Types.VARCHAR});
         return true;
+    }
+
+    private int loadCurrentEntityVersion(SummaryEntityType type, UUID id) {
+        String sql = switch (type) {
+            case REQUIREMENT -> "SELECT COALESCE(version, 0) FROM requirements_requirement WHERE id = ?::uuid";
+            case FUNCTION    -> "SELECT COALESCE(version, 0) FROM app_functional_item WHERE id = ?::uuid";
+            case USE_CASE    -> "SELECT COALESCE(version, 0) FROM app_use_case WHERE id = ?::uuid";
+            case TEST_CASE   -> "SELECT COALESCE(version, 0) FROM quality_test_case WHERE id = ?::uuid";
+        };
+        List<Integer> rows = jdbc.queryForList(sql, Integer.class, id.toString());
+        return rows.isEmpty() ? -1 : rows.get(0);
     }
 }

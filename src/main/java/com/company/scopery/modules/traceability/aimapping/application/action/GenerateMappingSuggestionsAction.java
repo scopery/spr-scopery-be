@@ -46,6 +46,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -54,8 +56,8 @@ import java.util.UUID;
 public class GenerateMappingSuggestionsAction {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateMappingSuggestionsAction.class);
-    private static final BigDecimal HIGH_SCORE_THRESHOLD = new BigDecimal("0.75");
-    private static final BigDecimal HIGH_MARGIN_THRESHOLD = new BigDecimal("0.08");
+    private static final BigDecimal HIGH_SCORE_THRESHOLD   = new BigDecimal("0.75");
+    private static final BigDecimal HIGH_MARGIN_THRESHOLD  = new BigDecimal("0.08");
     private static final BigDecimal MEDIUM_SCORE_THRESHOLD = new BigDecimal("0.55");
     private static final BigDecimal MEDIUM_MARGIN_THRESHOLD = new BigDecimal("0.04");
 
@@ -128,14 +130,12 @@ public class GenerateMappingSuggestionsAction {
                     .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
         }
         AiModel aiModel = aiModelRepository.findById(deployment.modelId())
-                .orElseThrow(() -> AiMappingExceptions.noDeploymentConfigured());
+                .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
         Provider provider = providerRepository.findById(aiModel.providerId())
-                .orElseThrow(() -> AiMappingExceptions.noDeploymentConfigured());
-        // Validate adapter exists up-front (fail fast before async work).
+                .orElseThrow(AiMappingExceptions::noDeploymentConfigured);
         adapterRegistry.getAdapter(provider.code().value());
 
         String promptCode = resolvePromptCode(command.relationType());
-        // Resolve prompt early so missing templates fail before the run starts.
         promptResolverService.resolveByTemplateCode(promptCode);
 
         MappingRun run = MappingRun.create(
@@ -154,10 +154,8 @@ public class GenerateMappingSuggestionsAction {
             return MappingRunResponse.from(run);
         }
 
-        Instant now = Instant.now();
         if (sources.isEmpty()) {
-            run = persistProgress(run, MappingRunStatus.COMPLETED, 0, 0, 0,
-                    buildTokenUsageJson(0, 0));
+            run = persistProgress(run, MappingRunStatus.COMPLETED, 0, 0, 0, buildTokenUsageJson(0, 0));
             activityLogger.logSuccess(
                     AiMappingEntityTypes.MAPPING_RUN, run.id(),
                     AiMappingActivityActions.GENERATE_MAPPING_RUN,
@@ -165,18 +163,10 @@ public class GenerateMappingSuggestionsAction {
             return MappingRunResponse.from(run);
         }
 
-        run = run.withProgress(
-                MappingRunStatus.RUNNING,
-                sources.size(),
-                0,
-                0,
-                null,
-                now,
-                null);
+        run = run.withProgress(MappingRunStatus.RUNNING, sources.size(), 0, 0, null, Instant.now(), null);
         run = runRepository.save(run);
 
-        log.info("Mapping run {} accepted async: {} sources ({})",
-                run.id(), sources.size(), command.relationType());
+        log.info("Mapping run {} accepted async: {} sources ({})", run.id(), sources.size(), command.relationType());
         final UUID runId = run.id();
         final List<UnmappedSource> sourceSnapshot = List.copyOf(sources);
         taskExecutor.execute(() -> processSourcesAsync(runId, command, sourceSnapshot));
@@ -186,8 +176,7 @@ public class GenerateMappingSuggestionsAction {
 
     public void processSourcesAsync(UUID runId, GenerateMappingCommand command, List<UnmappedSource> sources) {
         log.info("Mapping run {} worker started ({} sources)", runId, sources.size());
-        MappingRun run = runRepository.findById(runId)
-                .orElse(null);
+        MappingRun run = runRepository.findById(runId).orElse(null);
         if (run == null) {
             log.error("Mapping run {} disappeared before async processing", runId);
             return;
@@ -204,52 +193,141 @@ public class GenerateMappingSuggestionsAction {
             MappingPromptResolverService.ResolvedPrompt resolvedPrompt =
                     promptResolverService.resolveByTemplateCode(run.promptKey());
 
-            // Prefetch summaries for all sources so embedding work is front-loaded
-            // and per-source loops hit cache instead of N sequential embeds.
+            // Warm source summaries
             log.info("Mapping run {}: warming summaries for {} sources", runId, sources.size());
             for (UnmappedSource source : sources) {
-                try {
-                    summaryBuilderService.getOrBuildSummary(source.sourceType(), source.id());
-                } catch (Exception e) {
-                    log.warn("Failed to warm summary for source {}: {}", source.id(), e.getMessage());
-                }
+                try { summaryBuilderService.getOrBuildSummary(source.sourceType(), source.id()); }
+                catch (Exception e) { log.warn("Failed to warm summary for source {}: {}", source.id(), e.getMessage()); }
             }
 
-            int totalSuggestions = 0;
-            int processed = 0;
+            // Warm target summaries so vector retrieval finds them
+            var allTargets = candidateRetrievalService.findAllEligibleTargets(command.relationType(), command.projectId());
+            log.info("Mapping run {}: warming summaries for {} eligible targets", runId, allTargets.size());
+            for (var target : allTargets) {
+                try { summaryBuilderService.getOrBuildSummary(target.targetType(), target.id()); }
+                catch (Exception e) { log.warn("Failed to warm summary for target {}: {}", target.id(), e.getMessage()); }
+            }
+
+            // ---------------------------------------------------------------
+            // Phase A — Pre-screening (no AI call)
+            // ---------------------------------------------------------------
+            List<UnmappedSource> ambiguous = new ArrayList<>();
+            int clearMatchCount = 0;
+            int noCandidateCount = 0;
+
+            Map<UUID, MappingSummary>           sourceSummaryMap    = new LinkedHashMap<>();
+            Map<UUID, List<ScoredCandidate>>    sourceCandidateMap  = new LinkedHashMap<>();
 
             for (UnmappedSource source : sources) {
-                try {
-                    int count = processSource(source, command, run, adapter, aiModel, provider, resolvedPrompt);
-                    totalSuggestions += count;
-                } catch (Exception e) {
-                    log.warn("Failed to process source {} in run {}: {}", source.id(), run.id(), e.getMessage());
-                    try {
-                        suggestionRepository.save(buildNoMatchSuggestion(source, run));
-                        totalSuggestions += 1;
-                    } catch (Exception ignore) {
-                        // keep going
-                    }
+                MappingSummary sourceSummary = summaryBuilderService.getOrBuildSummary(
+                        source.sourceType(), source.id());
+                if (sourceSummary == null) {
+                    log.warn("Skipping source {} ({}): summary unavailable", source.id(), source.sourceType());
+                    continue;
                 }
-                processed += 1;
-                run = persistProgress(
-                        run,
-                        MappingRunStatus.RUNNING,
-                        sources.size(),
-                        processed,
-                        totalSuggestions,
-                        null);
+
+                List<CandidateResult> rawCandidates = candidateRetrievalService.findCandidates(
+                        command.relationType(), command.projectId(),
+                        source.id(), source.searchText(), properties.getCandidateLimit());
+
+                if (rawCandidates.isEmpty()) {
+                    suggestionRepository.save(buildNoMatchSuggestion(source, run));
+                    noCandidateCount++;
+                    continue;
+                }
+
+                List<ScoredCandidate> scored = new ArrayList<>();
+                for (CandidateResult cr : rawCandidates) {
+                    MappingSummary cs = summaryBuilderService.getOrBuildSummary(cr.targetType(), cr.entityId());
+                    if (cs != null) scored.add(new ScoredCandidate(cs, cr.retrievalScore(), cr.rank(), cr.titleSimilarity()));
+                }
+
+                if (scored.isEmpty()) {
+                    suggestionRepository.save(buildNoMatchSuggestion(source, run));
+                    noCandidateCount++;
+                    continue;
+                }
+
+                // Best candidate is first (highest RRF score)
+                ScoredCandidate best = scored.get(0);
+                if (best.titleSimilarity() >= properties.getClearMatchThreshold()) {
+                    MappingSuggestion autoSuggest = buildClearMatchSuggestion(source, run, best);
+                    suggestionRepository.save(autoSuggest);
+                    clearMatchCount++;
+                    continue;
+                }
+
+                sourceSummaryMap.put(source.id(), sourceSummary);
+                sourceCandidateMap.put(source.id(), scored);
+                ambiguous.add(source);
             }
 
-            String tokenUsage = buildTokenUsageJson(0, 0);
-            run = persistProgress(
-                    run,
-                    MappingRunStatus.COMPLETED,
-                    sources.size(),
-                    processed,
-                    totalSuggestions,
-                    tokenUsage);
+            log.info("Mapping run {} pre-screen: {} clear-match, {} no-candidate, {} ambiguous",
+                    runId, clearMatchCount, noCandidateCount, ambiguous.size());
 
+            // ---------------------------------------------------------------
+            // Phase B — Batch AI calls for ambiguous sources
+            // ---------------------------------------------------------------
+            int totalSuggestions = clearMatchCount + noCandidateCount;
+            int processed = sources.size() - ambiguous.size();
+            int batchSize = properties.getBatchSize();
+
+            for (int i = 0; i < ambiguous.size(); i += batchSize) {
+                List<UnmappedSource> chunk = ambiguous.subList(i, Math.min(i + batchSize, ambiguous.size()));
+                int chunkNum = (i / batchSize) + 1;
+                int totalChunks = (int) Math.ceil((double) ambiguous.size() / batchSize);
+                log.info("Mapping run {}: batch AI call {}/{} with {} sources", runId, chunkNum, totalChunks, chunk.size());
+
+                Map<UUID, MappingSummary> chunkSummaries = new LinkedHashMap<>();
+                Map<UUID, List<ScoredCandidate>> chunkCandidates = new LinkedHashMap<>();
+                for (UnmappedSource s : chunk) {
+                    chunkSummaries.put(s.id(), sourceSummaryMap.get(s.id()));
+                    chunkCandidates.put(s.id(), sourceCandidateMap.get(s.id()));
+                }
+
+                String inputJson = promptBuilderService.buildBatchInputJson(chunk, chunkSummaries, chunkCandidates);
+                String fullPrompt = renderPrompt(resolvedPrompt, inputJson);
+
+                AiProviderRequest aiRequest = new AiProviderRequest(
+                        provider.id(), aiModel.providerModelId(), fullPrompt,
+                        resolvedPrompt.temperature(),
+                        resolvedPrompt.maxTokens() != null ? resolvedPrompt.maxTokens() : 4096);
+
+                AiProviderResponse aiResponse;
+                try {
+                    aiResponse = adapter.call(aiRequest);
+                } catch (Exception e) {
+                    log.error("AI batch call failed for chunk {}/{} in run {}: {}", chunkNum, totalChunks, runId, e.getMessage());
+                    for (UnmappedSource s : chunk) {
+                        suggestionRepository.save(buildNoMatchSuggestion(s, run));
+                        totalSuggestions++;
+                    }
+                    processed += chunk.size();
+                    run = persistProgress(run, MappingRunStatus.RUNNING, sources.size(), processed, totalSuggestions, null);
+                    continue;
+                }
+
+                Map<UUID, List<Map<String, Object>>> batchResults = parseBatchAiResponse(aiResponse.outputText());
+
+                for (UnmappedSource s : chunk) {
+                    List<Map<String, Object>> aiResults = batchResults.getOrDefault(s.id(), List.of());
+                    List<ScoredCandidate> scored = sourceCandidateMap.get(s.id());
+                    List<MappingSuggestion> suggestions = buildSuggestions(s, run, scored, aiResults);
+                    if (suggestions.isEmpty()) {
+                        suggestionRepository.save(buildNoMatchSuggestion(s, run));
+                        totalSuggestions++;
+                    } else {
+                        suggestionRepository.saveAll(suggestions);
+                        totalSuggestions += suggestions.size();
+                    }
+                }
+
+                processed += chunk.size();
+                run = persistProgress(run, MappingRunStatus.RUNNING, sources.size(), processed, totalSuggestions, null);
+            }
+
+            run = persistProgress(run, MappingRunStatus.COMPLETED, sources.size(), processed, totalSuggestions,
+                    buildTokenUsageJson(0, 0));
             activityLogger.logSuccess(
                     AiMappingEntityTypes.MAPPING_RUN, run.id(),
                     AiMappingActivityActions.GENERATE_MAPPING_RUN,
@@ -258,161 +336,89 @@ public class GenerateMappingSuggestionsAction {
             log.error("Async mapping run {} failed: {}", runId, e.getMessage(), e);
             try {
                 MappingRun current = runRepository.findById(runId).orElse(run);
-                persistProgress(
-                        current,
-                        MappingRunStatus.FAILED,
-                        current.sourceCount(),
-                        current.processedSourceCount(),
-                        current.suggestionCount(),
-                        null);
+                persistProgress(current, MappingRunStatus.FAILED,
+                        current.sourceCount(), current.processedSourceCount(), current.suggestionCount(), null);
             } catch (Exception persistErr) {
                 log.error("Failed to mark mapping run {} as FAILED: {}", runId, persistErr.getMessage());
             }
         }
     }
 
-    private MappingRun persistProgress(MappingRun run,
-                                       MappingRunStatus status,
-                                       Integer sourceCount,
-                                       int processedSourceCount,
-                                       Integer suggestionCount,
-                                       String tokenUsage) {
-        Instant startedAt = run.startedAt() != null
-                ? run.startedAt()
-                : (status == MappingRunStatus.RUNNING || status == MappingRunStatus.COMPLETED
-                        ? Instant.now() : null);
+    private MappingRun persistProgress(MappingRun run, MappingRunStatus status,
+                                        Integer sourceCount, int processedSourceCount,
+                                        Integer suggestionCount, String tokenUsage) {
+        Instant startedAt = run.startedAt() != null ? run.startedAt()
+                : (status == MappingRunStatus.RUNNING || status == MappingRunStatus.COMPLETED ? Instant.now() : null);
         Instant completedAt = (status == MappingRunStatus.COMPLETED || status == MappingRunStatus.FAILED)
-                ? Instant.now()
-                : run.completedAt();
+                ? Instant.now() : run.completedAt();
         return runRepository.save(run.withProgress(
                 status,
                 sourceCount != null ? sourceCount : run.sourceCount(),
                 processedSourceCount,
                 suggestionCount != null ? suggestionCount : run.suggestionCount(),
                 tokenUsage != null ? tokenUsage : run.tokenUsageJson(),
-                startedAt,
-                completedAt));
+                startedAt, completedAt));
     }
 
-    private int processSource(UnmappedSource source, GenerateMappingCommand command,
-                               MappingRun run, AiProviderAdapter adapter,
-                               AiModel aiModel, Provider provider,
-                               MappingPromptResolverService.ResolvedPrompt resolvedPrompt) {
-        MappingSummary sourceSummary = summaryBuilderService.getOrBuildSummary(
-                source.sourceType(), source.id());
-        if (sourceSummary == null) {
-            log.warn("Skipping source {} ({}): summary could not be built", source.id(), source.sourceType());
-            return 0;
-        }
-
-        List<CandidateResult> candidateResults = candidateRetrievalService.findCandidates(
-                command.relationType(), command.projectId(),
-                source.id(), source.searchText(), properties.getCandidateLimit());
-
-        if (candidateResults.isEmpty()) {
-            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
-            suggestionRepository.save(noMatch);
-            return 1;
-        }
-
-        List<ScoredCandidate> scoredCandidates = new ArrayList<>();
-        for (CandidateResult cr : candidateResults) {
-            MappingSummary candidateSummary = summaryBuilderService.getOrBuildSummary(
-                    cr.targetType(), cr.entityId());
-            if (candidateSummary != null) {
-                scoredCandidates.add(new ScoredCandidate(candidateSummary, cr.retrievalScore(), cr.rank()));
-            }
-        }
-
-        if (scoredCandidates.isEmpty()) {
-            log.warn("Candidates found for source {} but none had buildable summaries; recording NO_MATCH",
-                    source.id());
-            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
-            suggestionRepository.save(noMatch);
-            return 1;
-        }
-
-        String inputJson = promptBuilderService.buildInputJson(sourceSummary, scoredCandidates);
-        String fullPrompt = renderPrompt(resolvedPrompt, inputJson);
-
-        AiProviderRequest aiRequest = new AiProviderRequest(
-                provider.id(), aiModel.providerModelId(), fullPrompt,
-                resolvedPrompt.temperature(),
-                resolvedPrompt.maxTokens() != null ? resolvedPrompt.maxTokens() : 4096);
-
-        AiProviderResponse aiResponse;
-        try {
-            aiResponse = adapter.call(aiRequest);
-        } catch (Exception e) {
-            log.error("AI call failed for source {} in run {}: {}", source.id(), run.id(), e.getMessage());
-            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
-            suggestionRepository.save(noMatch);
-            return 1;
-        }
-
-        List<Map<String, Object>> aiResults = parseAiResponse(aiResponse.outputText());
-        List<MappingSuggestion> suggestions = buildSuggestions(source, run, scoredCandidates, aiResults);
-        if (suggestions.isEmpty()) {
-            // Prompt often returns NO_MATCH / empty suggestions, or parser miss —
-            // always persist a row so the UI is not empty after a long run.
-            MappingSuggestion noMatch = buildNoMatchSuggestion(source, run);
-            suggestionRepository.save(noMatch);
-            return 1;
-        }
-        suggestionRepository.saveAll(suggestions);
-        return suggestions.size();
-    }
+    // -------------------------------------------------------------------------
+    // Batch AI response parsing — returns sourceId → list of suggestion maps
+    // -------------------------------------------------------------------------
 
     /**
-     * Accepts seed prompt schema:
-     * <pre>{ "results": [ { "sourceId", "decision", "suggestions": [ { "targetId", "score", ... } ] } ] }</pre>
-     * plus flatter shapes ({suggestions:[...]} or a bare array).
+     * Parses batch AI response of shape:
+     * { "results": [ { "sourceId": "uuid", "decision": "SUGGEST|NO_MATCH", "suggestions": [{...}] } ] }
+     *
+     * Returns map: sourceId UUID → flat list of suggestion maps (each has "targetId", etc).
+     * Sources with decision=NO_MATCH are mapped to empty list.
      */
-    private List<Map<String, Object>> parseAiResponse(String outputText) {
-        if (outputText == null || outputText.isBlank()) return List.of();
+    private Map<UUID, List<Map<String, Object>>> parseBatchAiResponse(String outputText) {
+        Map<UUID, List<Map<String, Object>>> result = new HashMap<>();
+        if (outputText == null || outputText.isBlank()) return result;
         String json = extractJson(outputText);
         try {
             Object parsed = objectMapper.readValue(json, Object.class);
-            if (parsed instanceof List<?> list) {
-                return objectMapper.convertValue(list, new TypeReference<>() {});
-            }
-            if (parsed instanceof Map<?, ?> map) {
-                if (map.containsKey("results")) {
-                    List<Map<String, Object>> results =
-                            objectMapper.convertValue(map.get("results"), new TypeReference<>() {});
+            if (!(parsed instanceof Map<?, ?> root)) return result;
+            if (!root.containsKey("results")) return result;
+
+            List<Map<String, Object>> results =
+                    objectMapper.convertValue(root.get("results"), new TypeReference<>() {});
+
+            for (Map<String, Object> entry : results) {
+                String sourceIdStr = getString(entry, "sourceId");
+                if (sourceIdStr == null) continue;
+                UUID sourceId;
+                try { sourceId = UUID.fromString(sourceIdStr); } catch (Exception e) { continue; }
+
+                String outerDecision = getString(entry, "decision");
+                if ("NO_MATCH".equalsIgnoreCase(outerDecision)) {
+                    result.put(sourceId, List.of());
+                    continue;
+                }
+
+                Object nested = entry.get("suggestions");
+                if (nested instanceof List<?> sugList) {
                     List<Map<String, Object>> flattened = new ArrayList<>();
-                    for (Map<String, Object> result : results) {
-                        Object decision = result.get("decision");
-                        if (decision != null && "NO_MATCH".equalsIgnoreCase(decision.toString())) {
-                            continue;
-                        }
-                        Object nested = result.get("suggestions");
-                        if (nested instanceof List<?> sugList) {
-                            for (Object item : sugList) {
-                                if (item instanceof Map<?, ?> itemMap) {
-                                    Map<String, Object> copy = objectMapper.convertValue(itemMap, new TypeReference<>() {});
-                                    if (!copy.containsKey("decision") && result.get("decision") != null) {
-                                        copy.put("decision", result.get("decision"));
-                                    }
-                                    flattened.add(copy);
-                                }
+                    for (Object item : sugList) {
+                        if (item instanceof Map<?, ?> itemMap) {
+                            Map<String, Object> copy = objectMapper.convertValue(itemMap, new TypeReference<>() {});
+                            if (!copy.containsKey("decision") && outerDecision != null) {
+                                copy.put("decision", outerDecision);
                             }
+                            flattened.add(copy);
                         }
                     }
-                    return flattened;
-                }
-                if (map.containsKey("suggestions")) {
-                    return objectMapper.convertValue(map.get("suggestions"), new TypeReference<>() {});
-                }
-                // Single suggestion object
-                if (map.containsKey("targetId")) {
-                    return List.of(objectMapper.convertValue(map, new TypeReference<>() {}));
+                    result.put(sourceId, flattened);
+                } else {
+                    // Flat result (legacy V1 UC/TC schema — targetId at same level as sourceId)
+                    if (entry.containsKey("targetId")) {
+                        result.put(sourceId, List.of(new LinkedHashMap<>(entry)));
+                    }
                 }
             }
         } catch (Exception e) {
-            log.warn("Failed to parse AI response JSON: {}", e.getMessage());
+            log.warn("Failed to parse batch AI response JSON: {}", e.getMessage());
         }
-        return List.of();
+        return result;
     }
 
     private String extractJson(String text) {
@@ -427,6 +433,10 @@ public class GenerateMappingSuggestionsAction {
         return end > start ? text.substring(start, end + 1) : text;
     }
 
+    // -------------------------------------------------------------------------
+    // Suggestion builders
+    // -------------------------------------------------------------------------
+
     private List<MappingSuggestion> buildSuggestions(UnmappedSource source, MappingRun run,
                                                        List<ScoredCandidate> candidates,
                                                        List<Map<String, Object>> aiResults) {
@@ -440,27 +450,30 @@ public class GenerateMappingSuggestionsAction {
                     .findFirst().orElse(null);
             if (matched == null) continue;
 
+            // V2 REQUIREMENT_TO_FUNCTION uses MATCH/PARTIAL; others use SUGGEST/AMBIGUOUS/NO_MATCH
+            String decisionStr = getString(result, "decision");
+            SuggestionDecision decision = decisionStr != null ? safeDecision(decisionStr) : SuggestionDecision.SUGGEST;
+            if (decision == SuggestionDecision.NO_MATCH) continue;
+
             BigDecimal aiScoreRaw = getBigDecimal(result, "aiScore");
-            if (aiScoreRaw == null) {
-                aiScoreRaw = getBigDecimal(result, "score"); // seed prompt field name
-            }
+            if (aiScoreRaw == null) aiScoreRaw = getBigDecimal(result, "score");
             final BigDecimal aiScore = aiScoreRaw;
             BigDecimal secondBestScore = getBigDecimal(result, "secondBestScore");
             final BigDecimal scoreMargin = aiScore != null && secondBestScore != null
                     ? aiScore.subtract(secondBestScore) : null;
-            String decisionStr = getString(result, "decision");
-            SuggestionDecision decision = decisionStr != null
-                    ? safeDecision(decisionStr) : SuggestionDecision.SUGGEST;
-            if (decision == SuggestionDecision.NO_MATCH) {
-                continue;
-            }
+
             ConfidenceBand confidence = parseConfidenceBand(getString(result, "confidenceBand"))
                     .orElseGet(() -> calculateConfidenceBand(aiScore, scoreMargin, toJson(result.get("warnings"))));
-            String reasonCodesJson = toJson(result.get("reasonCodes"));
-            String evidenceJson = toJson(result.get("evidence"));
-            String warningsJson = toJson(result.get("warnings"));
 
-            MappingSuggestion suggestion = new MappingSuggestion(
+            // V1 fields → mapped to DB columns
+            String evidenceJson    = coalesce(toJson(result.get("coveredByFunction")),  toJson(result.get("evidence")));
+            String warningsJson    = coalesce(toJson(result.get("notCovered")),          toJson(result.get("warnings")));
+            String reasonCodesJson = coalesce(toJson(result.get("conflicts")),           toJson(result.get("reasonCodes")));
+            String coverageJson    = result.containsKey("requirementIntent")
+                    ? toJson(result.get("requirementIntent"))
+                    : toJson(result.get("coverageContribution"));
+
+            suggestions.add(new MappingSuggestion(
                     UUID.randomUUID(), run.id(),
                     source.sourceType(), source.id(), source.entityVersion(), null,
                     matched.summary().entityType(), matched.summary().entityId(),
@@ -469,22 +482,12 @@ public class GenerateMappingSuggestionsAction {
                     BigDecimal.valueOf(matched.retrievalScore()), aiScore,
                     aiScore, secondBestScore, scoreMargin,
                     confidence, decision,
-                    reasonCodesJson, evidenceJson, warningsJson, null,
+                    reasonCodesJson, evidenceJson, warningsJson, coverageJson,
                     SuggestionReviewStatus.PENDING, null, null,
                     Instant.now(), Instant.now()
-            );
-            suggestions.add(suggestion);
+            ));
         }
         return suggestions;
-    }
-
-    private java.util.Optional<ConfidenceBand> parseConfidenceBand(String raw) {
-        if (raw == null || raw.isBlank()) return java.util.Optional.empty();
-        try {
-            return java.util.Optional.of(ConfidenceBand.valueOf(raw.trim().toUpperCase()));
-        } catch (Exception e) {
-            return java.util.Optional.empty();
-        }
     }
 
     private MappingSuggestion buildNoMatchSuggestion(UnmappedSource source, MappingRun run) {
@@ -499,6 +502,36 @@ public class GenerateMappingSuggestionsAction {
                 SuggestionReviewStatus.PENDING, null, null,
                 Instant.now(), Instant.now()
         );
+    }
+
+    private MappingSuggestion buildClearMatchSuggestion(UnmappedSource source, MappingRun run,
+                                                          ScoredCandidate best) {
+        return new MappingSuggestion(
+                UUID.randomUUID(), run.id(),
+                source.sourceType(), source.id(), source.entityVersion(), null,
+                best.summary().entityType(), best.summary().entityId(),
+                best.summary().entityVersion(), null,
+                run.relationType(), best.rank(),
+                BigDecimal.valueOf(best.retrievalScore()), null,
+                null, null, null,
+                ConfidenceBand.HIGH, SuggestionDecision.SUGGEST,
+                null, null, null, null,
+                SuggestionReviewStatus.PENDING, null, null,
+                Instant.now(), Instant.now()
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private java.util.Optional<ConfidenceBand> parseConfidenceBand(String raw) {
+        if (raw == null || raw.isBlank()) return java.util.Optional.empty();
+        try {
+            return java.util.Optional.of(ConfidenceBand.valueOf(raw.trim().toUpperCase()));
+        } catch (Exception e) {
+            return java.util.Optional.empty();
+        }
     }
 
     private ConfidenceBand calculateConfidenceBand(BigDecimal finalScore, BigDecimal scoreMargin, String warnings) {
@@ -529,8 +562,8 @@ public class GenerateMappingSuggestionsAction {
     private String resolvePromptCode(com.company.scopery.modules.traceability.aimapping.run.domain.enums.MappingRelationType relationType) {
         return switch (relationType) {
             case REQUIREMENT_TO_FUNCTION -> AiMappingPromptKeys.REQ_FUNC_PROMPT_CODE;
-            case FUNCTION_TO_USE_CASE -> AiMappingPromptKeys.UC_FUNCTION_PROMPT_CODE;
-            case USE_CASE_TO_TEST_CASE -> AiMappingPromptKeys.TC_UC_PROMPT_CODE;
+            case FUNCTION_TO_USE_CASE    -> AiMappingPromptKeys.UC_FUNCTION_PROMPT_CODE;
+            case USE_CASE_TO_TEST_CASE   -> AiMappingPromptKeys.TC_UC_PROMPT_CODE;
         };
     }
 
@@ -540,11 +573,13 @@ public class GenerateMappingSuggestionsAction {
 
     private String toJson(Object value) {
         if (value == null) return null;
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (Exception e) {
-            return null;
-        }
+        try { return objectMapper.writeValueAsString(value); }
+        catch (Exception e) { return null; }
+    }
+
+    /** Returns first non-null value, or null if both are null. */
+    private static String coalesce(String a, String b) {
+        return a != null ? a : b;
     }
 
     private static String getString(Map<String, Object> map, String key) {
@@ -555,18 +590,15 @@ public class GenerateMappingSuggestionsAction {
     private static BigDecimal getBigDecimal(Map<String, Object> map, String key) {
         Object v = map.get(key);
         if (v == null) return null;
-        try {
-            return new BigDecimal(v.toString());
-        } catch (Exception e) {
-            return null;
-        }
+        try { return new BigDecimal(v.toString()); }
+        catch (Exception e) { return null; }
     }
 
     private static SuggestionDecision safeDecision(String value) {
-        try {
-            return SuggestionDecision.valueOf(value.toUpperCase());
-        } catch (Exception e) {
-            return SuggestionDecision.SUGGEST;
-        }
+        return switch (value.toUpperCase()) {
+            case "MATCH", "PARTIAL", "SUGGEST" -> SuggestionDecision.SUGGEST;
+            case "AMBIGUOUS"                   -> SuggestionDecision.AMBIGUOUS;
+            default                            -> SuggestionDecision.NO_MATCH;
+        };
     }
 }

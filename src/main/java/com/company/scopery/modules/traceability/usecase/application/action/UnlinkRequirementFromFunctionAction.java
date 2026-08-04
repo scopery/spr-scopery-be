@@ -1,6 +1,7 @@
 package com.company.scopery.modules.traceability.usecase.application.action;
 
 import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
+import com.company.scopery.modules.traceability.requirement.domain.model.RequirementRepository;
 import com.company.scopery.modules.traceability.shared.activity.TraceabilityActivityLogger;
 import com.company.scopery.modules.traceability.shared.authorization.TraceabilityAuthorizationService;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityActivityActions;
@@ -11,20 +12,26 @@ import com.company.scopery.modules.traceability.usecase.domain.model.Requirement
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
 @Component
 public class UnlinkRequirementFromFunctionAction {
 
     private final FunctionalItemRepository functionalItems;
     private final RequirementFunctionRepository requirementFunctionRepo;
+    private final RequirementRepository requirements;
     private final TraceabilityAuthorizationService authorization;
     private final TraceabilityActivityLogger activityLogger;
 
     public UnlinkRequirementFromFunctionAction(FunctionalItemRepository functionalItems,
                                                RequirementFunctionRepository requirementFunctionRepo,
+                                               RequirementRepository requirements,
                                                TraceabilityAuthorizationService authorization,
                                                TraceabilityActivityLogger activityLogger) {
         this.functionalItems = functionalItems;
         this.requirementFunctionRepo = requirementFunctionRepo;
+        this.requirements = requirements;
         this.authorization = authorization;
         this.activityLogger = activityLogger;
     }
@@ -36,11 +43,20 @@ public class UnlinkRequirementFromFunctionAction {
         functionalItems.findByIdAndProjectId(c.functionId(), c.projectId())
                 .orElseThrow(() -> TraceabilityExceptions.functionalItemNotFound(c.functionId()));
 
-        if (!requirementFunctionRepo.exists(c.requirementId(), c.functionId())) {
-            throw TraceabilityExceptions.requirementFunctionNotFound(c.requirementId(), c.functionId());
+        if (requirementFunctionRepo.exists(c.requirementId(), c.functionId())) {
+            requirementFunctionRepo.unlink(c.requirementId(), c.functionId());
         }
 
-        requirementFunctionRepo.unlink(c.requirementId(), c.functionId());
+        // Keep primary FK in sync: clear or repoint when it still referenced this function.
+        // Idempotent when junction was already gone (FK-only / stale UI edge).
+        requirements.findByIdAndProjectId(c.requirementId(), c.projectId()).ifPresent(req -> {
+            if (!c.functionId().equals(req.functionalItemId())) {
+                return;
+            }
+            List<UUID> remaining = requirementFunctionRepo.findFunctionIdsByRequirementId(c.requirementId());
+            UUID nextPrimary = remaining.isEmpty() ? null : remaining.get(0);
+            requirements.save(req.withFunctionalItemId(nextPrimary));
+        });
 
         activityLogger.logSuccess(TraceabilityEntityTypes.FUNCTIONAL_ITEM, c.functionId(),
                 TraceabilityActivityActions.REQUIREMENT_FUNCTION_UNLINKED,

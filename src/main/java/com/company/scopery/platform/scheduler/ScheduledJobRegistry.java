@@ -72,7 +72,10 @@ public final class ScheduledJobRegistry {
                         "Republish unpublished ai-action execution events to Redis (redis_published_at IS NULL)"),
                 new JobInfo("BulkJobWorker", "platform/bulkjob",
                         "${scopery.bulk-job.poll-interval-ms:3000}ms fixed delay",
-                        "Poll QUEUED bulk jobs and dispatch to registered handlers (bulk create traceability/project items)")
+                        "Poll QUEUED bulk jobs and dispatch to registered handlers (bulk create traceability/project items)"),
+                new JobInfo("AiMappingIndexJob", "modules/traceability/aimapping",
+                        "${scopery.ai-mapping.index-cron:0 0 */4 * * *}",
+                        "Rebuilds stale AI mapping summaries and embeddings for all 4 entity types (REQUIREMENT, FUNCTION, USE_CASE, TEST_CASE)")
         );
     }
 

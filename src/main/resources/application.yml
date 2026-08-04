@@ -72,6 +72,8 @@ scopery:
     candidate-limit: ${AI_MAPPING_CANDIDATE_LIMIT:5}
     batch-size: ${AI_MAPPING_BATCH_SIZE:15}
     embedding-model: ${AI_MAPPING_EMBEDDING_MODEL:text-embedding-3-small}
+    clear-match-threshold: ${AI_MAPPING_CLEAR_MATCH_THRESHOLD:0.90}
+    index-cron: ${AI_MAPPING_INDEX_CRON:0 0 */4 * * *}
 
   platform:
     outbox:

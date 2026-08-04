@@ -35,7 +35,11 @@ public class TraceLinkPersistenceMapper {
         e.setSourceTitle(d.sourceTitle());
         e.setTargetCode(d.targetCode());
         e.setTargetTitle(d.targetTitle());
-        if (d.createdAt() != null) e.setCreatedAt(d.createdAt());
+        if (d.createdAt() != null) {
+            // Preserve @Version so archive/update does not hit optimistic lock (RESOURCE_CONFLICT).
+            e.setVersion(d.version());
+            e.setCreatedAt(d.createdAt());
+        }
         return e;
     }
 }

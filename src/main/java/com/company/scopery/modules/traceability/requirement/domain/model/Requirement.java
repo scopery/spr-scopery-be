@@ -79,6 +79,13 @@ public record Requirement(UUID id, UUID projectId, UUID workspaceId, UUID applic
                 functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, requiresUseCase, version, createdAt, Instant.now());
     }
 
+    /** Explicit set/clear of primary functional item FK (null clears). */
+    public Requirement withFunctionalItemId(UUID functionalItemId) {
+        return new Requirement(id, projectId, workspaceId, applicationId, code, title, description, requirementType, priority,
+                status, ownerUserId, currentVersionNumber, archivedAt, archivedBy,
+                functionalItemId, nonFunctionalItemId, scopeItemId, scopePackageId, requiresUseCase, version, createdAt, Instant.now());
+    }
+
     /** Explicit override of requiresUseCase value. */
     public Requirement withRequiresUseCase(String requiresUseCase) {
         return new Requirement(id, projectId, workspaceId, applicationId, code, title, description, requirementType, priority,
