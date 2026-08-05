@@ -28,7 +28,14 @@ public class JpaTraceLinkRepository implements TraceLinkRepository {
 
     @Override
     public List<TraceLink> findByProjectId(UUID projectId) {
-        return springData.findByProjectIdOrderByCreatedAtDesc(projectId).stream().map(mapper::toDomain).toList();
+        return springData.findActiveByProjectIdOrderByCreatedAtDesc(projectId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<TraceLink> findActiveBySourceAndTarget(UUID projectId, String sourceType, UUID sourceId,
+                                                        String targetType, UUID targetId, String linkType) {
+        return springData.findActiveBySourceAndTarget(projectId, sourceType, sourceId, targetType, targetId, linkType)
+                .stream().map(mapper::toDomain).toList();
     }
 
     @Override

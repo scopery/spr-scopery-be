@@ -7,6 +7,7 @@ import com.company.scopery.modules.traceability.shared.authorization.Traceabilit
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityActivityActions;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityEntityTypes;
 import com.company.scopery.modules.traceability.shared.error.TraceabilityExceptions;
+import com.company.scopery.modules.traceability.tracelink.domain.model.TraceLinkRepository;
 import com.company.scopery.modules.traceability.usecase.application.command.UnlinkRequirementFromFunctionCommand;
 import com.company.scopery.modules.traceability.usecase.domain.model.RequirementFunctionRepository;
 import org.springframework.stereotype.Component;
@@ -21,17 +22,20 @@ public class UnlinkRequirementFromFunctionAction {
     private final FunctionalItemRepository functionalItems;
     private final RequirementFunctionRepository requirementFunctionRepo;
     private final RequirementRepository requirements;
+    private final TraceLinkRepository traceLinkRepo;
     private final TraceabilityAuthorizationService authorization;
     private final TraceabilityActivityLogger activityLogger;
 
     public UnlinkRequirementFromFunctionAction(FunctionalItemRepository functionalItems,
                                                RequirementFunctionRepository requirementFunctionRepo,
                                                RequirementRepository requirements,
+                                               TraceLinkRepository traceLinkRepo,
                                                TraceabilityAuthorizationService authorization,
                                                TraceabilityActivityLogger activityLogger) {
         this.functionalItems = functionalItems;
         this.requirementFunctionRepo = requirementFunctionRepo;
         this.requirements = requirements;
+        this.traceLinkRepo = traceLinkRepo;
         this.authorization = authorization;
         this.activityLogger = activityLogger;
     }
@@ -46,6 +50,12 @@ public class UnlinkRequirementFromFunctionAction {
         if (requirementFunctionRepo.exists(c.requirementId(), c.functionId())) {
             requirementFunctionRepo.unlink(c.requirementId(), c.functionId());
         }
+
+        // Archive any active COVERS trace link for this requirement→function pair so the
+        // list API no longer returns it and the FE reflects the unlink immediately.
+        traceLinkRepo.findActiveBySourceAndTarget(
+                c.projectId(), "REQUIREMENT", c.requirementId(), "FUNCTIONAL_ITEM", c.functionId(), "COVERS"
+        ).forEach(link -> traceLinkRepo.save(link.archive()));
 
         // Keep primary FK in sync: clear or repoint when it still referenced this function.
         // Idempotent when junction was already gone (FK-only / stale UI edge).

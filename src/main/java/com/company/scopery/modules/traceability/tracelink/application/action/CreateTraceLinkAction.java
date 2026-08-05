@@ -52,6 +52,10 @@ public class CreateTraceLinkAction {
         String sourceType = c.sourceType().trim();
         String targetType = c.targetType().trim();
 
+        if (repo.existsActiveLink(c.projectId(), sourceType, c.sourceId(), targetType, c.targetId(), linkType.name())) {
+            throw TraceabilityExceptions.traceLinkDuplicate();
+        }
+
         String[] sourceMeta = resolveDisplayMeta(sourceType, c.sourceId(), c.projectId());
         String[] targetMeta = resolveDisplayMeta(targetType, c.targetId(), c.projectId());
 
