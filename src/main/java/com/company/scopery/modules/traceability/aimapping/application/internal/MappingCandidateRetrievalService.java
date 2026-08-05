@@ -22,7 +22,9 @@ public class MappingCandidateRetrievalService {
 
     public record UnmappedSource(UUID id, SummaryEntityType sourceType, int entityVersion, String searchText) {}
 
-    public record CandidateResult(UUID entityId, SummaryEntityType targetType, double retrievalScore, int rank) {}
+    public record CandidateResult(UUID entityId, SummaryEntityType targetType, double retrievalScore, int rank, double titleSimilarity) {}
+
+    public record EligibleTarget(UUID id, SummaryEntityType targetType) {}
 
     @Transactional(readOnly = true)
     public List<UnmappedSource> findUnmappedSources(MappingRelationType relationType, UUID projectId, int limit) {
@@ -44,6 +46,36 @@ public class MappingCandidateRetrievalService {
             case USE_CASE_TO_TEST_CASE -> findUseCaseCandidatesForTestCase(
                     projectId, sourceId, searchText, limit);
         };
+    }
+
+    @Transactional(readOnly = true)
+    public List<EligibleTarget> findAllEligibleTargets(MappingRelationType relationType, UUID projectId) {
+        return switch (relationType) {
+            case REQUIREMENT_TO_FUNCTION -> findAllEligibleFunctions(projectId);
+            case FUNCTION_TO_USE_CASE    -> findAllEligibleUseCases(projectId);
+            case USE_CASE_TO_TEST_CASE   -> findAllEligibleTestCases(projectId);
+        };
+    }
+
+    private List<EligibleTarget> findAllEligibleFunctions(UUID projectId) {
+        return jdbc.query(
+                "SELECT id FROM app_functional_item WHERE project_id = ?::uuid AND status != 'ARCHIVED'",
+                (rs, n) -> new EligibleTarget(UUID.fromString(rs.getString("id")), SummaryEntityType.FUNCTION),
+                projectId.toString());
+    }
+
+    private List<EligibleTarget> findAllEligibleUseCases(UUID projectId) {
+        return jdbc.query(
+                "SELECT id FROM app_use_case WHERE project_id = ?::uuid AND status NOT IN ('ARCHIVED', 'DEPRECATED')",
+                (rs, n) -> new EligibleTarget(UUID.fromString(rs.getString("id")), SummaryEntityType.USE_CASE),
+                projectId.toString());
+    }
+
+    private List<EligibleTarget> findAllEligibleTestCases(UUID projectId) {
+        return jdbc.query(
+                "SELECT id FROM quality_test_case WHERE project_id = ?::uuid AND status != 'ARCHIVED' AND type = 'FUNCTIONAL'",
+                (rs, n) -> new EligibleTarget(UUID.fromString(rs.getString("id")), SummaryEntityType.TEST_CASE),
+                projectId.toString());
     }
 
     private List<UnmappedSource> findUnmappedRequirements(UUID projectId, int limit) {
@@ -171,7 +203,8 @@ public class MappingCandidateRetrievalService {
                         UUID.fromString(rs.getString("id")),
                         SummaryEntityType.USE_CASE,
                         rs.getDouble("rrf_score"),
-                        rs.getInt("final_rank")
+                        rs.getInt("final_rank"),
+                        0.0
                 ),
                 sourceId.toString(), searchText, projectId.toString(), projectId.toString(), limit);
     }
@@ -234,7 +267,8 @@ public class MappingCandidateRetrievalService {
                         UUID.fromString(rs.getString("id")),
                         targetType,
                         rs.getDouble("rrf_score"),
-                        rs.getInt("final_rank")
+                        rs.getInt("final_rank"),
+                        0.0
                 ),
                 sourceId.toString(),
                 searchText != null ? searchText : "",
@@ -270,7 +304,7 @@ public class MappingCandidateRetrievalService {
                 projectId.toString(), limit);
         List<CandidateResult> out = new ArrayList<>();
         for (int i = 0; i < ids.size(); i++) {
-            out.add(new CandidateResult(ids.get(i), targetType, 0.01, i + 1));
+            out.add(new CandidateResult(ids.get(i), targetType, 0.01, i + 1, 0.0));
         }
         return out;
     }
