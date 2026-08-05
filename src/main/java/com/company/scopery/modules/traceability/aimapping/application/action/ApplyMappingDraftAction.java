@@ -12,6 +12,9 @@ import com.company.scopery.modules.traceability.aimapping.suggestion.domain.enum
 import com.company.scopery.modules.traceability.aimapping.suggestion.domain.model.MappingSuggestion;
 import com.company.scopery.modules.traceability.aimapping.suggestion.domain.model.MappingSuggestionRepository;
 import com.company.scopery.modules.traceability.aimapping.summary.domain.enums.SummaryEntityType;
+import com.company.scopery.modules.traceability.tracelink.domain.enums.TraceLinkType;
+import com.company.scopery.modules.traceability.tracelink.domain.model.TraceLink;
+import com.company.scopery.modules.traceability.tracelink.domain.model.TraceLinkRepository;
 import com.company.scopery.modules.traceability.usecase.domain.model.RequirementFunctionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,24 +36,27 @@ public class ApplyMappingDraftAction {
     private final MappingRunRepository runRepository;
     private final MappingSuggestionRepository suggestionRepository;
     private final RequirementFunctionRepository requirementFunctionRepository;
+    private final TraceLinkRepository traceLinkRepository;
     private final JdbcTemplate jdbc;
     private final AiMappingActivityLogger activityLogger;
 
     public ApplyMappingDraftAction(MappingRunRepository runRepository,
                                    MappingSuggestionRepository suggestionRepository,
                                    RequirementFunctionRepository requirementFunctionRepository,
+                                   TraceLinkRepository traceLinkRepository,
                                    JdbcTemplate jdbc,
                                    AiMappingActivityLogger activityLogger) {
         this.runRepository = runRepository;
         this.suggestionRepository = suggestionRepository;
         this.requirementFunctionRepository = requirementFunctionRepository;
+        this.traceLinkRepository = traceLinkRepository;
         this.jdbc = jdbc;
         this.activityLogger = activityLogger;
     }
 
     @Transactional
     public ApplyMappingDraftResponse execute(ApplyMappingDraftCommand command) {
-        runRepository.findById(command.runId())
+        var run = runRepository.findById(command.runId())
                 .orElseThrow(() -> AiMappingExceptions.runNotFound(command.runId()));
 
         List<MappingSuggestion> accepted = suggestionRepository.findAcceptedByRunId(command.runId());
@@ -78,7 +84,7 @@ public class ApplyMappingDraftAction {
             }
 
             try {
-                boolean applied = applySuggestion(suggestion);
+                boolean applied = applySuggestion(suggestion, run.projectId());
                 if (applied) {
                     created++;
                 } else {
@@ -105,17 +111,23 @@ public class ApplyMappingDraftAction {
         return new ApplyMappingDraftResponse(created, skippedStale, skippedConflict, failed);
     }
 
-    private boolean applySuggestion(MappingSuggestion suggestion) {
+    private boolean applySuggestion(MappingSuggestion suggestion, UUID projectId) {
         return switch (suggestion.relationType()) {
-            case REQUIREMENT_TO_FUNCTION -> applyRequirementFunction(suggestion);
+            case REQUIREMENT_TO_FUNCTION -> applyRequirementFunction(suggestion, projectId);
             case FUNCTION_TO_USE_CASE    -> applyUseCaseFunction(suggestion);
             case USE_CASE_TO_TEST_CASE   -> applyTestCaseUseCase(suggestion);
         };
     }
 
-    private boolean applyRequirementFunction(MappingSuggestion s) {
+    private boolean applyRequirementFunction(MappingSuggestion s, UUID projectId) {
         if (requirementFunctionRepository.exists(s.sourceId(), s.targetId())) return false;
         requirementFunctionRepository.link(s.sourceId(), s.targetId());
+        if (!traceLinkRepository.existsActiveLink(projectId, "REQUIREMENT", s.sourceId(),
+                "FUNCTIONAL_ITEM", s.targetId(), TraceLinkType.COVERS.name())) {
+            traceLinkRepository.save(TraceLink.create(projectId, "REQUIREMENT", s.sourceId(),
+                    "FUNCTIONAL_ITEM", s.targetId(), TraceLinkType.COVERS,
+                    null, null, null, null));
+        }
         return true;
     }
 
