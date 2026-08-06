@@ -4,6 +4,7 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.modules.traceability.usecase.application.action.AddSupportingFunctionAction;
 import com.company.scopery.modules.traceability.usecase.application.action.BulkCreateUseCaseJobHandler;
+import com.company.scopery.modules.traceability.usecase.application.action.BulkLinkRequirementFunctionJobHandler;
 import com.company.scopery.modules.traceability.usecase.application.action.CreateUseCaseAction;
 import com.company.scopery.modules.traceability.usecase.application.action.DeleteUseCaseAction;
 import com.company.scopery.modules.traceability.usecase.application.action.ImportUseCaseNestedAction;
@@ -32,6 +33,8 @@ import com.company.scopery.modules.traceability.usecase.http.request.AddSupporti
 import com.company.scopery.modules.traceability.usecase.http.request.BulkCreateUseCaseRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.CreateUseCaseRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.ImportUseCaseNestedRequest;
+import com.company.scopery.modules.traceability.usecase.application.command.BulkLinkRequirementFunctionCommand;
+import com.company.scopery.modules.traceability.usecase.http.request.BulkLinkRequirementFunctionRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.LinkRequirementRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.NestedUseCasePartsRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.UpdateUseCaseRequest;
@@ -70,6 +73,7 @@ public class UseCaseController {
     private final UnlinkRequirementFromUseCaseAction unlinkReqFromUcAction;
     private final LinkRequirementToFunctionAction linkReqToFnAction;
     private final UnlinkRequirementFromFunctionAction unlinkReqFromFnAction;
+    private final BulkLinkRequirementFunctionJobHandler bulkLinkReqFnHandler;
     private final BulkJobService bulkJobService;
     private final ObjectMapper objectMapper;
 
@@ -84,6 +88,7 @@ public class UseCaseController {
                              UnlinkRequirementFromUseCaseAction unlinkReqFromUcAction,
                              LinkRequirementToFunctionAction linkReqToFnAction,
                              UnlinkRequirementFromFunctionAction unlinkReqFromFnAction,
+                             BulkLinkRequirementFunctionJobHandler bulkLinkReqFnHandler,
                              BulkJobService bulkJobService,
                              ObjectMapper objectMapper) {
         this.queryService = queryService;
@@ -97,6 +102,7 @@ public class UseCaseController {
         this.unlinkReqFromUcAction = unlinkReqFromUcAction;
         this.linkReqToFnAction = linkReqToFnAction;
         this.unlinkReqFromFnAction = unlinkReqFromFnAction;
+        this.bulkLinkReqFnHandler = bulkLinkReqFnHandler;
         this.bulkJobService = bulkJobService;
         this.objectMapper = objectMapper;
     }
@@ -326,5 +332,23 @@ public class UseCaseController {
         unlinkReqFromFnAction.execute(new UnlinkRequirementFromFunctionCommand(
                 projectId, functionalItemId, requirementId));
         return ApiResponse.success(null);
+    }
+
+    @PostMapping(TraceabilityApiPaths.FUNCTION_REQUIREMENTS_BULK_LINK)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk link requirements to a function (async — poll GET /api/bulk-jobs/{id} for status). Already-linked pairs are skipped.")
+    public ApiResponse<BulkJobResponse> bulkLinkRequirementsToFunction(
+            @PathVariable UUID projectId,
+            @PathVariable UUID functionalItemId,
+            @Valid @RequestBody BulkLinkRequirementFunctionRequest r) {
+        var requirementIds = r.requirementIds().stream().map(UUID::fromString).toList();
+        try {
+            String payload = objectMapper.writeValueAsString(
+                    new BulkLinkRequirementFunctionCommand(projectId, functionalItemId, requirementIds));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(bulkLinkReqFnHandler.supportsJobType(), requirementIds.size(), payload)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk link payload", e);
+        }
     }
 }

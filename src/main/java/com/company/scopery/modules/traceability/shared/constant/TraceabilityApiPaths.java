@@ -70,6 +70,7 @@ public final class TraceabilityApiPaths {
     // Requirement <-> Function links
     public static final String FUNCTION_REQUIREMENTS        = FUNCTIONAL_ITEMS + "/{functionalItemId}/requirements";
     public static final String FUNCTION_REQUIREMENT         = FUNCTION_REQUIREMENTS + "/{requirementId}";
+    public static final String FUNCTION_REQUIREMENTS_BULK_LINK = FUNCTION_REQUIREMENTS + "/bulk-link";
     // Requirement <-> Use Case links
     public static final String USE_CASE_REQUIREMENTS        = USE_CASE + "/requirements";
     public static final String USE_CASE_REQUIREMENT         = USE_CASE_REQUIREMENTS + "/{requirementId}";
