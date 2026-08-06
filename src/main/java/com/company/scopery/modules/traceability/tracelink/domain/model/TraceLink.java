@@ -19,7 +19,7 @@ public record TraceLink(UUID id, UUID projectId, String sourceType, UUID sourceI
         return new TraceLink(UUID.randomUUID(), projectId, sourceType, sourceId, targetType, targetId,
                 linkType, TraceLinkStatus.ACTIVE, null,
                 sourceCode, sourceTitle, targetCode, targetTitle,
-                0, Instant.now());
+                0, null);
     }
 
     public TraceLink archive() {
