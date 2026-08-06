@@ -1,5 +1,4 @@
--- AI Mapping Summary: compact summary cache with embedding for each traceable entity
--- NOTE: embedding stored as TEXT locally (vector type requires pgvector extension)
+-- AI Mapping Summary: compact summary cache with pgvector embedding for each traceable entity
 CREATE TABLE ai_mapping_summary
 (
     id              UUID         NOT NULL,
@@ -8,7 +7,7 @@ CREATE TABLE ai_mapping_summary
     entity_version  INTEGER      NOT NULL DEFAULT 0,
     compact_text    TEXT         NOT NULL,
     structured_json TEXT         NOT NULL,
-    embedding       TEXT,
+    embedding       vector(1536),
     summary_hash    VARCHAR(64)  NOT NULL,
     generated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
@@ -19,3 +18,5 @@ CREATE TABLE ai_mapping_summary
 );
 
 CREATE INDEX idx_ai_mapping_summary_entity ON ai_mapping_summary (entity_type, entity_id);
+CREATE INDEX idx_ai_mapping_summary_embedding ON ai_mapping_summary USING hnsw (embedding vector_cosine_ops)
+    WHERE embedding IS NOT NULL;
