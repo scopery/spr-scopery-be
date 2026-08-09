@@ -5,6 +5,8 @@ import com.company.scopery.common.pagination.PageResult;
 import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.project.shared.constant.ProjectApiPaths;
 import com.company.scopery.modules.project.wbs.application.action.ArchiveWbsNodeAction;
+import com.company.scopery.modules.project.wbs.application.action.DeleteWbsNodeAction;
+import com.company.scopery.modules.project.wbs.application.command.DeleteWbsNodeCommand;
 import com.company.scopery.modules.project.wbs.application.action.BulkCreateWbsNodeJobHandler;
 import com.company.scopery.modules.project.wbs.application.action.CreateWbsNodeAction;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
@@ -44,6 +46,7 @@ public class WbsNodeController {
     private final UpdateWbsNodeAction updateAction;
     private final MoveWbsNodeAction moveAction;
     private final ArchiveWbsNodeAction archiveAction;
+    private final DeleteWbsNodeAction deleteAction;
     private final BulkJobService bulkJobService;
     private final ObjectMapper objectMapper;
 
@@ -52,6 +55,7 @@ public class WbsNodeController {
                               UpdateWbsNodeAction updateAction,
                               MoveWbsNodeAction moveAction,
                               ArchiveWbsNodeAction archiveAction,
+                              DeleteWbsNodeAction deleteAction,
                               BulkJobService bulkJobService,
                               ObjectMapper objectMapper) {
         this.queryService = queryService;
@@ -59,6 +63,7 @@ public class WbsNodeController {
         this.updateAction = updateAction;
         this.moveAction = moveAction;
         this.archiveAction = archiveAction;
+        this.deleteAction = deleteAction;
         this.bulkJobService = bulkJobService;
         this.objectMapper = objectMapper;
     }
@@ -182,5 +187,14 @@ public class WbsNodeController {
         ArchiveWbsNodeCommand command = new ArchiveWbsNodeCommand(id, projectId);
         WbsNodeResponse response = archiveAction.execute(command);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "Delete a WBS node (only allowed when it has no children or linked tasks)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteWbsNode(
+            @PathVariable UUID projectId,
+            @PathVariable UUID id) {
+        deleteAction.execute(new DeleteWbsNodeCommand(id, projectId));
+        return ResponseEntity.noContent().build();
     }
 }

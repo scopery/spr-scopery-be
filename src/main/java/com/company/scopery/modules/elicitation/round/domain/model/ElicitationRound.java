@@ -14,7 +14,9 @@ public class ElicitationRound {
     private String questionsJson;
     private ClarityLevel overallClarity;
     private RoundStatus status;
-    private Instant submittedAt;
+    private String scopeSnapshotJson;
+    private Boolean shouldContinue;
+    private Instant evaluatedAt;
     private String createdBy;
     private String updatedBy;
     private Instant createdAt;
@@ -22,15 +24,14 @@ public class ElicitationRound {
 
     private ElicitationRound() {}
 
-    public static ElicitationRound create(UUID sessionId, int roundNumber, String questionsJson,
-                                           ClarityLevel overallClarity) {
+    public static ElicitationRound create(UUID sessionId, int roundNumber, String scopeSnapshotJson) {
         ElicitationRound r = new ElicitationRound();
         r.id = UUID.randomUUID();
         r.sessionId = sessionId;
         r.roundNumber = roundNumber;
-        r.questionsJson = questionsJson;
-        r.overallClarity = overallClarity;
-        r.status = RoundStatus.DRAFT;
+        r.scopeSnapshotJson = scopeSnapshotJson;
+        r.questionsJson = "[]";
+        r.status = RoundStatus.ACTIVE;
         r.createdAt = Instant.now();
         r.updatedAt = r.createdAt;
         return r;
@@ -38,7 +39,8 @@ public class ElicitationRound {
 
     public static ElicitationRound reconstitute(UUID id, UUID sessionId, int roundNumber, String questionsJson,
                                                  ClarityLevel overallClarity, RoundStatus status,
-                                                 Instant submittedAt, String createdBy, String updatedBy,
+                                                 String scopeSnapshotJson, Boolean shouldContinue,
+                                                 Instant evaluatedAt, String createdBy, String updatedBy,
                                                  Instant createdAt, Instant updatedAt) {
         ElicitationRound r = new ElicitationRound();
         r.id = id;
@@ -47,7 +49,9 @@ public class ElicitationRound {
         r.questionsJson = questionsJson;
         r.overallClarity = overallClarity;
         r.status = status;
-        r.submittedAt = submittedAt;
+        r.scopeSnapshotJson = scopeSnapshotJson;
+        r.shouldContinue = shouldContinue;
+        r.evaluatedAt = evaluatedAt;
         r.createdBy = createdBy;
         r.updatedBy = updatedBy;
         r.createdAt = createdAt;
@@ -55,21 +59,14 @@ public class ElicitationRound {
         return r;
     }
 
-    public void submit() {
-        if (status != RoundStatus.DRAFT) throw new IllegalStateException("Round is not in DRAFT status");
-        this.status = RoundStatus.SUBMITTED;
-        this.submittedAt = Instant.now();
-        this.updatedAt = this.submittedAt;
-    }
-
-    public void markProcessing() {
-        this.status = RoundStatus.PROCESSING;
-        this.updatedAt = Instant.now();
-    }
-
-    public void markCompleted() {
-        this.status = RoundStatus.COMPLETED;
-        this.updatedAt = Instant.now();
+    public void markEvaluated(String questionsJson, ClarityLevel overallClarity, boolean shouldContinue) {
+        if (status != RoundStatus.ACTIVE) throw new IllegalStateException("Round is not ACTIVE");
+        this.questionsJson = questionsJson;
+        this.overallClarity = overallClarity;
+        this.shouldContinue = shouldContinue;
+        this.status = RoundStatus.EVALUATED;
+        this.evaluatedAt = Instant.now();
+        this.updatedAt = this.evaluatedAt;
     }
 
     public UUID id()                     { return id; }
@@ -78,7 +75,9 @@ public class ElicitationRound {
     public String questionsJson()        { return questionsJson; }
     public ClarityLevel overallClarity() { return overallClarity; }
     public RoundStatus status()          { return status; }
-    public Instant submittedAt()         { return submittedAt; }
+    public String scopeSnapshotJson()    { return scopeSnapshotJson; }
+    public Boolean shouldContinue()      { return shouldContinue; }
+    public Instant evaluatedAt()         { return evaluatedAt; }
     public String createdBy()            { return createdBy; }
     public String updatedBy()            { return updatedBy; }
     public Instant createdAt()           { return createdAt; }

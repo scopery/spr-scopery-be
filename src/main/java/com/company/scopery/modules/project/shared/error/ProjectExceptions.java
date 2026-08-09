@@ -177,6 +177,11 @@ public final class ProjectExceptions {
                 "WBS node has active children or linked tasks: " + id, Map.of("id", id));
     }
 
+    public static AppException wbsNodeCannotDelete(UUID id) {
+        return new AppException(ProjectErrorCatalog.WBS_NODE_CANNOT_DELETE,
+                "WBS node has children or linked tasks and cannot be deleted: " + id, Map.of("id", id));
+    }
+
     public static AppException wbsNodePhaseMismatch(UUID nodeId, UUID phaseId) {
         return new AppException(ProjectErrorCatalog.WBS_NODE_PHASE_MISMATCH,
                 "WBS node " + nodeId + " does not belong to phase " + phaseId,
@@ -238,6 +243,12 @@ public final class ProjectExceptions {
         return new AppException(ProjectErrorCatalog.TASK_ASSIGNEE_NOT_WORKSPACE_MEMBER,
                 "User " + userId + " is not an active workspace member",
                 Map.of("userId", userId));
+    }
+
+    public static AppException taskCannotDelete(UUID id) {
+        return new AppException(ProjectErrorCatalog.TASK_CANNOT_DELETE,
+                "Task " + id + " cannot be deleted — only TODO tasks with no actual hours recorded can be deleted",
+                Map.of("taskId", id));
     }
 
     public static AppException taskEntityMismatch(String entity, UUID entityId, UUID projectId) {

@@ -31,7 +31,7 @@ public class StartElicitationSessionAction {
         }
 
         ElicitationSession session = ElicitationSession.create(
-                command.projectId(), command.scopePackageId(), command.title());
+                command.projectId(), command.scopePackageId(), command.title(), command.language());
         ElicitationSession saved = sessionRepository.save(session);
 
         activityLogger.logSuccess(

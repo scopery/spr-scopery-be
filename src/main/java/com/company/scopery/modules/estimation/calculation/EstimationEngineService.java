@@ -23,6 +23,8 @@ import com.company.scopery.modules.project.project.domain.model.ProjectRepositor
 import com.company.scopery.modules.project.task.domain.enums.TaskStatus;
 import com.company.scopery.modules.project.task.domain.model.Task;
 import com.company.scopery.modules.project.task.domain.model.TaskRepository;
+import com.company.scopery.modules.project.taskrolecontribution.domain.model.TaskRoleContribution;
+import com.company.scopery.modules.project.taskrolecontribution.domain.model.TaskRoleContributionRepository;
 import com.company.scopery.modules.project.wbs.domain.enums.WbsNodeStatus;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNode;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNodeRepository;
@@ -62,6 +64,7 @@ public class EstimationEngineService {
     private final ProjectRepository projects;
     private final CostRoleResolutionService costRoleResolutionService;
     private final RateResolutionService rateResolutionService;
+    private final TaskRoleContributionRepository taskRoleContributions;
 
     public EstimationEngineService(EstimationRunRepository runs,
                                    TaskEstimateSnapshotRepository snapshots,
@@ -72,7 +75,8 @@ public class EstimationEngineService {
                                    WbsNodeRepository wbsNodes,
                                    ProjectRepository projects,
                                    CostRoleResolutionService costRoleResolutionService,
-                                   RateResolutionService rateResolutionService) {
+                                   RateResolutionService rateResolutionService,
+                                   TaskRoleContributionRepository taskRoleContributions) {
         this.runs = runs;
         this.snapshots = snapshots;
         this.wbsRollups = wbsRollups;
@@ -83,6 +87,7 @@ public class EstimationEngineService {
         this.projects = projects;
         this.costRoleResolutionService = costRoleResolutionService;
         this.rateResolutionService = rateResolutionService;
+        this.taskRoleContributions = taskRoleContributions;
     }
 
     @Transactional
@@ -94,9 +99,14 @@ public class EstimationEngineService {
             List<Task> projectTasks = tasks.findAllByProjectId(current.projectId());
             List<WbsNode> nodes = wbsNodes.findAllByProjectId(current.projectId());
 
+            Map<UUID, List<TaskRoleContribution>> contributionsByTaskId =
+                    taskRoleContributions.findAllByProjectId(current.projectId()).stream()
+                            .collect(Collectors.groupingBy(TaskRoleContribution::taskId));
+
             List<TaskEstimateSnapshot> taskSnapshots = new ArrayList<>();
             for (Task task : projectTasks) {
-                taskSnapshots.add(buildTaskSnapshot(current, project, task, options));
+                taskSnapshots.add(buildTaskSnapshot(current, project, task, options,
+                        contributionsByTaskId.getOrDefault(task.id(), List.of())));
             }
             snapshots.saveAll(taskSnapshots);
 
@@ -143,11 +153,12 @@ public class EstimationEngineService {
     TaskEstimateSnapshot buildTaskSnapshot(EstimationRun run,
                                            Project project,
                                            Task task,
-                                           EstimationEngineOptions options) {
-        BigDecimal hours = task.estimateHours() != null ? task.estimateHours() : ZERO;
+                                           EstimationEngineOptions options,
+                                           List<TaskRoleContribution> contributions) {
         LocalDate rateDate = resolveRateTargetDate(run.rateTargetDateStrategy(), project, task);
 
         if (isExcluded(task, options)) {
+            BigDecimal hours = task.estimateHours() != null ? task.estimateHours() : ZERO;
             return TaskEstimateSnapshot.create(
                     run.id(), run.projectId(), task.projectPhaseId(), task.wbsNodeId(),
                     task.id(), task.code(), task.title(), task.inChargeUserId(), null,
@@ -156,6 +167,37 @@ public class EstimationEngineService {
                     null, null, null, null,
                     null, null, TaskSnapshotStatus.EXCLUDED, null, null);
         }
+
+        // Contribution-based path: use snapshotted rates directly, bypass rate card lookup
+        List<TaskRoleContribution> ratedContributions = contributions.stream()
+                .filter(TaskRoleContribution::hasRateSnapshot)
+                .toList();
+        if (!ratedContributions.isEmpty()) {
+            BigDecimal totalHours = contributions.stream()
+                    .filter(c -> c.plannedHours() != null)
+                    .map(TaskRoleContribution::plannedHours)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal totalCost = ratedContributions.stream()
+                    .map(TaskRoleContribution::estimatedCost)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+            String currency = ratedContributions.stream()
+                    .map(TaskRoleContribution::currencyCode)
+                    .filter(c -> c != null && !c.isBlank())
+                    .findFirst()
+                    .orElse(null);
+            return TaskEstimateSnapshot.create(
+                    run.id(), run.projectId(), task.projectPhaseId(), task.wbsNodeId(),
+                    task.id(), task.code(), task.title(), task.inChargeUserId(), null,
+                    null, null, totalHours, rateDate,
+                    null, null, null, null, null, null, null,
+                    currency, null, null, null, null,
+                    totalCost, null, TaskSnapshotStatus.CALCULATED, null, null);
+        }
+
+        // Standard path: task.estimateHours + role resolution + rate card lookup
+        BigDecimal hours = task.estimateHours() != null ? task.estimateHours() : ZERO;
 
         if (task.estimateHours() == null || task.estimateHours().compareTo(BigDecimal.ZERO) <= 0) {
             return TaskEstimateSnapshot.create(

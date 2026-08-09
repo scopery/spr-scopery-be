@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-@Component
+@Component("pfCreateFinanceScenarioAction")
 public class CreateFinanceScenarioAction {
 
     private final ProjectRepository projects;

@@ -15,6 +15,7 @@ public class ElicitationSessionPersistenceMapper {
         entity.setScopePackageId(domain.scopePackageId());
         entity.setTitle(domain.title());
         entity.setStatus(domain.status().name());
+        entity.setLanguage(domain.language() != null ? domain.language() : "en");
         entity.setCreatedAt(domain.createdAt());
         return entity;
     }
@@ -26,6 +27,7 @@ public class ElicitationSessionPersistenceMapper {
                 entity.getScopePackageId(),
                 entity.getTitle(),
                 SessionStatus.valueOf(entity.getStatus()),
+                entity.getLanguage(),
                 entity.getCreatedBy(),
                 entity.getUpdatedBy(),
                 entity.getCreatedAt(),

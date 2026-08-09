@@ -42,8 +42,14 @@ public class ElicitationRoundJpaEntity extends AuditableJpaEntity {
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 
-    @Column(name = "submitted_at")
-    private Instant submittedAt;
+    @Column(name = "scope_snapshot_json", columnDefinition = "TEXT")
+    private String scopeSnapshotJson;
+
+    @Column(name = "should_continue")
+    private Boolean shouldContinue;
+
+    @Column(name = "evaluated_at")
+    private Instant evaluatedAt;
 
     @Override
     public UUID getId() { return id; }

@@ -51,7 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-@RestController
+@RestController("pfFinanceScenarioController")
 @RequestMapping(ProjectFinanceApiPaths.FINANCE_SCENARIOS)
 @Tag(name = "Project Finance - Scenarios")
 public class FinanceScenarioController {

@@ -91,14 +91,19 @@ public enum ElicitationErrorCatalog implements ErrorCatalog {
             "Elicitation round not found",
             HttpStatus.NOT_FOUND),
 
-    ROUND_ALREADY_SUBMITTED(
-            "ELICITATION_ROUND_ALREADY_SUBMITTED",
-            "Elicitation round is already submitted",
+    ROUND_ALREADY_ACTIVE(
+            "ELICITATION_ROUND_ALREADY_ACTIVE",
+            "An active round already exists for this session",
+            HttpStatus.CONFLICT),
+
+    ROUND_NOT_ACTIVE(
+            "ELICITATION_ROUND_NOT_ACTIVE",
+            "This operation requires an active round",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
-    ROUND_NOT_SUBMITTED(
-            "ELICITATION_ROUND_NOT_SUBMITTED",
-            "Elicitation round must be submitted before generating suggestions",
+    ROUND_NO_ANSWERED_QUESTIONS(
+            "ELICITATION_ROUND_NO_ANSWERED_QUESTIONS",
+            "Cannot submit a round with no answered questions",
             HttpStatus.UNPROCESSABLE_ENTITY),
 
     INVALID_ROUND_STATUS(

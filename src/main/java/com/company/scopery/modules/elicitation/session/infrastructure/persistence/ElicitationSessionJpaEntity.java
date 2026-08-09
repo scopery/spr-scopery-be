@@ -39,6 +39,9 @@ public class ElicitationSessionJpaEntity extends AuditableJpaEntity {
     @Column(name = "status", nullable = false, length = 50)
     private String status;
 
+    @Column(name = "language", nullable = false, length = 20)
+    private String language;
+
     @Override
     public UUID getId() { return id; }
 }

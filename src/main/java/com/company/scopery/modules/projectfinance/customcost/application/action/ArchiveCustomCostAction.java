@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfArchiveCustomCostAction")
 public class ArchiveCustomCostAction {
 
     private final ProjectRepository projects;

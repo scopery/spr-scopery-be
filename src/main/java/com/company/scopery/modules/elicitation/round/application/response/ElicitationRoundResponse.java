@@ -12,7 +12,8 @@ public record ElicitationRoundResponse(
         String questionsJson,
         String overallClarity,
         String status,
-        Instant submittedAt,
+        Boolean shouldContinue,
+        Instant evaluatedAt,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -24,7 +25,8 @@ public record ElicitationRoundResponse(
                 round.questionsJson(),
                 round.overallClarity() != null ? round.overallClarity().name() : null,
                 round.status().name(),
-                round.submittedAt(),
+                round.shouldContinue(),
+                round.evaluatedAt(),
                 round.createdAt(),
                 round.updatedAt()
         );

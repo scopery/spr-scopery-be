@@ -31,6 +31,9 @@ public class ElicitationQuestionJpaEntity extends AuditableJpaEntity {
     @Column(name = "session_id", nullable = false, updatable = false)
     private UUID sessionId;
 
+    @Column(name = "round_id")
+    private UUID roundId;
+
     @Column(name = "sequence", nullable = false)
     private int sequence;
 
@@ -57,6 +60,9 @@ public class ElicitationQuestionJpaEntity extends AuditableJpaEntity {
 
     @Column(name = "answered_at")
     private Instant answeredAt;
+
+    @Column(name = "suggested_answers", columnDefinition = "TEXT")
+    private String suggestedAnswers;
 
     @Override
     public UUID getId() { return id; }

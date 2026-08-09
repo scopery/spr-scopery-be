@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfMarkCurrentFinanceScenarioAction")
 public class MarkCurrentFinanceScenarioAction {
 
     private final ProjectRepository projects;

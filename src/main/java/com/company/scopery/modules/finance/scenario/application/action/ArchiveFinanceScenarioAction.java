@@ -1,0 +1,49 @@
+package com.company.scopery.modules.finance.scenario.application.action;
+
+import com.company.scopery.modules.finance.scenario.application.response.FinanceScenarioResponse;
+import com.company.scopery.modules.finance.scenario.domain.model.FinanceScenario;
+import com.company.scopery.modules.finance.scenario.domain.model.FinanceScenarioRepository;
+import com.company.scopery.modules.finance.shared.activity.FinanceActivityLogger;
+import com.company.scopery.modules.finance.shared.constant.FinanceActivityActions;
+import com.company.scopery.modules.finance.shared.constant.FinanceEntityTypes;
+import com.company.scopery.modules.finance.shared.error.FinanceExceptions;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Component
+public class ArchiveFinanceScenarioAction {
+
+    private final FinanceScenarioRepository scenarios;
+    private final FinanceActivityLogger activityLogger;
+
+    public ArchiveFinanceScenarioAction(FinanceScenarioRepository scenarios,
+                                        FinanceActivityLogger activityLogger) {
+        this.scenarios = scenarios;
+        this.activityLogger = activityLogger;
+    }
+
+    @Transactional
+    public FinanceScenarioResponse execute(UUID projectId, UUID scenarioId) {
+        FinanceScenario scenario = scenarios.findByIdAndProjectId(scenarioId, projectId)
+                .orElseThrow(() -> FinanceExceptions.scenarioNotFound(scenarioId));
+
+        if (!scenario.canArchive()) {
+            throw FinanceExceptions.scenarioNotArchivable(scenarioId);
+        }
+
+        if (scenario.currentFlag()) {
+            throw FinanceExceptions.scenarioNotArchivable(scenarioId);
+        }
+
+        FinanceScenario archived = scenario.archive();
+        FinanceScenario saved = scenarios.save(archived);
+
+        activityLogger.log(FinanceEntityTypes.FINANCE_SCENARIO, saved.id(),
+                FinanceActivityActions.ARCHIVE_SCENARIO,
+                "Finance scenario archived: " + saved.code());
+
+        return FinanceScenarioResponse.from(saved);
+    }
+}

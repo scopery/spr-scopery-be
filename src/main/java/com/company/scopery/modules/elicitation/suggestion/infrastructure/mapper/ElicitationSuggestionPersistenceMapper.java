@@ -54,6 +54,8 @@ public class ElicitationSuggestionPersistenceMapper {
         entity.setExecutedAt(domain.executedAt());
         entity.setErrorMessage(domain.errorMessage());
         entity.setRollbackDataJson(domain.rollbackDataJson());
+        entity.setRequirementId(domain.requirementId());
+        entity.setChainingContextJson(domain.chainingContextJson());
         entity.setCreatedAt(domain.createdAt());
         return entity;
     }
@@ -75,6 +77,8 @@ public class ElicitationSuggestionPersistenceMapper {
                 entity.getExecutedAt(),
                 entity.getErrorMessage(),
                 entity.getRollbackDataJson(),
+                entity.getRequirementId(),
+                entity.getChainingContextJson(),
                 entity.getCreatedBy(),
                 entity.getUpdatedBy(),
                 entity.getCreatedAt(),

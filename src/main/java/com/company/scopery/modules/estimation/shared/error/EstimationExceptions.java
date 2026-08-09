@@ -10,7 +10,7 @@ public final class EstimationExceptions {
 
     public static AppException runNotFound(UUID id) {
         return new AppException(EstimationErrorCatalog.ESTIMATION_RUN_NOT_FOUND,
-                "Estimation run not found: " + id, Map.of("id", id));
+                "Estimation run not found: " + id, Map.of("id", id == null ? "" : id.toString()));
     }
 
     public static AppException projectArchived(UUID projectId) {

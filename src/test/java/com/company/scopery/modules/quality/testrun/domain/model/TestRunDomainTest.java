@@ -6,7 +6,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 class TestRunDomainTest {
     private TestRun newRun() {
-        return TestRun.create(UUID.randomUUID(), UUID.randomUUID(), "Run 1", TestRunType.MANUAL, null, null, null);
+        return TestRun.create(UUID.randomUUID(), UUID.randomUUID(), "Run 1", TestRunType.MANUAL, null, null, null, null);
     }
     @Test void create_isPlanned() {
         var run = newRun();

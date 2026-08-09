@@ -27,7 +27,7 @@ public record EstimationRun(
         Instant completedAt,
         UUID actorUserId,
         String traceId,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -46,7 +46,7 @@ public record EstimationRun(
         return new EstimationRun(
                 UUID.randomUUID(), projectId, workspaceId, scheduleRunId, name, description,
                 EstimationRunStatus.PENDING, calculationMode, rateTargetDateStrategy, currencyPolicy,
-                assumptionsJson, null, null, null, null, null, actorUserId, traceId, 0, null, null);
+                assumptionsJson, null, null, null, null, null, actorUserId, traceId, null, null, null);
     }
 
     public EstimationRun running() {

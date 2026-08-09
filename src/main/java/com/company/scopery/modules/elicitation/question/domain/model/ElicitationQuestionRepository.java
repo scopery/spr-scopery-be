@@ -14,6 +14,8 @@ public interface ElicitationQuestionRepository {
 
     List<ElicitationQuestion> findAllBySessionId(UUID sessionId);
 
+    List<ElicitationQuestion> findAllByRoundId(UUID roundId);
+
     int countBySessionId(UUID sessionId);
 
     int findMaxSequenceBySessionId(UUID sessionId);

@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfApproveFinanceScenarioAction")
 public class ApproveFinanceScenarioAction {
 
     private final ProjectRepository projects;

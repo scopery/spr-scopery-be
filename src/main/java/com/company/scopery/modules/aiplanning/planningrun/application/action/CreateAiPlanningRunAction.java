@@ -96,7 +96,7 @@ public class CreateAiPlanningRunAction {
                     || !Boolean.FALSE.equals(command.options().get("createSuggestions"));
             String outputSummary = "{\"created\":false}";
             if (createSuggestions) {
-                var generated = generator.generate(run.id(), project.id(), project.workspaceId(), runType, command.input());
+                var generated = generator.generate(run.id(), project.id(), project.workspaceId(), runType, command.input(), snapshot.contextPayloadJson());
                 var suggestion = suggestions.save(generated.suggestion());
                 for (var item : generated.items()) {
                     items.save(item);

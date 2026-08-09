@@ -8,6 +8,8 @@ import com.company.scopery.modules.elicitation.session.application.command.Cance
 import com.company.scopery.modules.elicitation.session.application.command.CloseSessionCommand;
 import com.company.scopery.modules.elicitation.session.application.command.StartSessionCommand;
 import com.company.scopery.modules.elicitation.session.application.response.ElicitationSessionResponse;
+import com.company.scopery.modules.elicitation.session.application.response.ScopeLockResponse;
+import com.company.scopery.modules.elicitation.session.application.response.ScopeTreeResponse;
 import com.company.scopery.modules.elicitation.session.application.service.ElicitationSessionQueryService;
 import com.company.scopery.modules.elicitation.session.http.request.StartSessionRequest;
 import com.company.scopery.modules.elicitation.shared.constant.ElicitationApiPaths;
@@ -45,7 +47,7 @@ public class ElicitationSessionController {
     public ApiResponse<ElicitationSessionResponse> start(@PathVariable UUID projectId,
                                                           @Valid @RequestBody StartSessionRequest request) {
         return ApiResponse.success(startAction.execute(
-                new StartSessionCommand(projectId, request.scopePackageId(), request.title())));
+                new StartSessionCommand(projectId, request.scopePackageId(), request.title(), request.language())));
     }
 
     @GetMapping(ElicitationApiPaths.BASE_SESSIONS)
@@ -73,5 +75,19 @@ public class ElicitationSessionController {
     public ApiResponse<ElicitationSessionResponse> cancel(@PathVariable UUID projectId,
                                                            @PathVariable UUID sessionId) {
         return ApiResponse.success(cancelAction.execute(new CancelSessionCommand(projectId, sessionId)));
+    }
+
+    @GetMapping(ElicitationApiPaths.SESSION_ACTIVE_LOCK)
+    @Operation(summary = "Check if a scope package is locked by an active elicitation session")
+    public ApiResponse<ScopeLockResponse> activeLock(@PathVariable UUID projectId,
+                                                      @RequestParam UUID scopePackageId) {
+        return ApiResponse.success(queryService.checkActiveLock(projectId, scopePackageId));
+    }
+
+    @GetMapping(ElicitationApiPaths.SESSION_SCOPE_TREE)
+    @Operation(summary = "Get before/after scope tree for elicitation session")
+    public ApiResponse<ScopeTreeResponse> scopeTree(@PathVariable UUID projectId,
+                                                     @PathVariable UUID sessionId) {
+        return ApiResponse.success(queryService.getScopeTree(projectId, sessionId));
     }
 }

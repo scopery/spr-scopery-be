@@ -6,7 +6,7 @@ import com.company.scopery.modules.elicitation.suggestion.application.action.App
 import com.company.scopery.modules.elicitation.suggestion.application.action.GenerateSuggestionsAction;
 import com.company.scopery.modules.elicitation.suggestion.application.action.RejectSuggestionItemAction;
 import com.company.scopery.modules.elicitation.suggestion.application.command.ApproveSuggestionItemCommand;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.company.scopery.modules.elicitation.suggestion.application.command.GenerateSuggestionsCommand;
 import com.company.scopery.modules.elicitation.suggestion.application.command.RejectSuggestionItemCommand;
 import com.company.scopery.modules.elicitation.suggestion.application.response.ElicitationSuggestionItemResponse;
 import com.company.scopery.modules.elicitation.suggestion.application.response.ElicitationSuggestionResponse;
@@ -28,7 +28,7 @@ public class ElicitationSuggestionController {
 
     public ElicitationSuggestionController(GenerateSuggestionsAction generateAction,
                                             ApproveSuggestionItemAction approveAction,
-                                            @Qualifier("elicitationRejectSuggestionItemAction") RejectSuggestionItemAction rejectAction,
+                                            RejectSuggestionItemAction rejectAction,
                                             ElicitationSuggestionQueryService queryService) {
         this.generateAction = generateAction;
         this.approveAction = approveAction;
@@ -39,7 +39,7 @@ public class ElicitationSuggestionController {
     @PostMapping(ElicitationApiPaths.ROUND_SUGGESTIONS)
     @Operation(summary = "AI-generate scope change suggestions for a round")
     public ApiResponse<ElicitationSuggestionResponse> generate(@PathVariable UUID roundId) {
-        return ApiResponse.success(generateAction.execute(roundId));
+        return ApiResponse.success(generateAction.execute(new GenerateSuggestionsCommand(roundId)));
     }
 
     @GetMapping(ElicitationApiPaths.ROUND_SUGGESTIONS)

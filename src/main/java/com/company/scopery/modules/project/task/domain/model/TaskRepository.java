@@ -17,6 +17,8 @@ public interface TaskRepository {
 
     Optional<Task> findById(UUID id);
 
+    void deleteById(UUID id);
+
     boolean existsByProjectIdAndCode(UUID projectId, String code);
 
     PageResult<Task> search(UUID projectId, UUID phaseId, UUID wbsNodeId,

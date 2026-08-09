@@ -13,6 +13,7 @@ import com.company.scopery.modules.project.task.http.request.BulkCreateTaskReque
 import com.company.scopery.modules.project.task.http.request.CreateTaskRequest;
 import com.company.scopery.modules.project.task.http.request.UpdateTaskRequest;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import org.springframework.http.ResponseEntity;
 import com.company.scopery.platform.bulkjob.BulkJobService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +39,7 @@ public class TaskController {
     private final CancelTaskAction cancelTaskAction;
     private final ArchiveTaskAction archiveTaskAction;
     private final ReopenTaskAction reopenTaskAction;
+    private final DeleteTaskAction deleteTaskAction;
     private final BulkJobService bulkJobService;
     private final ObjectMapper objectMapper;
 
@@ -50,6 +52,7 @@ public class TaskController {
                           CancelTaskAction cancelTaskAction,
                           ArchiveTaskAction archiveTaskAction,
                           ReopenTaskAction reopenTaskAction,
+                          DeleteTaskAction deleteTaskAction,
                           BulkJobService bulkJobService,
                           ObjectMapper objectMapper) {
         this.taskQueryService = taskQueryService;
@@ -61,6 +64,7 @@ public class TaskController {
         this.cancelTaskAction = cancelTaskAction;
         this.archiveTaskAction = archiveTaskAction;
         this.reopenTaskAction = reopenTaskAction;
+        this.deleteTaskAction = deleteTaskAction;
         this.bulkJobService = bulkJobService;
         this.objectMapper = objectMapper;
     }
@@ -206,5 +210,14 @@ public class TaskController {
             @PathVariable UUID projectId,
             @PathVariable UUID id) {
         return ApiResponse.success(reopenTaskAction.execute(new ReopenTaskCommand(id, projectId)));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a task (only allowed for TODO tasks with no actual hours)")
+    public ResponseEntity<Void> deleteTask(
+            @PathVariable UUID projectId,
+            @PathVariable UUID id) {
+        deleteTaskAction.execute(new DeleteTaskCommand(id, projectId));
+        return ResponseEntity.noContent().build();
     }
 }

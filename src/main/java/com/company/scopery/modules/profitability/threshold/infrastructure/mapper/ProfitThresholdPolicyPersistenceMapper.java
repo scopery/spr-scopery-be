@@ -2,7 +2,7 @@ package com.company.scopery.modules.profitability.threshold.infrastructure.mappe
 import com.company.scopery.modules.profitability.threshold.domain.model.ProfitThresholdPolicy;
 import com.company.scopery.modules.profitability.threshold.infrastructure.persistence.ProfitThresholdPolicyJpaEntity;
 import org.springframework.stereotype.Component;
-@Component
+@Component("profitThresholdPersistenceMapper")
 public class ProfitThresholdPolicyPersistenceMapper {
     public ProfitThresholdPolicy toDomain(ProfitThresholdPolicyJpaEntity e) {
         return new ProfitThresholdPolicy(e.getId(), e.getWorkspaceId(), e.getProjectId(), e.getHealthyMarginPercent(), e.getWatchMarginPercent(),

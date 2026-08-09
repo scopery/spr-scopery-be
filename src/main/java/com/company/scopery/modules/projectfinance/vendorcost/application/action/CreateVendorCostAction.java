@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfCreateVendorCostAction")
 public class CreateVendorCostAction {
 
     private final ProjectRepository projects;

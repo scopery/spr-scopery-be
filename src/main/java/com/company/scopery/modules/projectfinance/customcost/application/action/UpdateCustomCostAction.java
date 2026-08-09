@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfUpdateCustomCostAction")
 public class UpdateCustomCostAction {
 
     private final ProjectRepository projects;

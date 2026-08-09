@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Component("elicitationApproveSuggestionItemAction")
 public class ApproveSuggestionItemAction {
 
     private static final Logger log = LoggerFactory.getLogger(ApproveSuggestionItemAction.class);

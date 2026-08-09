@@ -63,8 +63,8 @@ public class CapacityCalculationController {
     @Operation(summary = "Get a project's resource allocation summary over a date range")
     public ApiResponse<ProjectAllocationSummaryResponse> getProjectAllocationSummary(
             @PathVariable UUID projectId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         var query = new ProjectAllocationSummaryQuery(projectId, fromDate, toDate);
         return ApiResponse.success(calculationService.getProjectAllocationSummary(query));
     }

@@ -1,3 +1,11 @@
 package com.company.scopery.modules.profitability.profile.http.request;
+
 import jakarta.validation.constraints.NotBlank;
-public record CreateProfitabilityProfileRequest(@NotBlank String currency) {}
+import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
+
+public record CreateProfitabilityProfileRequest(
+        @NotNull UUID workspaceId,
+        @NotBlank String currency
+) {}

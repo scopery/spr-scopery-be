@@ -100,15 +100,18 @@ public class ElicitationScopeLoader {
 
     private String loadUseCasesJson(List<UUID> functionIds) {
         String sql = """
-                SELECT json_agg(DISTINCT json_build_object(
-                    'id', uc.id,
-                    'code', uc.code,
-                    'title', uc.title,
-                    'description', uc.description
+                SELECT json_agg(json_build_object(
+                    'id', u.id,
+                    'key', u.key,
+                    'name', u.name,
+                    'goal', u.goal
                 )) AS result
-                FROM app_use_case_supporting_function ucsf
-                JOIN app_use_case uc ON uc.id = ucsf.use_case_id
-                WHERE ucsf.function_id = ANY(:ids)
+                FROM (
+                    SELECT DISTINCT ON (uc.id) uc.id, uc.key, uc.name, uc.goal
+                    FROM app_use_case_supporting_function ucsf
+                    JOIN app_use_case uc ON uc.id = ucsf.use_case_id
+                    WHERE ucsf.function_id = ANY(:ids)
+                ) u
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource("ids", functionIds.toArray(new UUID[0]));
         return queryJsonArray(sql, params);
@@ -116,15 +119,17 @@ public class ElicitationScopeLoader {
 
     private String loadScreensJson(List<UUID> functionIds) {
         String sql = """
-                SELECT json_agg(DISTINCT json_build_object(
+                SELECT json_agg(json_build_object(
                     'id', s.id,
                     'code', s.code,
-                    'name', s.name,
-                    'description', s.description
+                    'name', s.name
                 )) AS result
-                FROM app_function_screen fs
-                JOIN app_registry_screen s ON s.id = fs.screen_id
-                WHERE fs.function_id = ANY(:ids)
+                FROM (
+                    SELECT DISTINCT ON (scr.id) scr.id, scr.code, scr.name
+                    FROM app_function_screen fs
+                    JOIN app_registry_screen scr ON scr.id = fs.screen_id
+                    WHERE fs.function_id = ANY(:ids)
+                ) s
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource("ids", functionIds.toArray(new UUID[0]));
         return queryJsonArray(sql, params);
@@ -132,15 +137,18 @@ public class ElicitationScopeLoader {
 
     private String loadApisJson(List<UUID> functionIds) {
         String sql = """
-                SELECT json_agg(DISTINCT json_build_object(
+                SELECT json_agg(json_build_object(
                     'id', a.id,
                     'method', a.method,
-                    'path', a.path,
-                    'summary', a.summary
+                    'path', a.path_pattern,
+                    'name', a.name
                 )) AS result
-                FROM app_function_api fa
-                JOIN app_registry_api_endpoint a ON a.id = fa.api_endpoint_id
-                WHERE fa.function_id = ANY(:ids)
+                FROM (
+                    SELECT DISTINCT ON (ep.id) ep.id, ep.method, ep.path_pattern, ep.name
+                    FROM app_function_api fa
+                    JOIN app_registry_api_endpoint ep ON ep.id = fa.api_endpoint_id
+                    WHERE fa.function_id = ANY(:ids)
+                ) a
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource("ids", functionIds.toArray(new UUID[0]));
         return queryJsonArray(sql, params);

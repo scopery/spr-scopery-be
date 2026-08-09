@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfDuplicateFinanceScenarioAction")
 public class DuplicateFinanceScenarioAction {
 
     private final ProjectRepository projects;

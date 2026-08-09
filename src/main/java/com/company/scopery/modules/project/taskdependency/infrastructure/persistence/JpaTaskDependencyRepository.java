@@ -50,6 +50,11 @@ public class JpaTaskDependencyRepository implements TaskDependencyRepository {
     }
 
     @Override
+    public void deleteAllByTaskId(UUID taskId) {
+        springDataRepository.deleteAllByTaskId(taskId);
+    }
+
+    @Override
     public boolean existsByPredecessorAndSuccessorAndType(UUID predecessorId, UUID successorId, TaskDependencyType type) {
         return springDataRepository.existsByPredecessorTaskIdAndSuccessorTaskIdAndDependencyType(
                 predecessorId, successorId, type.name());

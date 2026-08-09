@@ -5,6 +5,8 @@ import com.company.scopery.modules.elicitation.question.application.response.Eli
 import com.company.scopery.modules.elicitation.question.domain.enums.QuestionStatus;
 import com.company.scopery.modules.elicitation.question.domain.model.ElicitationQuestion;
 import com.company.scopery.modules.elicitation.question.domain.model.ElicitationQuestionRepository;
+import com.company.scopery.modules.elicitation.round.domain.enums.RoundStatus;
+import com.company.scopery.modules.elicitation.round.domain.model.ElicitationRoundRepository;
 import com.company.scopery.modules.elicitation.shared.activity.ElicitationActivityLogger;
 import com.company.scopery.modules.elicitation.shared.constant.ElicitationActivityActions;
 import com.company.scopery.modules.elicitation.shared.constant.ElicitationEntityTypes;
@@ -16,11 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnswerQuestionAction {
 
     private final ElicitationQuestionRepository questionRepository;
+    private final ElicitationRoundRepository roundRepository;
     private final ElicitationActivityLogger activityLogger;
 
     public AnswerQuestionAction(ElicitationQuestionRepository questionRepository,
+                                 ElicitationRoundRepository roundRepository,
                                  ElicitationActivityLogger activityLogger) {
         this.questionRepository = questionRepository;
+        this.roundRepository = roundRepository;
         this.activityLogger = activityLogger;
     }
 
@@ -29,6 +34,14 @@ public class AnswerQuestionAction {
         ElicitationQuestion question = questionRepository.findById(command.questionId())
                 .filter(q -> q.sessionId().equals(command.sessionId()))
                 .orElseThrow(() -> ElicitationExceptions.questionNotFound(command.questionId()));
+
+        if (question.roundId() != null) {
+            roundRepository.findById(question.roundId()).ifPresent(round -> {
+                if (round.status() != RoundStatus.ACTIVE) {
+                    throw ElicitationExceptions.roundNotActive(round.id());
+                }
+            });
+        }
 
         if (question.status() == QuestionStatus.ANSWERED) {
             throw ElicitationExceptions.questionAlreadyAnswered(question.id());

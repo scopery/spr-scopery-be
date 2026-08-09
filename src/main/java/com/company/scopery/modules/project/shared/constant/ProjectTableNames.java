@@ -22,6 +22,7 @@ public final class ProjectTableNames {
     // Timeline cell buckets
     public static final String TASK_DAILY_ALLOCATION = "project_task_daily_allocation";
     public static final String TASK_PROGRESS_SNAPSHOT = "project_task_progress_snapshot";
+    public static final String TASK_ROLE_CONTRIBUTION = "project_task_role_contribution";
 
     // Phase 11 — templates
     public static final String PROJECT_TEMPLATE                = "project_template";

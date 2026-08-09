@@ -128,11 +128,14 @@ public class CapacityCalculationService {
     @Transactional(readOnly = true)
     public ProjectAllocationSummaryResponse getProjectAllocationSummary(ProjectAllocationSummaryQuery query) {
         authorizationService.requireProjectWorkspacePermission(query.projectId(), IamAuthorities.CAPACITY_VIEW);
-        validateRange(query.fromDate(), query.toDate());
+        if (query.fromDate() != null || query.toDate() != null) {
+            validateRange(query.fromDate(), query.toDate());
+        }
 
         List<ProjectResourceAllocation> allocations = allocationRepository.findActiveByProjectId(query.projectId())
                 .stream()
-                .filter(allocation -> allocation.overlaps(query.fromDate(), query.toDate()))
+                .filter(allocation -> query.fromDate() == null || query.toDate() == null
+                        || allocation.overlaps(query.fromDate(), query.toDate()))
                 .toList();
 
         List<AllocationSummaryItem> items = allocations.stream()

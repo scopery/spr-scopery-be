@@ -11,4 +11,6 @@ public interface SpringDataElicitationSessionJpaRepository
     List<ElicitationSessionJpaEntity> findByProjectId(UUID projectId);
 
     boolean existsByProjectIdAndScopePackageIdAndStatus(UUID projectId, UUID scopePackageId, String status);
+
+    java.util.Optional<ElicitationSessionJpaEntity> findFirstByProjectIdAndScopePackageIdAndStatus(UUID projectId, UUID scopePackageId, String status);
 }

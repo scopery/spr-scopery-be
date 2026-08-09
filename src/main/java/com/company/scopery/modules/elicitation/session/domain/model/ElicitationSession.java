@@ -12,6 +12,7 @@ public class ElicitationSession {
     private UUID scopePackageId;
     private String title;
     private SessionStatus status;
+    private String language;
     private String createdBy;
     private String updatedBy;
     private Instant createdAt;
@@ -19,12 +20,13 @@ public class ElicitationSession {
 
     private ElicitationSession() {}
 
-    public static ElicitationSession create(UUID projectId, UUID scopePackageId, String title) {
+    public static ElicitationSession create(UUID projectId, UUID scopePackageId, String title, String language) {
         ElicitationSession s = new ElicitationSession();
         s.id = UUID.randomUUID();
         s.projectId = projectId;
         s.scopePackageId = scopePackageId;
         s.title = title;
+        s.language = (language != null && !language.isBlank()) ? language : "en";
         s.status = SessionStatus.ACTIVE;
         s.createdAt = Instant.now();
         s.updatedAt = s.createdAt;
@@ -32,7 +34,8 @@ public class ElicitationSession {
     }
 
     public static ElicitationSession reconstitute(UUID id, UUID projectId, UUID scopePackageId, String title,
-                                                   SessionStatus status, String createdBy, String updatedBy,
+                                                   SessionStatus status, String language,
+                                                   String createdBy, String updatedBy,
                                                    Instant createdAt, Instant updatedAt) {
         ElicitationSession s = new ElicitationSession();
         s.id = id;
@@ -40,6 +43,7 @@ public class ElicitationSession {
         s.scopePackageId = scopePackageId;
         s.title = title;
         s.status = status;
+        s.language = language != null ? language : "en";
         s.createdBy = createdBy;
         s.updatedBy = updatedBy;
         s.createdAt = createdAt;
@@ -64,6 +68,7 @@ public class ElicitationSession {
     public UUID scopePackageId()   { return scopePackageId; }
     public String title()          { return title; }
     public SessionStatus status()  { return status; }
+    public String language()       { return language; }
     public String createdBy()      { return createdBy; }
     public String updatedBy()      { return updatedBy; }
     public Instant createdAt()     { return createdAt; }

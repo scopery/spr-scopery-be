@@ -9,7 +9,6 @@ public final class ElicitationActivityActions {
     public static final String GENERATE_QUESTIONS        = "GENERATE_ELICITATION_QUESTIONS";
     public static final String ANSWER_QUESTION           = "ANSWER_ELICITATION_QUESTION";
     public static final String SKIP_QUESTION             = "SKIP_ELICITATION_QUESTION";
-    public static final String EVALUATE_ANSWERS          = "EVALUATE_ELICITATION_ANSWERS";
 
     public static final String SUBMIT_ROUND              = "SUBMIT_ELICITATION_ROUND";
 

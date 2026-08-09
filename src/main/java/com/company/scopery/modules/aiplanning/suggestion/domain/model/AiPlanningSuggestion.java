@@ -25,7 +25,7 @@ public record AiPlanningSuggestion(
         Instant rejectedAt,
         UUID rejectedBy,
         String rejectionReason,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -36,7 +36,7 @@ public record AiPlanningSuggestion(
         return new AiPlanningSuggestion(
                 UUID.randomUUID(), planningRunId, projectId, workspaceId, type, title, summary, rationale,
                 confidenceLabel, SuggestionStatus.GENERATED, sourceReferencesJson,
-                null, null, null, null, null, null, null, 0, now, now);
+                null, null, null, null, null, null, null, null, now, now);
     }
 
     public AiPlanningSuggestion startReview(UUID actorId) {

@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-@Component
+@Component("pfUpdatePhaseRevenueAction")
 public class UpdatePhaseRevenueAction {
 
     private final ProjectRepository projects;

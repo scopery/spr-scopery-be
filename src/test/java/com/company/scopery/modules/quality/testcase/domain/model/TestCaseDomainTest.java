@@ -5,14 +5,14 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 class TestCaseDomainTest {
     private TestCase newCase() {
-        return TestCase.create(UUID.randomUUID(), null, "TC-1", "Login test", null,
-                TestCaseType.FUNCTIONAL, TestCasePriority.HIGH, null, "User is logged in");
+        return TestCase.create(UUID.randomUUID(), null, null, "TC-1", "Login test", null,
+                TestCaseType.FUNCTIONAL, TestCasePriority.HIGH, null, "User is logged in", null, null);
     }
     @Test void approvedIsImmutable() {
         var tc = newCase().approve(UUID.randomUUID());
         assertEquals(TestCaseStatus.APPROVED, tc.status());
         var immutable = tc;
-        assertThrows(IllegalStateException.class, () -> immutable.update("x", null, TestCaseType.FUNCTIONAL, TestCasePriority.LOW, null, null));
+        assertThrows(IllegalStateException.class, () -> immutable.update("x", null, TestCaseType.FUNCTIONAL, TestCasePriority.LOW, null, null, null, null, null, null));
     }
     @Test void draftIsEditable() {
         var tc = newCase();
@@ -26,7 +26,7 @@ class TestCaseDomainTest {
         assertNotNull(tc.archivedAt());
     }
     @Test void update_success_whenDraft() {
-        var tc = newCase().update("New Title", "desc", TestCaseType.REGRESSION, TestCasePriority.MEDIUM, "pre", "expected");
+        var tc = newCase().update("New Title", "desc", TestCaseType.REGRESSION, TestCasePriority.MEDIUM, null, "pre", "expected", null, null, null);
         assertEquals("New Title", tc.title());
         assertEquals(TestCaseType.REGRESSION, tc.type());
         assertEquals(TestCasePriority.MEDIUM, tc.priority());
@@ -41,8 +41,8 @@ class TestCaseDomainTest {
     @Test void create_hasExpectedDefaults() {
         var projectId = UUID.randomUUID();
         var suiteId = UUID.randomUUID();
-        var tc = TestCase.create(projectId, suiteId, "TC-99", "Title", null,
-                TestCaseType.UAT, TestCasePriority.CRITICAL, "pre", "expected");
+        var tc = TestCase.create(projectId, suiteId, null, "TC-99", "Title", null,
+                TestCaseType.UAT, TestCasePriority.CRITICAL, "pre", "expected", null, null);
         assertEquals(projectId, tc.projectId());
         assertEquals(suiteId, tc.testSuiteId());
         assertEquals(TestCaseStatus.DRAFT, tc.status());

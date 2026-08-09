@@ -76,14 +76,19 @@ public final class ElicitationExceptions {
                 "Elicitation round not found: " + id, Map.of("id", id));
     }
 
-    public static AppException roundAlreadySubmitted(UUID roundId) {
-        return new AppException(ElicitationErrorCatalog.ROUND_ALREADY_SUBMITTED,
-                "Elicitation round is already submitted: " + roundId, Map.of("roundId", roundId));
+    public static AppException roundAlreadyActive(UUID sessionId) {
+        return new AppException(ElicitationErrorCatalog.ROUND_ALREADY_ACTIVE,
+                "An active round already exists for session: " + sessionId, Map.of("sessionId", sessionId));
     }
 
-    public static AppException roundNotSubmitted(UUID roundId) {
-        return new AppException(ElicitationErrorCatalog.ROUND_NOT_SUBMITTED,
-                "Elicitation round must be submitted first: " + roundId, Map.of("roundId", roundId));
+    public static AppException roundNotActive(UUID roundId) {
+        return new AppException(ElicitationErrorCatalog.ROUND_NOT_ACTIVE,
+                "Elicitation round is not active: " + roundId, Map.of("roundId", roundId));
+    }
+
+    public static AppException roundNoAnsweredQuestions(UUID roundId) {
+        return new AppException(ElicitationErrorCatalog.ROUND_NO_ANSWERED_QUESTIONS,
+                "Cannot submit round with no answered questions: " + roundId, Map.of("roundId", roundId));
     }
 
     // ── Suggestion ────────────────────────────────────────────────────────────

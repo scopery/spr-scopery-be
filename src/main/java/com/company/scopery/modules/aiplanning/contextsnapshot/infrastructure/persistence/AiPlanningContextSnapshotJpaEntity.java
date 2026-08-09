@@ -8,6 +8,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -32,13 +34,17 @@ public class AiPlanningContextSnapshotJpaEntity {
     private UUID actorUserId;
     @Column(name = "context_type", nullable = false)
     private String contextType;
-    @Column(name = "access_scope_json", nullable = false, columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "access_scope_json", nullable = false, columnDefinition = "jsonb")
     private String accessScopeJson;
-    @Column(name = "included_sections_json", nullable = false, columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "included_sections_json", nullable = false, columnDefinition = "jsonb")
     private String includedSectionsJson;
-    @Column(name = "redaction_summary_json", columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "redaction_summary_json", columnDefinition = "jsonb")
     private String redactionSummaryJson;
-    @Column(name = "context_payload_json", nullable = false, columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "context_payload_json", nullable = false, columnDefinition = "jsonb")
     private String contextPayloadJson;
     @Column(name = "token_estimate")
     private Integer tokenEstimate;

@@ -538,6 +538,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             - Cover: unclear requirements, missing acceptance criteria, ambiguous business rules, technical dependencies, edge cases.
             - Each question must be specific and answerable. No vague questions.
             - Assign a category to each question: REQUIREMENT, FUNCTION, SCREEN, API, ENTITY, COMPONENT, BUSINESS_RULE
+            - For each question, provide 3-4 concise suggested answers that cover the most likely valid responses.
+              Suggested answers should be short (1-2 sentences max) and mutually exclusive where possible.
             """;
 
     private static final String ELICIT_QUESTIONS_USER = """
@@ -567,7 +569,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             {{COMPONENTS_JSON}}
 
             Return a JSON object with:
-            - questions: array of { sequence, questionText, category }
+            - questions: array of { sequence, questionText, category, suggestedAnswers }
+              where suggestedAnswers is an array of 3-4 short answer options for that question.
             """;
 
     private static final String ELICIT_QUESTIONS_VARIABLE_SCHEMA = """
@@ -594,11 +597,12 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
                   "type":"array",
                   "items":{
                     "type":"object",
-                    "required":["sequence","questionText","category"],
+                    "required":["sequence","questionText","category","suggestedAnswers"],
                     "properties":{
                       "sequence":{"type":"integer"},
                       "questionText":{"type":"string"},
-                      "category":{"type":"string","enum":["REQUIREMENT","FUNCTION","SCREEN","API","ENTITY","COMPONENT","BUSINESS_RULE"]}
+                      "category":{"type":"string","enum":["REQUIREMENT","FUNCTION","SCREEN","API","ENTITY","COMPONENT","BUSINESS_RULE"]},
+                      "suggestedAnswers":{"type":"array","items":{"type":"string"},"minItems":2,"maxItems":5}
                     }
                   }
                 }
@@ -610,40 +614,54 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
 
     private static final String ELICIT_EVALUATE_SYSTEM = """
             You are a requirements clarity evaluator for software projects.
-            Evaluate each answer and assign a clarity level based on how well it resolves the original question.
+            Evaluate each answered question in the current round and assign a clarity level.
 
-            Clarity levels (5 levels, assign exactly one):
-            - BLOCKED: Answer is missing or contradictory. Cannot proceed. Must be resolved before spec writing.
-            - CRITICAL: Answer is vague or incomplete on a critical aspect. Significant risk if unresolved.
+            Clarity levels (assign exactly one per question):
+            - BLOCKED: Answer is missing or contradictory. Cannot proceed without resolution.
+            - CRITICAL: Answer is vague or incomplete on a critical aspect. Significant risk.
             - IMPORTANT: Answer partially addresses the question. Some follow-up needed.
             - MINOR: Answer is mostly clear with minor gaps. Low risk.
             - CLEARED: Answer fully resolves the question. No follow-up needed.
 
+            Additionally:
+            - Detect conflicts between answers in the current round and previous rounds. If an answer contradicts a prior answer, set conflictNote to describe the conflict.
+            - Set shouldContinue=true if any question is BLOCKED, CRITICAL, or IMPORTANT. Set false only when all answers are MINOR or CLEARED and scope is sufficiently understood.
+            - Set overallClarity to the worst clarity level across all questions in the current round.
+            - Provide an evaluationSummary: 1-2 sentences summarising what was clarified and what remains unclear.
+
             Rules:
             - Output only valid JSON matching the requested schema.
-            - For any level other than CLEARED, provide a specific follow-up question as feedback.
+            - For any level other than CLEARED, provide a specific follow-up note as feedback.
             - CLEARED means no feedback needed (feedback: null).
-            - Be strict: a vague answer on a critical question is BLOCKED or CRITICAL.
+            - Be strict: a vague answer on a critical requirement is BLOCKED or CRITICAL.
             """;
 
     private static final String ELICIT_EVALUATE_USER = """
-            Evaluate the following answers for the scope context below.
+            Evaluate the answers from elicitation round {{ROUND_NUMBER}}.
 
             Scope Context:
             {{SCOPE_CONTEXT_JSON}}
 
-            Questions and Answers:
-            {{QUESTIONS_AND_ANSWERS_JSON}}
+            Questions and Answers for this round (to evaluate):
+            {{ROUND_QUESTIONS_JSON}}
+
+            All Q&A across all rounds in this session (for conflict detection):
+            {{ALL_QA_JSON}}
 
             Return a JSON object with:
-            - evaluations: array of { questionId, clarityLevel, feedback }
+            - evaluations: array of { questionId, clarityLevel, feedback, conflictNote }
+            - overallClarity: worst clarityLevel across all questions in this round
+            - shouldContinue: true if more rounds are needed, false if scope is sufficiently clear
+            - evaluationSummary: 1-2 sentence summary of what was clarified and what remains
             """;
 
     private static final String ELICIT_EVALUATE_VARIABLE_SCHEMA = """
             {
               "variables": [
-                {"name":"SCOPE_CONTEXT_JSON","description":"Scope context including requirements, functions, use cases, screens, APIs, entities","format":"JSON object","syntax":"{{SCOPE_CONTEXT_JSON}}"},
-                {"name":"QUESTIONS_AND_ANSWERS_JSON","description":"JSON array of question-answer pairs. Each: {questionId, questionText, answerText}","format":"JSON array","syntax":"{{QUESTIONS_AND_ANSWERS_JSON}}"}
+                {"name":"SCOPE_CONTEXT_JSON","description":"Scope context including requirements, functions, and use cases","format":"JSON object","syntax":"{{SCOPE_CONTEXT_JSON}}"},
+                {"name":"ROUND_QUESTIONS_JSON","description":"JSON array of question-answer pairs for this round. Each: {questionId, sequence, questionText, answerText, status}","format":"JSON array","syntax":"{{ROUND_QUESTIONS_JSON}}"},
+                {"name":"ALL_QA_JSON","description":"JSON array of all Q&A across all rounds in this session for conflict detection","format":"JSON array","syntax":"{{ALL_QA_JSON}}"},
+                {"name":"ROUND_NUMBER","description":"The current round number being evaluated","format":"Integer","syntax":"{{ROUND_NUMBER}}"}
               ]
             }
             """;
@@ -651,7 +669,7 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
     private static final String ELICIT_EVALUATE_RESPONSE_SCHEMA = """
             {
               "type":"object",
-              "required":["evaluations"],
+              "required":["evaluations","overallClarity","shouldContinue"],
               "properties":{
                 "evaluations":{
                   "type":"array",
@@ -661,10 +679,14 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
                     "properties":{
                       "questionId":{"type":"string"},
                       "clarityLevel":{"type":"string","enum":["BLOCKED","CRITICAL","IMPORTANT","MINOR","CLEARED"]},
-                      "feedback":{"type":["string","null"]}
+                      "feedback":{"type":["string","null"]},
+                      "conflictNote":{"type":["string","null"]}
                     }
                   }
-                }
+                },
+                "overallClarity":{"type":"string","enum":["BLOCKED","CRITICAL","IMPORTANT","MINOR","CLEARED"]},
+                "shouldContinue":{"type":"boolean"},
+                "evaluationSummary":{"type":["string","null"]}
               }
             }
             """;
@@ -673,46 +695,67 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
 
     private static final String ELICIT_SUGGEST_SYSTEM = """
             You are a requirements improvement specialist for software projects.
-            Based on a completed elicitation round, generate actionable scope change suggestions.
+            Based on elicitation Q&A findings, generate actionable scope change suggestions for a single requirement.
 
-            Suggestion actions available:
-            UPDATE_REQUIREMENT, CREATE_REQUIREMENT, DELETE_REQUIREMENT,
-            UPDATE_FUNCTION, CREATE_FUNCTION, DELETE_FUNCTION,
-            UPDATE_USE_CASE, CREATE_USE_CASE, DELETE_USE_CASE,
-            UPDATE_SCREEN, CREATE_SCREEN, UPDATE_API, CREATE_API,
-            UPDATE_ENTITY, LINK_REQUIREMENT_FUNCTION, UNLINK_REQUIREMENT_FUNCTION
+            Supported actions:
+            UPDATE_REQUIREMENT, CREATE_REQUIREMENT
+            UPDATE_FUNCTION, CREATE_FUNCTION
+            UPDATE_USE_CASE, CREATE_USE_CASE
+            CREATE_SCREEN, UPDATE_SCREEN
+            CREATE_NOTIFICATION, UPDATE_NOTIFICATION
+            LINK_REQUIREMENT_FUNCTION, UNLINK_REQUIREMENT_FUNCTION
+            LINK_FUNCTION_USE_CASE, UNLINK_FUNCTION_USE_CASE
+            LINK_FUNCTION_SCREEN, LINK_FUNCTION_NOTIFICATION
+            CREATE_COMPONENT, LINK_SCREEN_COMPONENT
+
+            Relationship rules:
+            - 1 Function belongs to exactly 1 Requirement
+            - 1 Requirement can have many Functions
+            - 1 Function can have many UseCases
+            - 1 UseCase can link to many supporting Functions
+            - 1 Screen links to the Function that generates it
+            - 1 Screen can have many AppComponents
+            - 1 Function can trigger many Notifications
 
             Rules:
             - Output only valid JSON matching the requested schema.
-            - Each suggestion item must have a clear rationale linked to specific Q&A findings.
+            - Each suggestion must have a clear rationale linked to specific Q&A findings.
+            - Do NOT suggest actions already covered in the accumulated suggestions for other requirements.
             - Prioritize: fix BLOCKED/CRITICAL clarity issues first, then IMPORTANT.
-            - Include precondition actions when order matters (e.g., unlink before delete).
             - Estimate impact: LOW / MEDIUM / HIGH based on scope change size.
             - Be specific: for updates, state exactly what field to change and to what value.
             """;
 
     private static final String ELICIT_SUGGEST_USER = """
-            Generate scope improvement suggestions based on the completed elicitation round.
+            Generate scope improvement suggestions for the following requirement.
 
             Scope Context:
             {{SCOPE_CONTEXT_JSON}}
 
-            Elicitation Round (Q&A with clarity evaluations):
-            {{ELICITATION_ROUND_JSON}}
+            All Q&A from elicitation session:
+            {{ALL_QA_JSON}}
+
+            Requirement to process:
+            {{REQUIREMENT_JSON}}
+
+            Suggestions already generated for other requirements (do NOT duplicate these):
+            {{ACCUMULATED_SUGGESTIONS_JSON}}
 
             Return a JSON object with:
-            - overallSummary: string summarizing key findings and recommendations
             - suggestions: array of {
                 sequence, action, targetEntityType, targetEntityId, targetEntityName,
                 rationale, changesJson, preconditionActionsJson, estimatedImpact
               }
+            - requirementSummary: 1 sentence describing the key suggestion for this requirement
             """;
 
     private static final String ELICIT_SUGGEST_VARIABLE_SCHEMA = """
             {
               "variables": [
-                {"name":"SCOPE_CONTEXT_JSON","description":"Full scope context: requirements, functions, use cases, screens, APIs, entities, components","format":"JSON object","syntax":"{{SCOPE_CONTEXT_JSON}}"},
-                {"name":"ELICITATION_ROUND_JSON","description":"Complete elicitation round snapshot with all Q&A and clarity evaluations. Each question: {questionId, questionText, answerText, clarityLevel, aiFeedback}","format":"JSON object","syntax":"{{ELICITATION_ROUND_JSON}}"}
+                {"name":"SCOPE_CONTEXT_JSON","description":"Scope context including requirements, functions, and use cases","format":"JSON object","syntax":"{{SCOPE_CONTEXT_JSON}}"},
+                {"name":"ALL_QA_JSON","description":"All Q&A across the elicitation session for context","format":"JSON array","syntax":"{{ALL_QA_JSON}}"},
+                {"name":"REQUIREMENT_JSON","description":"The specific requirement being processed in this call","format":"JSON object with id, code, title, description, priority","syntax":"{{REQUIREMENT_JSON}}"},
+                {"name":"ACCUMULATED_SUGGESTIONS_JSON","description":"Summary of suggestions already generated for previous requirements to avoid duplication","format":"JSON array","syntax":"{{ACCUMULATED_SUGGESTIONS_JSON}}"}
               ]
             }
             """;
@@ -720,9 +763,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
     private static final String ELICIT_SUGGEST_RESPONSE_SCHEMA = """
             {
               "type":"object",
-              "required":["overallSummary","suggestions"],
+              "required":["suggestions"],
               "properties":{
-                "overallSummary":{"type":"string"},
                 "suggestions":{
                   "type":"array",
                   "items":{
@@ -740,7 +782,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
                       "estimatedImpact":{"type":"string","enum":["LOW","MEDIUM","HIGH"]}
                     }
                   }
-                }
+                },
+                "requirementSummary":{"type":["string","null"]}
               }
             }
             """;

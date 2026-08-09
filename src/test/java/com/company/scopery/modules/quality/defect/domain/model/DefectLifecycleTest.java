@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DefectLifecycleTest {
     private Defect newDefect(DefectSeverity severity) {
         return Defect.create(UUID.randomUUID(), UUID.randomUUID(), "D-X", "Bug", null,
-                DefectCategory.FUNCTIONAL, severity, DefectPriority.P1, UUID.randomUUID(), null, null, null, null);
+                DefectCategory.FUNCTIONAL, severity, DefectPriority.P1, UUID.randomUUID(), null, null, null, null, null, null, null, null);
     }
     @Test void closeRequiresResolution() {
         var d = newDefect(DefectSeverity.CRITICAL);
@@ -82,7 +82,7 @@ class DefectLifecycleTest {
         var projectId = UUID.randomUUID();
         var wsId = UUID.randomUUID();
         var d = Defect.create(projectId, wsId, "D-1", "Title", null, DefectCategory.INTEGRATION,
-                DefectSeverity.MAJOR, DefectPriority.P2, UUID.randomUUID(), null, null, null, null);
+                DefectSeverity.MAJOR, DefectPriority.P2, UUID.randomUUID(), null, null, null, null, null, null, null, null);
         assertEquals(projectId, d.projectId());
         assertEquals(wsId, d.workspaceId());
         assertEquals(DefectStatus.OPEN, d.status());

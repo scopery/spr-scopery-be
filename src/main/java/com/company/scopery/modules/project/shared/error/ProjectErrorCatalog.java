@@ -102,6 +102,8 @@ public enum ProjectErrorCatalog implements ErrorCatalog {
             "WBS_NODE_ALREADY_ARCHIVED", "WBS node is already archived", HttpStatus.UNPROCESSABLE_ENTITY),
     WBS_NODE_CANNOT_ARCHIVE(
             "WBS_NODE_CANNOT_ARCHIVE", "WBS node cannot be archived because it has active children or linked tasks", HttpStatus.UNPROCESSABLE_ENTITY),
+    WBS_NODE_CANNOT_DELETE(
+            "WBS_NODE_CANNOT_DELETE", "WBS node cannot be deleted because it has children or linked tasks", HttpStatus.UNPROCESSABLE_ENTITY),
     WBS_NODE_PHASE_MISMATCH(
             "WBS_NODE_PHASE_MISMATCH", "WBS node does not belong to the specified project phase", HttpStatus.UNPROCESSABLE_ENTITY),
     WBS_NODE_CIRCULAR_PARENT(
@@ -134,6 +136,8 @@ public enum ProjectErrorCatalog implements ErrorCatalog {
             "PROJECT_TASK_ACCESS_DENIED", "Access to the task is denied", HttpStatus.FORBIDDEN),
     TASK_CANNOT_TRANSITION(
             "TASK_CANNOT_TRANSITION", "Task cannot transition to the requested status from its current status", HttpStatus.UNPROCESSABLE_ENTITY),
+    TASK_CANNOT_DELETE(
+            "TASK_CANNOT_DELETE", "Task cannot be deleted because it has been started or has recorded actual hours", HttpStatus.UNPROCESSABLE_ENTITY),
     TASK_ASSIGNEE_NOT_WORKSPACE_MEMBER(
             "TASK_ASSIGNEE_NOT_WORKSPACE_MEMBER", "The assigned user is not an active member of the workspace", HttpStatus.UNPROCESSABLE_ENTITY),
     TASK_ENTITY_MISMATCH(

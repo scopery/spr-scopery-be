@@ -17,7 +17,7 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Component("apRejectSuggestionItemAction")
 public class RejectSuggestionItemAction {
     private final AiPlanningSuggestionRepository suggestions;
     private final AiPlanningSuggestionItemRepository items;

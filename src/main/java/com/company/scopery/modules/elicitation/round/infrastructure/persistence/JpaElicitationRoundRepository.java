@@ -39,6 +39,16 @@ public class JpaElicitationRoundRepository implements ElicitationRoundRepository
     }
 
     @Override
+    public Optional<ElicitationRound> findActiveBySessionId(UUID sessionId) {
+        return springDataRepo.findFirstBySessionIdAndStatus(sessionId, "ACTIVE").map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<ElicitationRound> findFirstBySessionIdOrderByRoundNumberAsc(UUID sessionId) {
+        return springDataRepo.findFirstBySessionIdOrderByRoundNumberAsc(sessionId).map(mapper::toDomain);
+    }
+
+    @Override
     public int countBySessionId(UUID sessionId) {
         return springDataRepo.countBySessionId(sessionId);
     }

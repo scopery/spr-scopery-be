@@ -5,5 +5,6 @@ import java.util.UUID;
 public record StartSessionCommand(
         UUID projectId,
         UUID scopePackageId,
-        String title
+        String title,
+        String language
 ) {}

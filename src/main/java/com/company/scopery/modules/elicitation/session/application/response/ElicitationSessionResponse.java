@@ -11,6 +11,7 @@ public record ElicitationSessionResponse(
         UUID scopePackageId,
         String title,
         String status,
+        String language,
         String createdBy,
         Instant createdAt,
         Instant updatedAt
@@ -22,6 +23,7 @@ public record ElicitationSessionResponse(
                 session.scopePackageId(),
                 session.title(),
                 session.status().name(),
+                session.language(),
                 session.createdBy(),
                 session.createdAt(),
                 session.updatedAt()

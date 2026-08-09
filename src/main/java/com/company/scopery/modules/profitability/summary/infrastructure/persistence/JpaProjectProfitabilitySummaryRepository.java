@@ -1,14 +1,14 @@
 package com.company.scopery.modules.profitability.summary.infrastructure.persistence;
 import com.company.scopery.modules.profitability.summary.domain.model.*;
-import com.company.scopery.modules.profitability.summary.infrastructure.mapper.ProfitabilitySummaryPersistenceMapper;
+import com.company.scopery.modules.profitability.summary.infrastructure.mapper.ProjectProfitabilitySummaryPersistenceMapper;
 import org.springframework.stereotype.Repository;
 import java.util.*;
 @Repository
 public class JpaProjectProfitabilitySummaryRepository implements ProjectProfitabilitySummaryRepository {
     private final SpringDataProjectProfitabilitySummaryJpaRepository springData;
-    private final ProfitabilitySummaryPersistenceMapper mapper;
+    private final ProjectProfitabilitySummaryPersistenceMapper mapper;
     public JpaProjectProfitabilitySummaryRepository(SpringDataProjectProfitabilitySummaryJpaRepository springData,
-                                                    ProfitabilitySummaryPersistenceMapper mapper) {
+                                                    ProjectProfitabilitySummaryPersistenceMapper mapper) {
         this.springData = springData; this.mapper = mapper;
     }
     @Override public ProjectProfitabilitySummary save(ProjectProfitabilitySummary s) {

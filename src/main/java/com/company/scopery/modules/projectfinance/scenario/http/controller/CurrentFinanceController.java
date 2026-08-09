@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-@RestController
+@RestController("pfCurrentFinanceController")
 @RequestMapping(ProjectFinanceApiPaths.CURRENT_FINANCE)
 @Tag(name = "Project Finance - Current")
 public class CurrentFinanceController {

@@ -63,6 +63,17 @@ public class JpaWbsNodeRepository implements WbsNodeRepository {
     }
 
     @Override
+    public boolean hasAnyChildrenOrLinkedTasks(UUID nodeId) {
+        return springDataRepository.hasAnyChildren(nodeId)
+                || springDataRepository.hasAnyLinkedTasks(nodeId);
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        springDataRepository.deleteById(id);
+    }
+
+    @Override
     public List<WbsNode> findAllDescendants(UUID nodeId) {
         return springDataRepository.findById(nodeId)
                 .map(n -> springDataRepository.findAllDescendants(n.getPath())

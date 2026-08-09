@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -26,7 +28,8 @@ public class AiPlanningSuggestionJpaEntity extends AuditableJpaEntity {
     @Column(columnDefinition = "text") private String rationale;
     @Column(name = "confidence_label") private String confidenceLabel;
     @Column(nullable = false) private String status;
-    @Column(name = "source_references_json", columnDefinition = "text") private String sourceReferencesJson;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "source_references_json", columnDefinition = "jsonb") private String sourceReferencesJson;
     @Column(name = "reviewed_at") private Instant reviewedAt;
     @Column(name = "reviewed_by") private UUID reviewedBy;
     @Column(name = "applied_at") private Instant appliedAt;

@@ -23,6 +23,8 @@ public class ElicitationSuggestionItem {
     private Instant executedAt;
     private String errorMessage;
     private String rollbackDataJson;
+    private UUID requirementId;
+    private String chainingContextJson;
     private String createdBy;
     private String updatedBy;
     private Instant createdAt;
@@ -34,7 +36,8 @@ public class ElicitationSuggestionItem {
                                                     String targetEntityType, UUID targetEntityId,
                                                     String targetEntityName, String rationale,
                                                     String changesJson, String preconditionActionsJson,
-                                                    SuggestionItemImpact estimatedImpact) {
+                                                    SuggestionItemImpact estimatedImpact,
+                                                    UUID requirementId, String chainingContextJson) {
         ElicitationSuggestionItem item = new ElicitationSuggestionItem();
         item.id = UUID.randomUUID();
         item.suggestionId = suggestionId;
@@ -47,6 +50,8 @@ public class ElicitationSuggestionItem {
         item.changesJson = changesJson;
         item.preconditionActionsJson = preconditionActionsJson;
         item.estimatedImpact = estimatedImpact;
+        item.requirementId = requirementId;
+        item.chainingContextJson = chainingContextJson;
         item.status = SuggestionItemStatus.PENDING;
         item.createdAt = Instant.now();
         item.updatedAt = item.createdAt;
@@ -60,6 +65,7 @@ public class ElicitationSuggestionItem {
                                                           SuggestionItemImpact estimatedImpact,
                                                           SuggestionItemStatus status, Instant executedAt,
                                                           String errorMessage, String rollbackDataJson,
+                                                          UUID requirementId, String chainingContextJson,
                                                           String createdBy, String updatedBy,
                                                           Instant createdAt, Instant updatedAt) {
         ElicitationSuggestionItem item = new ElicitationSuggestionItem();
@@ -78,6 +84,8 @@ public class ElicitationSuggestionItem {
         item.executedAt = executedAt;
         item.errorMessage = errorMessage;
         item.rollbackDataJson = rollbackDataJson;
+        item.requirementId = requirementId;
+        item.chainingContextJson = chainingContextJson;
         item.createdBy = createdBy;
         item.updatedBy = updatedBy;
         item.createdAt = createdAt;
@@ -131,6 +139,8 @@ public class ElicitationSuggestionItem {
     public Instant executedAt()                  { return executedAt; }
     public String errorMessage()                 { return errorMessage; }
     public String rollbackDataJson()             { return rollbackDataJson; }
+    public UUID requirementId()                  { return requirementId; }
+    public String chainingContextJson()          { return chainingContextJson; }
     public String createdBy()                    { return createdBy; }
     public String updatedBy()                    { return updatedBy; }
     public Instant createdAt()                   { return createdAt; }

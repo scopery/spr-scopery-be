@@ -22,4 +22,8 @@ public interface SpringDataTaskDependencyJpaRepository
     List<TaskDependencyJpaEntity> findActiveDependenciesOutgoing(@Param("taskId") UUID taskId);
 
     List<TaskDependencyJpaEntity> findAllByProjectIdAndStatus(UUID projectId, String status);
+
+    @Query("DELETE FROM TaskDependencyJpaEntity d WHERE d.predecessorTaskId = :taskId OR d.successorTaskId = :taskId")
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+    void deleteAllByTaskId(@Param("taskId") UUID taskId);
 }

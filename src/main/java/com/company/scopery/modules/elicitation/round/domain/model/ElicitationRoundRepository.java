@@ -12,5 +12,9 @@ public interface ElicitationRoundRepository {
 
     List<ElicitationRound> findAllBySessionId(UUID sessionId);
 
+    Optional<ElicitationRound> findActiveBySessionId(UUID sessionId);
+
+    Optional<ElicitationRound> findFirstBySessionIdOrderByRoundNumberAsc(UUID sessionId);
+
     int countBySessionId(UUID sessionId);
 }

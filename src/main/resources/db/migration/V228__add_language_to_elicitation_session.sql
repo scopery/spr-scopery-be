@@ -1,0 +1,2 @@
+ALTER TABLE elicitation_session
+    ADD COLUMN IF NOT EXISTS language VARCHAR(20) NOT NULL DEFAULT 'en';

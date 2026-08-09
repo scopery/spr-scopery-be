@@ -17,6 +17,8 @@ public interface TaskDependencyRepository {
 
     void deleteById(UUID id);
 
+    void deleteAllByTaskId(UUID taskId);
+
     boolean existsByPredecessorAndSuccessorAndType(UUID predecessorId, UUID successorId, TaskDependencyType type);
 
     /** Incoming edges: dependencies where this task is the successor. */

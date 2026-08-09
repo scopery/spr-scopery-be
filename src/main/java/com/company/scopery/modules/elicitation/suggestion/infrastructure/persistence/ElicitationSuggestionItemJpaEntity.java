@@ -69,6 +69,12 @@ public class ElicitationSuggestionItemJpaEntity extends AuditableJpaEntity {
     @Column(name = "rollback_data_json", columnDefinition = "TEXT")
     private String rollbackDataJson;
 
+    @Column(name = "requirement_id")
+    private UUID requirementId;
+
+    @Column(name = "chaining_context_json", columnDefinition = "TEXT")
+    private String chainingContextJson;
+
     @Override
     public UUID getId() { return id; }
 }

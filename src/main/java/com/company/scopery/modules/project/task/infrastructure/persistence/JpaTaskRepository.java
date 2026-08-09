@@ -49,6 +49,11 @@ public class JpaTaskRepository implements TaskRepository {
     }
 
     @Override
+    public void deleteById(UUID id) {
+        springDataRepository.deleteById(id);
+    }
+
+    @Override
     public boolean existsByProjectIdAndCode(UUID projectId, String code) {
         return springDataRepository.existsByProjectIdAndCode(projectId, code);
     }

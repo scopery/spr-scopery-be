@@ -17,7 +17,9 @@ public class ElicitationRoundPersistenceMapper {
         entity.setQuestionsJson(domain.questionsJson());
         entity.setOverallClarity(domain.overallClarity() != null ? domain.overallClarity().name() : null);
         entity.setStatus(domain.status().name());
-        entity.setSubmittedAt(domain.submittedAt());
+        entity.setScopeSnapshotJson(domain.scopeSnapshotJson());
+        entity.setShouldContinue(domain.shouldContinue());
+        entity.setEvaluatedAt(domain.evaluatedAt());
         entity.setCreatedAt(domain.createdAt());
         return entity;
     }
@@ -30,7 +32,9 @@ public class ElicitationRoundPersistenceMapper {
                 entity.getQuestionsJson(),
                 entity.getOverallClarity() != null ? ClarityLevel.valueOf(entity.getOverallClarity()) : null,
                 RoundStatus.valueOf(entity.getStatus()),
-                entity.getSubmittedAt(),
+                entity.getScopeSnapshotJson(),
+                entity.getShouldContinue(),
+                entity.getEvaluatedAt(),
                 entity.getCreatedBy(),
                 entity.getUpdatedBy(),
                 entity.getCreatedAt(),

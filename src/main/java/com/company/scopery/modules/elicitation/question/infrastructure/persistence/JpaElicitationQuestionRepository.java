@@ -45,6 +45,11 @@ public class JpaElicitationQuestionRepository implements ElicitationQuestionRepo
     }
 
     @Override
+    public List<ElicitationQuestion> findAllByRoundId(UUID roundId) {
+        return springDataRepo.findByRoundIdOrderBySequenceAsc(roundId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public int countBySessionId(UUID sessionId) {
         return springDataRepo.countBySessionId(sessionId);
     }

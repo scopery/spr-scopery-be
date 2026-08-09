@@ -37,6 +37,7 @@ public final class ProjectApiPaths {
     public static final String TIMELINE = BASE + "/{projectId}/timeline";
     public static final String PROGRESS_SNAPSHOTS = BASE + "/{projectId}/progress-snapshots";
     public static final String TASK_PROGRESS_SNAPSHOTS = TASKS + "/{taskId}/progress-snapshots";
+    public static final String TASK_ROLE_CONTRIBUTIONS = TASKS + "/{taskId}/role-contributions";
     public static final String DAILY_ALLOCATIONS = BASE + "/{projectId}/daily-allocations";
     public static final String TASK_DAILY_ALLOCATIONS = TASKS + "/{taskId}/daily-allocations";
 

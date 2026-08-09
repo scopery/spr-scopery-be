@@ -12,6 +12,8 @@ public interface SpringDataElicitationQuestionJpaRepository
 
     List<ElicitationQuestionJpaEntity> findBySessionIdOrderBySequenceAsc(UUID sessionId);
 
+    List<ElicitationQuestionJpaEntity> findByRoundIdOrderBySequenceAsc(UUID roundId);
+
     int countBySessionId(UUID sessionId);
 
     @Query("SELECT COALESCE(MAX(q.sequence), 0) FROM ElicitationQuestionJpaEntity q WHERE q.sessionId = :sessionId")

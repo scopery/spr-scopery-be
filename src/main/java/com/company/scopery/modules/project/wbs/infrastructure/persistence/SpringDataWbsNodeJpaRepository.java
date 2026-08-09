@@ -23,8 +23,14 @@ public interface SpringDataWbsNodeJpaRepository
     @Query("SELECT COUNT(t) > 0 FROM com.company.scopery.modules.project.task.infrastructure.persistence.TaskJpaEntity t WHERE t.wbsNodeId = :id AND t.status NOT IN ('ARCHIVED', 'CANCELLED')")
     boolean hasLinkedActiveTasks(@Param("id") UUID id);
 
+    @Query("SELECT COUNT(t) > 0 FROM com.company.scopery.modules.project.task.infrastructure.persistence.TaskJpaEntity t WHERE t.wbsNodeId = :id")
+    boolean hasAnyLinkedTasks(@Param("id") UUID id);
+
     @Query("SELECT COUNT(c) > 0 FROM WbsNodeJpaEntity c WHERE c.parentId = :id AND c.status != 'ARCHIVED'")
     boolean hasActiveChildren(@Param("id") UUID id);
+
+    @Query("SELECT COUNT(c) > 0 FROM WbsNodeJpaEntity c WHERE c.parentId = :id")
+    boolean hasAnyChildren(@Param("id") UUID id);
 
     List<WbsNodeJpaEntity> findAllByProjectId(UUID projectId);
 }

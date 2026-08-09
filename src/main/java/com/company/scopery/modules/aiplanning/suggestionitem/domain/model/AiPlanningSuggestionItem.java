@@ -27,7 +27,7 @@ public record AiPlanningSuggestionItem(
         UUID reviewedBy,
         Instant appliedAt,
         UUID appliedBy,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -39,7 +39,7 @@ public record AiPlanningSuggestionItem(
         return new AiPlanningSuggestionItem(
                 UUID.randomUUID(), suggestionId, projectId, itemType, targetType, targetId, operation,
                 title, description, proposedPayloadJson, rationale, confidenceLabel, SuggestionItemStatus.PROPOSED,
-                null, null, null, null, null, null, 0, now, now);
+                null, null, null, null, null, null, null, now, now);
     }
 
     public AiPlanningSuggestionItem accept(UUID actorId) {

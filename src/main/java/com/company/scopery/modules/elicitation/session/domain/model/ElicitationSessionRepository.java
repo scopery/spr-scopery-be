@@ -13,4 +13,6 @@ public interface ElicitationSessionRepository {
     List<ElicitationSession> findAllByProjectId(UUID projectId);
 
     boolean existsActiveByProjectIdAndScopePackageId(UUID projectId, UUID scopePackageId);
+
+    Optional<ElicitationSession> findActiveByProjectIdAndScopePackageId(UUID projectId, UUID scopePackageId);
 }

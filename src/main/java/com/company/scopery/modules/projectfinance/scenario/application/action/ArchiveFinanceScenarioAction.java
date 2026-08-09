@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Component
+@Component("pfArchiveFinanceScenarioAction")
 public class ArchiveFinanceScenarioAction {
 
     private final ProjectRepository projects;

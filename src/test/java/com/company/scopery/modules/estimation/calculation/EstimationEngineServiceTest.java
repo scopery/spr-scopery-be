@@ -28,6 +28,7 @@ import com.company.scopery.modules.project.task.domain.model.TaskRepository;
 import com.company.scopery.modules.project.wbs.domain.enums.WbsNodeStatus;
 import com.company.scopery.modules.project.wbs.domain.enums.WbsNodeType;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNode;
+import com.company.scopery.modules.project.taskrolecontribution.domain.model.TaskRoleContributionRepository;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNodeRepository;
 import com.company.scopery.modules.ratecard.resolution.application.service.RateResolutionService;
 import com.company.scopery.modules.ratecard.resolution.domain.RateSnapshot;
@@ -62,6 +63,7 @@ class EstimationEngineServiceTest {
     @Mock ProjectRepository projects;
     @Mock CostRoleResolutionService costRoleResolutionService;
     @Mock RateResolutionService rateResolutionService;
+    @Mock TaskRoleContributionRepository taskRoleContributions;
 
     private EstimationEngineService engine;
     private final UUID projectId = UUID.randomUUID();
@@ -75,7 +77,8 @@ class EstimationEngineServiceTest {
     @BeforeEach
     void setUp() {
         engine = new EstimationEngineService(runs, snapshots, wbsRollups, phaseRollups, summaries,
-                tasks, wbsNodes, projects, costRoleResolutionService, rateResolutionService);
+                tasks, wbsNodes, projects, costRoleResolutionService, rateResolutionService, taskRoleContributions);
+        lenient().when(taskRoleContributions.findAllByProjectId(any())).thenReturn(List.of());
         lenient().when(runs.save(any())).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(snapshots.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(wbsRollups.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));

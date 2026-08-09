@@ -20,6 +20,10 @@ public interface WbsNodeRepository {
 
     boolean hasActiveChildrenOrLinkedTasks(UUID nodeId);
 
+    boolean hasAnyChildrenOrLinkedTasks(UUID nodeId);
+
+    void deleteById(UUID id);
+
     List<WbsNode> findAllDescendants(UUID nodeId);
 
     PageResult<WbsNode> search(UUID projectId, UUID phaseId, UUID parentId, WbsNodeStatus status, PageQuery pageQuery);

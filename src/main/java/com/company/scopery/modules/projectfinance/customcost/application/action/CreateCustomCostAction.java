@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-@Component
+@Component("pfCreateCustomCostAction")
 public class CreateCustomCostAction {
 
     private final ProjectRepository projects;

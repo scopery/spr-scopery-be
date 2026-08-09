@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
-@Component
+@Component("pfUpdateFinanceScenarioAction")
 public class UpdateFinanceScenarioAction {
 
     private final ProjectRepository projects;

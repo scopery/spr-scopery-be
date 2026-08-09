@@ -42,4 +42,10 @@ public class JpaElicitationSessionRepository implements ElicitationSessionReposi
     public boolean existsActiveByProjectIdAndScopePackageId(UUID projectId, UUID scopePackageId) {
         return springDataRepo.existsByProjectIdAndScopePackageIdAndStatus(projectId, scopePackageId, "ACTIVE");
     }
+
+    @Override
+    public Optional<ElicitationSession> findActiveByProjectIdAndScopePackageId(UUID projectId, UUID scopePackageId) {
+        return springDataRepo.findFirstByProjectIdAndScopePackageIdAndStatus(projectId, scopePackageId, "ACTIVE")
+                .map(mapper::toDomain);
+    }
 }

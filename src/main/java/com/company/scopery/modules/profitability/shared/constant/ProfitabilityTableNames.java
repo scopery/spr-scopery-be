@@ -1,19 +1,23 @@
 package com.company.scopery.modules.profitability.shared.constant;
 
 public final class ProfitabilityTableNames {
-    public static final String PROFILE         = "profit_project_profile";
-    public static final String REVENUE_SOURCE  = "profit_revenue_source";
-    public static final String COST_SOURCE     = "profit_cost_source";
-    public static final String SUMMARY         = "profit_project_summary";
-    public static final String THRESHOLD       = "profit_threshold_policy";
-    public static final String ADJUSTMENT      = "profit_adjustment";
-    public static final String RISK_FLAG       = "profit_risk_flag";
-    public static final String SNAPSHOT        = "profit_snapshot";
-    public static final String RATE_CARD       = "profit_rate_card";
-    public static final String PLAN            = "profit_plan";
-    public static final String PLAN_VERSION    = "profit_plan_version";
-    public static final String REVENUE_FORECAST = "profit_revenue_forecast";
-    public static final String COST_FORECAST   = "profit_cost_forecast";
-    public static final String VARIANCE        = "profit_variance";
     private ProfitabilityTableNames() {}
+
+    public static final String PROFILE = "project_profitability_profile";
+    public static final String SUMMARY = "project_profitability_summary";
+    public static final String COST_SOURCE = "project_profitability_cost_source";
+    public static final String REVENUE_SOURCE = "project_profitability_revenue_source";
+    public static final String COST_FORECAST = "project_profitability_cost_forecast";
+    public static final String REVENUE_FORECAST = "project_profitability_revenue_forecast";
+    public static final String PLAN = "project_profitability_plan";
+    public static final String PLAN_VERSION = "project_profitability_plan_version";
+    public static final String ADJUSTMENT = "project_profitability_adjustment";
+    public static final String VARIANCE = "project_profitability_variance";
+    public static final String RISK_FLAG = "project_profitability_risk_flag";
+    public static final String THRESHOLD_POLICY = "project_profitability_threshold_policy";
+    public static final String THRESHOLD = "project_profitability_threshold";
+    public static final String WORKSPACE_RATE_CARD = "workspace_profit_rate_card";
+    public static final String PROJECT_RATE_CARD = "project_profit_rate_card";
+    public static final String RATE_CARD = "project_profit_rate_card";
+    public static final String SNAPSHOT = "project_profitability_snapshot";
 }

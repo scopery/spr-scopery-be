@@ -6,5 +6,6 @@ import java.util.UUID;
 
 public record StartSessionRequest(
         @NotNull UUID scopePackageId,
-        String title
+        String title,
+        String language
 ) {}
