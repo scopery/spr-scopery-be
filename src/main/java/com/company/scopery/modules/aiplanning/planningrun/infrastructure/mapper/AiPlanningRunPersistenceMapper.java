@@ -16,7 +16,7 @@ public class AiPlanningRunPersistenceMapper {
                 PlanningRunType.valueOf(e.getRunType()), PlanningRunStatus.valueOf(e.getStatus()),
                 e.getInputSummaryJson(), e.getContextSnapshotId(), e.getOutputSummaryJson(),
                 e.getErrorCode(), e.getErrorMessage(), e.getStartedAt(), e.getCompletedAt(), e.getTraceId(),
-                e.getVersion() == null ? 0 : e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
 
     public AiPlanningRunJpaEntity toJpaEntity(AiPlanningRun d) {
@@ -41,7 +41,7 @@ public class AiPlanningRunPersistenceMapper {
         e.setStartedAt(d.startedAt());
         e.setCompletedAt(d.completedAt());
         e.setTraceId(d.traceId());
-        e.setVersion(d.version());
+        e.setVersion(d.version());  // null for brand-new entities → isNew()=true → persist(); non-null after first save → merge()
         if (d.createdAt() != null) {
             e.setCreatedAt(d.createdAt());
         }

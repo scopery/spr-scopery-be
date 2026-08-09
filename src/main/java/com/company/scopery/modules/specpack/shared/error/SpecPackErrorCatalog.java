@@ -36,8 +36,11 @@ public enum SpecPackErrorCatalog implements ErrorCatalog {
     // Agent session
     AGENT_SESSION_NOT_FOUND("SPEC_PACK_AGENT_SESSION_NOT_FOUND", "Agent session not found", HttpStatus.NOT_FOUND),
     AGENT_SESSION_NOT_ACTIVE("SPEC_PACK_AGENT_SESSION_NOT_ACTIVE", "Agent session is not active", HttpStatus.UNPROCESSABLE_ENTITY),
+    AGENT_SESSION_WRONG_STAGE("SPEC_PACK_AGENT_SESSION_WRONG_STAGE", "Agent session is not in the expected stage", HttpStatus.UNPROCESSABLE_ENTITY),
     AGENT_STAGE_NOT_FOUND("SPEC_PACK_AGENT_STAGE_NOT_FOUND", "Agent stage not found", HttpStatus.NOT_FOUND),
     AGENT_STAGE_INVALID_STATUS("SPEC_PACK_AGENT_STAGE_INVALID_STATUS", "Agent stage cannot be completed in its current status", HttpStatus.UNPROCESSABLE_ENTITY),
+    AGENT_STAGE_ALREADY_IN_PROGRESS("SPEC_PACK_AGENT_STAGE_ALREADY_IN_PROGRESS", "Stage execution is already in progress", HttpStatus.CONFLICT),
+    OUTLINE_NOT_APPROVED("SPEC_PACK_OUTLINE_NOT_APPROVED", "No approved outline found for this session", HttpStatus.UNPROCESSABLE_ENTITY),
 
     // Clarification
     CLARIFICATION_NOT_FOUND("SPEC_PACK_CLARIFICATION_NOT_FOUND", "Clarification not found", HttpStatus.NOT_FOUND),

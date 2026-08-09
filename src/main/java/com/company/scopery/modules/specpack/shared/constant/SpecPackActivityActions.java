@@ -27,8 +27,10 @@ public final class SpecPackActivityActions {
     public static final String CLARIFICATION_DELETED    = "CLARIFICATION_DELETED";
     public static final String READINESS_UPDATED        = "READINESS_UPDATED";
     public static final String OUTLINE_CREATED          = "OUTLINE_CREATED";
-    public static final String OUTLINE_APPROVED         = "OUTLINE_APPROVED";
-    public static final String PROMPT_RENDERED          = "PROMPT_RENDERED";
+    public static final String OUTLINE_APPROVED              = "OUTLINE_APPROVED";
+    public static final String GENERATE_CONTENT_STARTED     = "GENERATE_CONTENT_STARTED";
+    public static final String GENERATE_CONTENT_COMPLETED   = "GENERATE_CONTENT_COMPLETED";
+    public static final String PROMPT_RENDERED               = "PROMPT_RENDERED";
     public static final String PROMPT_TEMPLATE_PUBLISHED = "PROMPT_TEMPLATE_PUBLISHED";
     public static final String PROMPT_TEMPLATE_DEPRECATED = "PROMPT_TEMPLATE_DEPRECATED";
     private SpecPackActivityActions() {}

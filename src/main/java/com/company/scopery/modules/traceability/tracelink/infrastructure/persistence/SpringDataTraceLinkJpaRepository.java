@@ -31,4 +31,9 @@ public interface SpringDataTraceLinkJpaRepository extends JpaRepository<TraceLin
                              @Param("targetType") String targetType,
                              @Param("targetId") UUID targetId,
                              @Param("linkType") String linkType);
+
+    @Query("SELECT COUNT(t) > 0 FROM TraceLinkJpaEntity t " +
+           "WHERE t.status = 'ACTIVE' AND " +
+           "((t.sourceType = :entityType AND t.sourceId = :entityId) OR (t.targetType = :entityType AND t.targetId = :entityId))")
+    boolean hasAnyActiveLinkForEntity(@Param("entityType") String entityType, @Param("entityId") UUID entityId);
 }

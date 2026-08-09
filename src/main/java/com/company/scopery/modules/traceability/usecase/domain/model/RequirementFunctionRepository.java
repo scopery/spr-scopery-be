@@ -9,4 +9,5 @@ public interface RequirementFunctionRepository {
     boolean exists(UUID requirementId, UUID functionId);
     List<UUID> findFunctionIdsByRequirementId(UUID requirementId);
     List<UUID> findRequirementIdsByFunctionId(UUID functionId);
+    boolean existsByRequirementId(UUID requirementId);
 }

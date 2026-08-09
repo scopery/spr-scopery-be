@@ -64,12 +64,13 @@ public class SpecPackAgentSessionPersistenceMapper {
         entity.setStageStatus(domain.stageStatus().name());
         entity.setResultJson(toJson(domain.resultJson()));
         entity.setCompletedAt(domain.completedAt());
+        entity.setCreatedAt(domain.createdAt());
         return entity;
     }
 
     public SpecPackAgentStage toStageDomain(SpecPackAgentStageJpaEntity entity) {
         return SpecPackAgentStage.reconstitute(
-                entity.getId(),
+                (java.util.UUID) entity.getId(),
                 entity.getSessionId(),
                 AgentStageCode.valueOf(entity.getStageCode()),
                 AgentStageStatus.valueOf(entity.getStageStatus()),

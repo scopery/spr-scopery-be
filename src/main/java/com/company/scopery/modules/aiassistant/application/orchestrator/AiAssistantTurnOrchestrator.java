@@ -52,6 +52,7 @@ import com.company.scopery.modules.aiassistant.workspaceconfig.domain.model.AiAs
 import com.company.scopery.modules.aiassistant.workspaceconfig.domain.model.AiAssistantWorkspaceConfigRepository;
 import com.company.scopery.modules.project.project.domain.model.Project;
 import com.company.scopery.modules.project.project.domain.model.ProjectRepository;
+import com.company.scopery.modules.traceability.aimapping.application.internal.MappingPromptResolverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -110,6 +111,7 @@ public class AiAssistantTurnOrchestrator {
     private final CreateAiActionRequestAction createAiActionRequestAction;
     private final BuildAiActionPlanAction buildAiActionPlanAction;
     private final ObjectMapper objectMapper;
+    private final MappingPromptResolverService promptResolver;
 
     public AiAssistantTurnOrchestrator(AiMessageRepository messageRepository,
                                        AiConversationRepository conversationRepository,
@@ -134,7 +136,8 @@ public class AiAssistantTurnOrchestrator {
                                        AiActionToolRegistryPort aiActionToolRegistryPort,
                                        CreateAiActionRequestAction createAiActionRequestAction,
                                        BuildAiActionPlanAction buildAiActionPlanAction,
-                                       ObjectMapper objectMapper) {
+                                       ObjectMapper objectMapper,
+                                       MappingPromptResolverService promptResolver) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.toolCallRepository = toolCallRepository;
@@ -159,6 +162,7 @@ public class AiAssistantTurnOrchestrator {
         this.createAiActionRequestAction = createAiActionRequestAction;
         this.buildAiActionPlanAction = buildAiActionPlanAction;
         this.objectMapper = objectMapper;
+        this.promptResolver = promptResolver;
     }
 
     public record TurnRequest(
@@ -385,7 +389,7 @@ public class AiAssistantTurnOrchestrator {
                     ? wsConfig.maxOutputTokensOverride() : properties.getMaxOutputTokens();
             String baseSystemPrompt = (wsConfig != null && wsConfig.systemPromptOverride() != null
                     && !wsConfig.systemPromptOverride().isBlank())
-                    ? wsConfig.systemPromptOverride() : "You are Scopery AI Assistant.";
+                    ? wsConfig.systemPromptOverride() : resolveBaseSystemPrompt();
 
             Project project = (req.projectId() != null)
                     ? projectRepository.findById(req.projectId()).orElse(null)
@@ -767,6 +771,19 @@ public class AiAssistantTurnOrchestrator {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private String resolveBaseSystemPrompt() {
+        try {
+            String systemPrompt = promptResolver
+                    .resolveByTemplateCode(properties.getPromptProfileCode())
+                    .systemPrompt();
+            if (systemPrompt != null && !systemPrompt.isBlank()) return systemPrompt;
+        } catch (Exception e) {
+            log.debug("[AiAssistantTurnOrchestrator] Prompt profile {} not in DB, using default base",
+                    properties.getPromptProfileCode());
+        }
+        return "You are Scopery AI Assistant.";
     }
 
     private static String buildSystemPrompt(String base, Project project, ResponseMode mode, String snapshotBlock) {

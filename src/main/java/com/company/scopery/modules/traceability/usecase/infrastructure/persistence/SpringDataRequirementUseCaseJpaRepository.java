@@ -14,4 +14,7 @@ public interface SpringDataRequirementUseCaseJpaRepository extends JpaRepository
 
     @Query("SELECT e.id.requirementId FROM RequirementUseCaseJpaEntity e WHERE e.id.useCaseId = :useCaseId")
     List<UUID> findRequirementIdsByUseCaseId(@Param("useCaseId") UUID useCaseId);
+
+    @Query("SELECT COUNT(e) > 0 FROM RequirementUseCaseJpaEntity e WHERE e.id.requirementId = :requirementId")
+    boolean existsByRequirementId(@Param("requirementId") UUID requirementId);
 }

@@ -41,4 +41,9 @@ public class JpaRequirementUseCaseRepository implements RequirementUseCaseReposi
     public List<UUID> findRequirementIdsByUseCaseId(UUID useCaseId) {
         return springData.findRequirementIdsByUseCaseId(useCaseId);
     }
+
+    @Override
+    public boolean existsByRequirementId(UUID requirementId) {
+        return springData.existsByRequirementId(requirementId);
+    }
 }

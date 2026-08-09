@@ -6,6 +6,7 @@ import com.company.scopery.integration.ai.AiProviderRequest;
 import com.company.scopery.integration.ai.AiProviderResponse;
 import com.company.scopery.modules.knowledge.queryrewriter.domain.model.KnowledgeQueryRewriterConfig;
 import com.company.scopery.modules.knowledge.queryrewriter.domain.model.KnowledgeQueryRewriterConfigRepository;
+import com.company.scopery.modules.traceability.aimapping.application.internal.MappingPromptResolverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,22 +18,26 @@ import java.util.UUID;
 public class KnowledgeQueryRewriterService {
 
     private static final Logger log = LoggerFactory.getLogger(KnowledgeQueryRewriterService.class);
+    private static final String TEMPLATE_CODE = "KNOWLEDGE_QUERY_REWRITER_V1";
 
-    private static final String DEFAULT_PROMPT_TEMPLATE = """
+    private static final String HARDCODED_FALLBACK = """
             Extract the most important search keywords from the following query.
             Return ONLY the keywords in English, space-separated, no punctuation, no explanation.
-            Remove question words and stop words (what, is, are, how, does, the, a, an, do, can, where, when, who, which, about, tell, me, give, show, explain).
-            Query: {query}
+            Remove question words and stop words.
+            Query: {{QUERY}}
             """;
 
     private final KnowledgeQueryRewriterConfigRepository configRepository;
     private final AiProviderAdapterRegistry providerAdapterRegistry;
+    private final MappingPromptResolverService promptResolver;
 
     public KnowledgeQueryRewriterService(
             KnowledgeQueryRewriterConfigRepository configRepository,
-            AiProviderAdapterRegistry providerAdapterRegistry) {
+            AiProviderAdapterRegistry providerAdapterRegistry,
+            MappingPromptResolverService promptResolver) {
         this.configRepository = configRepository;
         this.providerAdapterRegistry = providerAdapterRegistry;
+        this.promptResolver = promptResolver;
     }
 
     public String rewrite(String originalQuery, UUID workspaceId) {
@@ -41,9 +46,13 @@ public class KnowledgeQueryRewriterService {
             return originalQuery;
         }
         try {
-            String prompt = (config.promptTemplate() != null && !config.promptTemplate().isBlank()
-                    ? config.promptTemplate() : DEFAULT_PROMPT_TEMPLATE)
-                    .replace("{query}", originalQuery);
+            String prompt;
+            if (config.promptTemplate() != null && !config.promptTemplate().isBlank()) {
+                // workspace-specific override — legacy {query} syntax preserved for backward compat
+                prompt = config.promptTemplate().replace("{query}", originalQuery);
+            } else {
+                prompt = resolveDbPrompt(originalQuery);
+            }
 
             AiProviderAdapter adapter = providerAdapterRegistry.getAdapter(config.provider());
             AiProviderRequest request = new AiProviderRequest(
@@ -61,6 +70,16 @@ public class KnowledgeQueryRewriterService {
         } catch (Exception e) {
             log.warn("[QueryRewriter] Rewrite failed for workspace={}: {} — falling back to original query", workspaceId, e.getMessage());
             return originalQuery;
+        }
+    }
+
+    private String resolveDbPrompt(String originalQuery) {
+        try {
+            String template = promptResolver.resolveByTemplateCode(TEMPLATE_CODE).userPromptTemplate();
+            return template.replace("{{QUERY}}", originalQuery);
+        } catch (Exception e) {
+            log.debug("[QueryRewriter] DB prompt {} not found, using hardcoded fallback", TEMPLATE_CODE);
+            return HARDCODED_FALLBACK.replace("{{QUERY}}", originalQuery);
         }
     }
 }

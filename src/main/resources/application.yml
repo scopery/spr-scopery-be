@@ -113,6 +113,10 @@ scopery:
         base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
         timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:60}
         api-key: ${OPENAI_API_KEY:}
+      anthropic:
+        base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com/v1}
+        timeout-seconds: ${ANTHROPIC_TIMEOUT_SECONDS:120}
+        api-key: ${ANTHROPIC_API_KEY:}
 
   storage:
     provider: s3-compatible

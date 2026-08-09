@@ -6,4 +6,5 @@ public interface RequirementRepository {
     List<Requirement> findByProjectId(UUID projectId);
     List<Requirement> findByProjectIdAndScopePackageId(UUID projectId, UUID scopePackageId);
     boolean existsByProjectIdAndCode(UUID projectId, String code);
+    void delete(UUID id);
 }

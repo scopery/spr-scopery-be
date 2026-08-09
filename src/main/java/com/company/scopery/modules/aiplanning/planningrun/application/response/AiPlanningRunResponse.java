@@ -9,7 +9,7 @@ public record AiPlanningRunResponse(
         UUID id, UUID projectId, UUID workspaceId, UUID actorUserId, UUID agentId,
         String runType, String status, String inputSummaryJson, UUID contextSnapshotId,
         String outputSummaryJson, String errorCode, String errorMessage,
-        Instant startedAt, Instant completedAt, String traceId, int version,
+        Instant startedAt, Instant completedAt, String traceId, Integer version,
         Instant createdAt, Instant updatedAt
 ) {
     public static AiPlanningRunResponse from(AiPlanningRun r) {

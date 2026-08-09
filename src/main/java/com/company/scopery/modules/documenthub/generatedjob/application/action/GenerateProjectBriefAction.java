@@ -10,6 +10,7 @@ import com.company.scopery.modules.aiassistant.application.service.ProjectContex
 import com.company.scopery.modules.aiassistant.workspaceconfig.domain.model.AiAssistantWorkspaceConfig;
 import com.company.scopery.modules.aiassistant.workspaceconfig.domain.model.AiAssistantWorkspaceConfigRepository;
 import com.company.scopery.modules.documenthub.generatedjob.application.response.ProjectBriefPreviewResponse;
+import com.company.scopery.modules.traceability.aimapping.application.internal.MappingPromptResolverService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -50,35 +51,29 @@ public class GenerateProjectBriefAction {
             LIMIT 1
             """;
 
-    private static final String PROMPT_TEMPLATE = """
-            You are a project management AI. Generate a concise project summary in valid JSON only (no markdown, no explanation).
+    private static final String TEMPLATE_CODE = "PROJECT_BRIEF_GENERATION_V1";
+
+    private static final String FALLBACK_PROMPT = """
+            You are a project management AI. Generate a concise project summary in valid JSON only.
 
             Project:
-            - Name: {name}
-            - Code: {code}
-            - Status: {status}
-            - Description: {description}
-            - Planned: {startDate} → {endDate}
+            - Name: {{PROJECT_NAME}}
+            - Code: {{PROJECT_CODE}}
+            - Status: {{PROJECT_STATUS}}
+            - Description: {{PROJECT_DESCRIPTION}}
+            - Planned: {{START_DATE}} → {{END_DATE}}
 
-            {snapshot}
+            {{PROJECT_SNAPSHOT}}
 
-            Respond with ONLY this JSON structure:
-            {
-              "title": "Project Summary: {name}",
-              "sections": [
-                {"heading": "Overview", "body": "<2-3 sentence summary>"},
-                {"heading": "Current Status", "bullets": ["<key status point>"]},
-                {"heading": "Key Concerns", "bullets": ["<risk or issue>"]},
-                {"heading": "Recommended Next Steps", "bullets": ["<action>"]}\s
-              ],
-              "assumptions": []
-            }
+            Respond with ONLY this JSON:
+            {"title":"Project Summary: {{PROJECT_NAME}}","sections":[{"heading":"Overview","body":"<summary>"},{"heading":"Current Status","bullets":["<point>"]},{"heading":"Key Concerns","bullets":["<risk>"]},{"heading":"Recommended Next Steps","bullets":["<action>"]}],"assumptions":[]}
             """;
 
     private final NamedParameterJdbcTemplate jdbc;
     private final AiAssistantWorkspaceConfigRepository configRepository;
     private final AiProviderAdapterRegistry adapterRegistry;
     private final ProjectContextSnapshotService snapshotService;
+    private final MappingPromptResolverService promptResolver;
     private final ObjectMapper objectMapper;
 
     public GenerateProjectBriefAction(
@@ -86,11 +81,13 @@ public class GenerateProjectBriefAction {
             AiAssistantWorkspaceConfigRepository configRepository,
             AiProviderAdapterRegistry adapterRegistry,
             ProjectContextSnapshotService snapshotService,
+            MappingPromptResolverService promptResolver,
             ObjectMapper objectMapper) {
         this.jdbc = jdbc;
         this.configRepository = configRepository;
         this.adapterRegistry = adapterRegistry;
         this.snapshotService = snapshotService;
+        this.promptResolver = promptResolver;
         this.objectMapper = objectMapper;
     }
 
@@ -151,14 +148,21 @@ public class GenerateProjectBriefAction {
     }
 
     private String buildPrompt(Map<String, Object> row, String snapshot) {
-        return PROMPT_TEMPLATE
-                .replace("{name}", str(row.get("name")))
-                .replace("{code}", str(row.get("code")))
-                .replace("{status}", str(row.get("status")))
-                .replace("{description}", str(row.get("description")))
-                .replace("{startDate}", str(row.get("start_date")))
-                .replace("{endDate}", str(row.get("end_date")))
-                .replace("{snapshot}", snapshot);
+        String template;
+        try {
+            template = promptResolver.resolveByTemplateCode(TEMPLATE_CODE).userPromptTemplate();
+        } catch (Exception e) {
+            log.warn("[ProjectBrief] Prompt template {} not found in DB, using fallback", TEMPLATE_CODE);
+            template = FALLBACK_PROMPT;
+        }
+        return template
+                .replace("{{PROJECT_NAME}}", str(row.get("name")))
+                .replace("{{PROJECT_CODE}}", str(row.get("code")))
+                .replace("{{PROJECT_STATUS}}", str(row.get("status")))
+                .replace("{{PROJECT_DESCRIPTION}}", str(row.get("description")))
+                .replace("{{START_DATE}}", str(row.get("start_date")))
+                .replace("{{END_DATE}}", str(row.get("end_date")))
+                .replace("{{PROJECT_SNAPSHOT}}", snapshot);
     }
 
     private ProjectBriefPreviewResponse.Preview parsePreview(String rawText, String projectName) {

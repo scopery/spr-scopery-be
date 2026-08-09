@@ -613,6 +613,25 @@ public final class AiAgentExceptions {
                 "OpenAI API returned an invalid response: " + reason, Map.of("reason", reason));
     }
 
+    public static AppException anthropicApiKeyMissing() {
+        return new AppException(AiAgentErrorCatalog.ANTHROPIC_API_KEY_MISSING);
+    }
+
+    public static AppException anthropicApiCallFailed(int statusCode) {
+        return new AppException(AiAgentErrorCatalog.ANTHROPIC_API_CALL_FAILED,
+                "Anthropic API call failed with status " + statusCode,
+                Map.of("statusCode", statusCode));
+    }
+
+    public static AppException anthropicApiTimeout() {
+        return new AppException(AiAgentErrorCatalog.ANTHROPIC_API_TIMEOUT);
+    }
+
+    public static AppException anthropicApiResponseInvalid(String reason) {
+        return new AppException(AiAgentErrorCatalog.ANTHROPIC_API_RESPONSE_INVALID,
+                "Anthropic API returned an invalid response: " + reason, Map.of("reason", reason));
+    }
+
     // ── Provider Secret ───────────────────────────────────────────────────────
 
     public static AppException providerSecretNotFound(UUID id) {

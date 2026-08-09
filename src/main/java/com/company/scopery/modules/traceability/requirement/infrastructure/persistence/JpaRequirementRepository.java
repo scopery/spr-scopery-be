@@ -12,4 +12,5 @@ public class JpaRequirementRepository implements RequirementRepository {
         return springData.findByProjectIdAndScopePackageIdOrderByCreatedAtDesc(projectId, scopePackageId).stream().map(mapper::toDomain).toList();
     }
     @Override public boolean existsByProjectIdAndCode(UUID projectId, String code){return springData.existsByProjectIdAndCode(projectId,code);}
+    @Override public void delete(UUID id){springData.deleteById(id);}
 }

@@ -3,10 +3,12 @@ package com.company.scopery.modules.specpack.agentsession.http.controller;
 import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.specpack.agentsession.application.action.AdvanceStageAction;
 import com.company.scopery.modules.specpack.agentsession.application.action.CancelSessionAction;
+import com.company.scopery.modules.specpack.agentsession.application.action.ExecuteStageAction;
 import com.company.scopery.modules.specpack.agentsession.application.action.StartAgentSessionAction;
 import com.company.scopery.modules.specpack.agentsession.application.action.UpdateReadinessAction;
 import com.company.scopery.modules.specpack.agentsession.application.command.AdvanceStageCommand;
 import com.company.scopery.modules.specpack.agentsession.application.command.CancelSessionCommand;
+import com.company.scopery.modules.specpack.agentsession.application.command.ExecuteStageCommand;
 import com.company.scopery.modules.specpack.agentsession.application.command.StartAgentSessionCommand;
 import com.company.scopery.modules.specpack.agentsession.application.command.UpdateReadinessCommand;
 import com.company.scopery.modules.specpack.agentsession.application.response.AgentSessionResponse;
@@ -33,17 +35,20 @@ public class SpecPackAgentSessionController {
     private final AdvanceStageAction advanceStageAction;
     private final CancelSessionAction cancelAction;
     private final UpdateReadinessAction updateReadinessAction;
+    private final ExecuteStageAction executeStageAction;
     private final AgentSessionQueryService queryService;
 
     public SpecPackAgentSessionController(StartAgentSessionAction startAction,
                                            AdvanceStageAction advanceStageAction,
                                            CancelSessionAction cancelAction,
                                            UpdateReadinessAction updateReadinessAction,
+                                           ExecuteStageAction executeStageAction,
                                            AgentSessionQueryService queryService) {
         this.startAction = startAction;
         this.advanceStageAction = advanceStageAction;
         this.cancelAction = cancelAction;
         this.updateReadinessAction = updateReadinessAction;
+        this.executeStageAction = executeStageAction;
         this.queryService = queryService;
     }
 
@@ -99,5 +104,12 @@ public class SpecPackAgentSessionController {
     public ApiResponse<AgentSessionResponse> updateReadiness(@PathVariable UUID projectId,
                                                               @PathVariable UUID sessionId) {
         return ApiResponse.success(updateReadinessAction.execute(new UpdateReadinessCommand(projectId, sessionId)));
+    }
+
+    @Operation(summary = "Execute AI content generation for the GENERATE_CONTENT stage")
+    @PostMapping("/{sessionId}/execute-generate")
+    public ApiResponse<AgentSessionResponse> executeGenerate(@PathVariable UUID projectId,
+                                                              @PathVariable UUID sessionId) {
+        return ApiResponse.success(executeStageAction.execute(new ExecuteStageCommand(projectId, sessionId)));
     }
 }

@@ -738,6 +738,8 @@ public final class IamAuthorities {
             IamPermissionCodes.REQUIREMENT_MANAGEMENT, IamActionCodes.UPDATE, "REQUIREMENT_UPDATE");
     public static final IamPermissionAction REQUIREMENT_APPROVE = IamPermissionAction.of(
             IamPermissionCodes.REQUIREMENT_MANAGEMENT, IamActionCodes.APPROVE, "REQUIREMENT_APPROVE");
+    public static final IamPermissionAction REQUIREMENT_DELETE = IamPermissionAction.of(
+            IamPermissionCodes.REQUIREMENT_MANAGEMENT, IamActionCodes.DELETE, "REQUIREMENT_DELETE");
 
     // EXTERNAL PARTY (Phase 29)
     public static final IamPermissionAction EXTERNAL_PARTY_VIEW = IamPermissionAction.of(
@@ -1142,6 +1144,7 @@ public final class IamAuthorities {
                 REQUIREMENT_CREATE,
                 REQUIREMENT_UPDATE,
                 REQUIREMENT_APPROVE,
+                REQUIREMENT_DELETE,
                 EXTERNAL_PARTY_VIEW,
                 EXTERNAL_PARTY_CREATE,
                 EXTERNAL_PARTY_UPDATE,
@@ -1530,6 +1533,7 @@ public final class IamAuthorities {
                 REQUIREMENT_CREATE,
                 REQUIREMENT_UPDATE,
                 REQUIREMENT_APPROVE,
+                REQUIREMENT_DELETE,
                 EXTERNAL_PARTY_VIEW,
                 EXTERNAL_PARTY_CREATE,
                 EXTERNAL_PARTY_UPDATE,

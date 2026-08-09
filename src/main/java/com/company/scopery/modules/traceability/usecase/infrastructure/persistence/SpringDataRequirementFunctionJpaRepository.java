@@ -14,4 +14,7 @@ public interface SpringDataRequirementFunctionJpaRepository extends JpaRepositor
 
     @Query("SELECT e.id.requirementId FROM RequirementFunctionJpaEntity e WHERE e.id.functionId = :functionId")
     List<UUID> findRequirementIdsByFunctionId(@Param("functionId") UUID functionId);
+
+    @Query("SELECT COUNT(e) > 0 FROM RequirementFunctionJpaEntity e WHERE e.id.requirementId = :requirementId")
+    boolean existsByRequirementId(@Param("requirementId") UUID requirementId);
 }

@@ -27,7 +27,7 @@ public record AiPlanningRun(
         Instant startedAt,
         Instant completedAt,
         String traceId,
-        int version,
+        Integer version,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -37,7 +37,7 @@ public record AiPlanningRun(
         return new AiPlanningRun(
                 UUID.randomUUID(), projectId, workspaceId, actorUserId, agentId, null, null, null, null, null,
                 runType, PlanningRunStatus.PENDING, inputSummaryJson, null, null, null, null,
-                now, null, traceId, 0, now, now);
+                now, null, traceId, null, now, now);
     }
 
     public AiPlanningRun markRunning() {

@@ -1,5 +1,6 @@
 package com.company.scopery.modules.specpack.outline.infrastructure.persistence;
 
+import com.company.scopery.common.audit.AuditableJpaEntity;
 import com.company.scopery.modules.specpack.shared.constant.SpecPackTableNames;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,9 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -18,7 +16,6 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 @Table(
         name = SpecPackTableNames.SPEC_PACK_OUTLINE,
         indexes = {
@@ -27,7 +24,7 @@ import java.util.UUID;
                 @Index(name = "idx_spec_pack_outline_version", columnList = "session_id,version_number")
         }
 )
-public class SpecPackOutlineJpaEntity {
+public class SpecPackOutlineJpaEntity extends AuditableJpaEntity {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
@@ -49,11 +46,8 @@ public class SpecPackOutlineJpaEntity {
     @Column(name = "approved_at")
     private Instant approvedAt;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @CreatedBy
-    @Column(name = "created_by", updatable = false)
-    private String createdBy;
+    @Override
+    public UUID getId() {
+        return id;
+    }
 }

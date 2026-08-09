@@ -10,6 +10,8 @@ import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -44,11 +46,13 @@ public class AiPlanningRunJpaEntity extends AuditableJpaEntity {
     private String runType;
     @Column(nullable = false)
     private String status;
-    @Column(name = "input_summary_json", columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "input_summary_json", columnDefinition = "jsonb")
     private String inputSummaryJson;
     @Column(name = "context_snapshot_id")
     private UUID contextSnapshotId;
-    @Column(name = "output_summary_json", columnDefinition = "text")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "output_summary_json", columnDefinition = "jsonb")
     private String outputSummaryJson;
     @Column(name = "error_code")
     private String errorCode;
@@ -62,4 +66,22 @@ public class AiPlanningRunJpaEntity extends AuditableJpaEntity {
     private String traceId;
     @Version
     private Integer version;
+
+    /**
+     * Override isNew() to use @Version as the new-entity signal.
+     * AiPlanningRun.create() sets createdAt=Instant.now() (non-null), so the inherited
+     * createdAt-null check from AuditableJpaEntity always returns false, causing Spring Data
+     * to call merge() instead of persist() for new entities, which triggers a stale-version
+     * OptimisticLockException. Using version==null is the correct indicator here because
+     * Hibernate only sets @Version after the first INSERT.
+     */
+    @Override
+    public boolean isNew() {
+        return version == null;
+    }
+
+    // NOTE: getId() is intentionally NOT overridden here.
+    // Lombok @Getter generates: public UUID getId() { return id; }
+    // which satisfies the Persistable<Object> contract via covariant return type.
+    // An explicit Object-typed override would break the mapper's type inference.
 }

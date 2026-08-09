@@ -8,5 +8,11 @@ public record AiProviderRequest(
         String model,
         String renderedPrompt,
         BigDecimal temperature,
-        Integer maxOutputTokens
-) {}
+        Integer maxOutputTokens,
+        String systemPrompt
+) {
+    public AiProviderRequest(UUID providerId, String model, String renderedPrompt,
+                              BigDecimal temperature, Integer maxOutputTokens) {
+        this(providerId, model, renderedPrompt, temperature, maxOutputTokens, null);
+    }
+}

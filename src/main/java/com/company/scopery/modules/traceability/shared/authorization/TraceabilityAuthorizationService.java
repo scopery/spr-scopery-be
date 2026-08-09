@@ -11,6 +11,7 @@ public class TraceabilityAuthorizationService {
     public void requireCreate(UUID projectId){requireProject(projectId, IamAuthorities.REQUIREMENT_CREATE);}
     public void requireUpdate(UUID projectId){requireProject(projectId, IamAuthorities.REQUIREMENT_UPDATE);}
     public void requireApprove(UUID projectId){requireProject(projectId, IamAuthorities.REQUIREMENT_APPROVE);}
+    public void requireDelete(UUID projectId){requireProject(projectId, IamAuthorities.REQUIREMENT_DELETE);}
     public void requireWorkspaceView(UUID workspaceId){requireWorkspace(workspaceId, IamAuthorities.REQUIREMENT_VIEW);}
     public void requireWorkspaceCreate(UUID workspaceId){requireWorkspace(workspaceId, IamAuthorities.REQUIREMENT_CREATE);}
     private void requireProject(UUID projectId, IamPermissionAction a){

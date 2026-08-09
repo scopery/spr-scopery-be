@@ -43,4 +43,9 @@ public class JpaTraceLinkRepository implements TraceLinkRepository {
                                     String targetType, UUID targetId, String linkType) {
         return springData.existsActiveLink(projectId, sourceType, sourceId, targetType, targetId, linkType);
     }
+
+    @Override
+    public boolean hasAnyActiveLinkForEntity(String entityType, UUID entityId) {
+        return springData.hasAnyActiveLinkForEntity(entityType, entityId);
+    }
 }

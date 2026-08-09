@@ -77,7 +77,8 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     REQUIREMENT_FUNCTION_DUPLICATE("REQUIREMENT_FUNCTION_DUPLICATE", "Requirement already linked to this function", HttpStatus.CONFLICT),
     REQUIREMENT_FUNCTION_NOT_FOUND("REQUIREMENT_FUNCTION_NOT_FOUND", "Requirement-function link not found", HttpStatus.NOT_FOUND),
     REQUIREMENT_USE_CASE_DUPLICATE("REQUIREMENT_USE_CASE_DUPLICATE", "Requirement already linked to this use case", HttpStatus.CONFLICT),
-    REQUIREMENT_USE_CASE_NOT_FOUND("REQUIREMENT_USE_CASE_NOT_FOUND", "Requirement-use case link not found", HttpStatus.NOT_FOUND);
+    REQUIREMENT_USE_CASE_NOT_FOUND("REQUIREMENT_USE_CASE_NOT_FOUND", "Requirement-use case link not found", HttpStatus.NOT_FOUND),
+    REQUIREMENT_HAS_LINKS("REQUIREMENT_HAS_LINKS", "Requirement has active links and cannot be permanently deleted", HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

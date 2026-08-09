@@ -41,6 +41,7 @@ public class RequirementController {
     private final DeferRequirementAction defer;
     private final MarkImplementedRequirementAction markImplemented;
     private final ArchiveRequirementAction archive;
+    private final DeleteRequirementAction delete;
     private final LinkTestCasesToRequirementAction linkTestCases;
     private final SetRequiresUseCaseAction setRequiresUseCase;
     private final RequirementQueryService query;
@@ -52,6 +53,7 @@ public class RequirementController {
                                   DeferRequirementAction defer,
                                   MarkImplementedRequirementAction markImplemented,
                                   ArchiveRequirementAction archive,
+                                  DeleteRequirementAction delete,
                                   LinkTestCasesToRequirementAction linkTestCases,
                                   SetRequiresUseCaseAction setRequiresUseCase,
                                   RequirementQueryService query,
@@ -59,7 +61,8 @@ public class RequirementController {
                                   ObjectMapper objectMapper) {
         this.create = create; this.update = update; this.approve = approve; this.reject = reject;
         this.defer = defer; this.markImplemented = markImplemented; this.archive = archive;
-        this.linkTestCases = linkTestCases; this.setRequiresUseCase = setRequiresUseCase; this.query = query;
+        this.delete = delete; this.linkTestCases = linkTestCases;
+        this.setRequiresUseCase = setRequiresUseCase; this.query = query;
         this.bulkJobService = bulkJobService; this.objectMapper = objectMapper;
     }
 
@@ -141,6 +144,13 @@ public class RequirementController {
     @Operation(summary = "Archive requirement")
     public ApiResponse<RequirementResponse> archive(@PathVariable UUID projectId, @PathVariable UUID requirementId) {
         return ApiResponse.success(archive.execute(new ArchiveRequirementCommand(requirementId, projectId)));
+    }
+
+    @DeleteMapping("/{requirementId}")
+    @Operation(summary = "Permanently delete a requirement (only if it has no active links)")
+    public ApiResponse<Void> delete(@PathVariable UUID projectId, @PathVariable UUID requirementId) {
+        delete.execute(new DeleteRequirementCommand(projectId, requirementId));
+        return ApiResponse.success(null);
     }
 
     @PostMapping("/{requirementId}/test-case-links")

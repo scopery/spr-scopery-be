@@ -86,6 +86,15 @@ public final class SpecPackExceptions {
     public static AppException agentStageInvalidStatus(String stageCode, String status) {
         return new AppException(SpecPackErrorCatalog.AGENT_STAGE_INVALID_STATUS, "Stage " + stageCode + " cannot be completed from status " + status, Map.of("stageCode", stageCode, "status", status));
     }
+    public static AppException agentSessionWrongStage(UUID sessionId, String expectedStage) {
+        return new AppException(SpecPackErrorCatalog.AGENT_SESSION_WRONG_STAGE, "Session " + sessionId + " is not in stage " + expectedStage, Map.of("sessionId", sessionId == null ? "" : sessionId, "expectedStage", expectedStage));
+    }
+    public static AppException agentStageAlreadyInProgress(UUID sessionId) {
+        return new AppException(SpecPackErrorCatalog.AGENT_STAGE_ALREADY_IN_PROGRESS, "Stage execution already in progress for session: " + sessionId, Map.of("sessionId", sessionId == null ? "" : sessionId));
+    }
+    public static AppException outlineNotApproved(UUID sessionId) {
+        return new AppException(SpecPackErrorCatalog.OUTLINE_NOT_APPROVED, "No approved outline found for session: " + sessionId, Map.of("sessionId", sessionId == null ? "" : sessionId));
+    }
 
     // Clarification
     public static AppException clarificationNotFound(UUID id) {

@@ -41,4 +41,9 @@ public class JpaRequirementFunctionRepository implements RequirementFunctionRepo
     public List<UUID> findRequirementIdsByFunctionId(UUID functionId) {
         return springData.findRequirementIdsByFunctionId(functionId);
     }
+
+    @Override
+    public boolean existsByRequirementId(UUID requirementId) {
+        return springData.existsByRequirementId(requirementId);
+    }
 }

@@ -449,10 +449,11 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
                 new RightDef("DOCUMENT_HUB_UPDATE",  "Update Document Hub",  "Update project documents",         "DOCUMENT_HUB"),
                 new RightDef("DOCUMENT_HUB_APPROVE", "Approve Document Hub", "Approve project documents",        "DOCUMENT_HUB"),
                 // REQUIREMENT
-                new RightDef("REQUIREMENT_VIEW",    "View Requirement",    "View requirements",                  "REQUIREMENT"),
-                new RightDef("REQUIREMENT_CREATE",  "Create Requirement",  "Create requirements",                "REQUIREMENT"),
-                new RightDef("REQUIREMENT_UPDATE",  "Update Requirement",  "Update requirements",                "REQUIREMENT"),
-                new RightDef("REQUIREMENT_APPROVE", "Approve Requirement", "Approve requirements",               "REQUIREMENT"),
+                new RightDef("REQUIREMENT_VIEW",    "View Requirement",    "View requirements",                              "REQUIREMENT"),
+                new RightDef("REQUIREMENT_CREATE",  "Create Requirement",  "Create requirements",                            "REQUIREMENT"),
+                new RightDef("REQUIREMENT_UPDATE",  "Update Requirement",  "Update requirements",                            "REQUIREMENT"),
+                new RightDef("REQUIREMENT_APPROVE", "Approve Requirement", "Approve requirements",                           "REQUIREMENT"),
+                new RightDef("REQUIREMENT_DELETE",  "Delete Requirement",  "Permanently delete unlinked requirements",       "REQUIREMENT"),
                 // EXTERNAL PARTY
                 new RightDef("EXTERNAL_PARTY_VIEW",   "View External Party",   "View external organizations and contacts", "EXTERNAL_PARTY"),
                 new RightDef("EXTERNAL_PARTY_CREATE", "Create External Party", "Create external organizations",           "EXTERNAL_PARTY"),

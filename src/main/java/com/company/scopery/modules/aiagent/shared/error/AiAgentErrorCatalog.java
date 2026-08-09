@@ -717,6 +717,26 @@ public enum AiAgentErrorCatalog implements ErrorCatalog {
             "OpenAI API returned an invalid response",
             HttpStatus.BAD_GATEWAY),
 
+    ANTHROPIC_API_KEY_MISSING(
+            "ANTHROPIC_API_KEY_MISSING",
+            "Anthropic API key is not configured",
+            HttpStatus.INTERNAL_SERVER_ERROR),
+
+    ANTHROPIC_API_CALL_FAILED(
+            "ANTHROPIC_API_CALL_FAILED",
+            "Anthropic API call failed",
+            HttpStatus.BAD_GATEWAY),
+
+    ANTHROPIC_API_TIMEOUT(
+            "ANTHROPIC_API_TIMEOUT",
+            "Anthropic API call timed out",
+            HttpStatus.GATEWAY_TIMEOUT),
+
+    ANTHROPIC_API_RESPONSE_INVALID(
+            "ANTHROPIC_API_RESPONSE_INVALID",
+            "Anthropic API returned an invalid response",
+            HttpStatus.BAD_GATEWAY),
+
     // ── Provider Secret ───────────────────────────────────────────────────────
 
     PROVIDER_SECRET_NOT_FOUND(

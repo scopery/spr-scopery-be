@@ -68,4 +68,5 @@ public final class TraceabilityExceptions {
     public static AppException requirementFunctionNotFound(UUID reqId, UUID fnId){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_FUNCTION_NOT_FOUND,"Requirement-function link not found",Map.of("requirementId",reqId==null?"":reqId,"functionId",fnId==null?"":fnId));}
     public static AppException requirementUseCaseDuplicate(){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_DUPLICATE);}
     public static AppException requirementUseCaseNotFound(UUID reqId, UUID ucId){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_NOT_FOUND,"Requirement-use case link not found",Map.of("requirementId",reqId==null?"":reqId,"useCaseId",ucId==null?"":ucId));}
+    public static AppException requirementHasLinks(UUID id){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_HAS_LINKS,"Requirement still has active links: "+id,Map.of("id",id==null?"":id));}
 }

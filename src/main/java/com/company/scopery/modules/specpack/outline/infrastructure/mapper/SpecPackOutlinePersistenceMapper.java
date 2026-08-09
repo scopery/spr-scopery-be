@@ -31,6 +31,7 @@ public class SpecPackOutlinePersistenceMapper {
         entity.setOutlineJson(toJson(domain.outlineJson()));
         entity.setStatus(domain.status().name());
         entity.setApprovedAt(domain.approvedAt());
+        entity.setCreatedAt(domain.createdAt());
         return entity;
     }
 

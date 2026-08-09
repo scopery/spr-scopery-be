@@ -8,4 +8,5 @@ public interface TraceLinkRepository {
     List<TraceLink> findByProjectId(UUID projectId);
     List<TraceLink> findActiveBySourceAndTarget(UUID projectId, String sourceType, UUID sourceId, String targetType, UUID targetId, String linkType);
     boolean existsActiveLink(UUID projectId, String sourceType, UUID sourceId, String targetType, UUID targetId, String linkType);
+    boolean hasAnyActiveLinkForEntity(String entityType, UUID entityId);
 }

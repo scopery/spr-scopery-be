@@ -9,4 +9,5 @@ public interface RequirementUseCaseRepository {
     boolean exists(UUID requirementId, UUID useCaseId);
     List<UUID> findUseCaseIdsByRequirementId(UUID requirementId);
     List<UUID> findRequirementIdsByUseCaseId(UUID useCaseId);
+    boolean existsByRequirementId(UUID requirementId);
 }
