@@ -12,6 +12,8 @@ public interface ElicitationSuggestionRepository {
 
     Optional<ElicitationSuggestion> findByRoundId(UUID roundId);
 
+    void deleteWithItemsByRoundId(UUID roundId);
+
     ElicitationSuggestionItem saveItem(ElicitationSuggestionItem item);
 
     List<ElicitationSuggestionItem> saveAllItems(List<ElicitationSuggestionItem> items);

@@ -9,4 +9,6 @@ public interface SpringDataElicitationSuggestionItemJpaRepository
         extends JpaRepository<ElicitationSuggestionItemJpaEntity, UUID> {
 
     List<ElicitationSuggestionItemJpaEntity> findBySuggestionIdOrderBySequenceAsc(UUID suggestionId);
+
+    void deleteBySuggestionId(UUID suggestionId);
 }

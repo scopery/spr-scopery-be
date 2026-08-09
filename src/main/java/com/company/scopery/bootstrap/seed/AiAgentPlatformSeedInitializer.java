@@ -278,16 +278,28 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
                                BigDecimal temperature, Integer maxTokens) {
         if (agentId == null) return;
         PromptTemplateCode code = PromptTemplateCode.of(templateCode);
-        if (promptTemplateRepository.existsByAgentIdAndCode(agentId, code)) return;
 
-        PromptTemplate template = promptTemplateRepository.save(
-                PromptTemplate.create(agentId, templateName, code, templateDesc));
+        PromptTemplate template;
+        if (!promptTemplateRepository.existsByAgentIdAndCode(agentId, code)) {
+            template = promptTemplateRepository.save(
+                    PromptTemplate.create(agentId, templateName, code, templateDesc));
+        } else {
+            // Template exists — skip if any version already present
+            var page = promptTemplateRepository.findAll(agentId, null, null, PageQuery.of(0, 100));
+            template = page.content().stream()
+                    .filter(t -> t.code().value().equals(templateCode))
+                    .findFirst().orElse(null);
+            if (template == null) return;
+            var versionPage = promptVersionRepository.findAll(template.id(), null, null, PageQuery.of(0, 20));
+            if (!versionPage.content().isEmpty()) return;
+        }
 
         int nextVersion = promptVersionRepository.getMaxVersionNumber(template.id()) + 1;
+        String changeNote = nextVersion == 1 ? "Initial seed version" : "Auto-upgrade: added language and prior Q&A context";
         PromptVersion version = PromptVersion.create(
-                template.id(), nextVersion, templateName + " — Initial",
+                template.id(), nextVersion, templateName + (nextVersion == 1 ? " — Initial" : " — v" + nextVersion),
                 userPromptTemplate, PromptContentFormat.TEXT,
-                variableSchema, "Initial seed version",
+                variableSchema, changeNote,
                 systemPrompt, userPromptTemplate,
                 "json_object", responseSchemaJson,
                 temperature, null, maxTokens);
@@ -530,22 +542,33 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
     // ── Elicitation: Generate Questions ──────────────────────────────────────
 
     private static final String ELICIT_QUESTIONS_SYSTEM = """
-            You are a requirements elicitation specialist for software projects.
-            Analyze the provided scope and generate targeted clarification questions to surface ambiguities.
-            Rules:
-            - Output only valid JSON matching the requested schema.
-            - Generate 5-15 questions ordered by importance (most critical first).
-            - Cover: unclear requirements, missing acceptance criteria, ambiguous business rules, technical dependencies, edge cases.
-            - Each question must be specific and answerable. No vague questions.
-            - Assign a category to each question: REQUIREMENT, FUNCTION, SCREEN, API, ENTITY, COMPONENT, BUSINESS_RULE
-            - For each question, provide 3-4 concise suggested answers that cover the most likely valid responses.
-              Suggested answers should be short (1-2 sentences max) and mutually exclusive where possible.
+            You are a senior Business Analyst (BA) applying BABOK v3 elicitation techniques to software requirement projects.
+            Your role is to conduct a structured stakeholder interview — not to summarize what is already known, but to surface what is MISSING, AMBIGUOUS, or CONFLICTING.
+
+            Core BA techniques to apply:
+            - Stakeholder Interviews: probe undocumented business rules, exception flows, authorization logic, SLAs, data ownership
+            - Process Analysis: identify decision points, branching conditions, failure paths, compensating actions, rollback scenarios
+            - Document Analysis: detect implicit assumptions, missing preconditions, inconsistencies between requirements and use cases
+            - Scenario-Based Questioning: ask "what happens when…" for edge cases not covered in any requirement or function
+            - Gap Analysis: identify missing entities, unlinked functions, requirements without use cases, screens without data sources
+
+            Question quality rules (CRITICAL — follow exactly):
+            1. Output ONLY valid JSON. Never add prose.
+            2. Generate exactly 5 questions per response, ordered by business criticality (most critical first).
+            3. Read {{ALL_QA_JSON}} carefully — NEVER ask about anything already answered or clearly inferable from prior answers.
+            4. NEVER ask trivial questions that can be directly derived from requirement titles, function names, or use case keys alone.
+            5. Each question must target an UNKNOWN: a hidden business rule, an exception path, a constraint, an authorization requirement, a data lifecycle rule, or a conflicting assumption.
+            6. Frame questions as a skilled BA interviewing a domain expert: specific, direct, non-technical unless the domain requires it.
+            7. Provide 3-4 suggested answers per question — short (1-2 sentences), mutually exclusive, covering realistic stakeholder responses.
+            8. Assign category: REQUIREMENT | FUNCTION | SCREEN | API | ENTITY | COMPONENT | BUSINESS_RULE
+            9. Write questions and suggested answers in the language specified: {{LANGUAGE}} (vi=Vietnamese, en=English). If {{LANGUAGE}} is "vi", respond entirely in Vietnamese.
             """;
 
     private static final String ELICIT_QUESTIONS_USER = """
-            Generate clarification questions for the following scope to reduce ambiguity before specification writing.
+            Conduct BABOK-style elicitation for scope: "{{SCOPE_NAME}}".
+            Output language: {{LANGUAGE}}
 
-            Scope Name: {{SCOPE_NAME}}
+            === CURRENT SCOPE ===
 
             Requirements:
             {{REQUIREMENTS_JSON}}
@@ -568,22 +591,31 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             Components:
             {{COMPONENTS_JSON}}
 
-            Return a JSON object with:
-            - questions: array of { sequence, questionText, category, suggestedAnswers }
-              where suggestedAnswers is an array of 3-4 short answer options for that question.
+            === PRIOR Q&A — DO NOT REPEAT THESE (read carefully before generating) ===
+            {{ALL_QA_JSON}}
+
+            === INSTRUCTION ===
+            Generate the next 5 most valuable elicitation questions starting at sequence {{ROUND_START_SEQ}}.
+            Focus exclusively on gaps and unknowns that CANNOT be inferred from the scope above and have NOT been covered in prior Q&A.
+            Think like a BA who must produce a complete, unambiguous specification — what critical information is still missing?
+
+            Return JSON: { "questions": [{ "sequence": <int>, "questionText": "<string>", "category": "<CATEGORY>", "suggestedAnswers": ["<string>", "<string>", "<string>"] }] }
             """;
 
     private static final String ELICIT_QUESTIONS_VARIABLE_SCHEMA = """
             {
               "variables": [
                 {"name":"SCOPE_NAME","description":"Name of the scope package being analyzed","format":"Plain text","syntax":"{{SCOPE_NAME}}"},
-                {"name":"REQUIREMENTS_JSON","description":"JSON array of requirements. Each: {id, title, description, priority}","format":"JSON array","syntax":"{{REQUIREMENTS_JSON}}"},
-                {"name":"FUNCTIONS_JSON","description":"JSON array of functions/features. Each: {id, title, description}","format":"JSON array","syntax":"{{FUNCTIONS_JSON}}"},
-                {"name":"USE_CASES_JSON","description":"JSON array of use cases. Each: {id, title, description, actor, preconditions, postconditions}","format":"JSON array","syntax":"{{USE_CASES_JSON}}"},
-                {"name":"SCREENS_JSON","description":"JSON array of UI screens. Each: {id, title, description}","format":"JSON array","syntax":"{{SCREENS_JSON}}"},
-                {"name":"APIS_JSON","description":"JSON array of API endpoints. Each: {id, title, method, path, description}","format":"JSON array","syntax":"{{APIS_JSON}}"},
-                {"name":"ENTITIES_JSON","description":"JSON array of data entities. Each: {id, title, description}","format":"JSON array","syntax":"{{ENTITIES_JSON}}"},
-                {"name":"COMPONENTS_JSON","description":"JSON array of components. Each: {id, title, description}","format":"JSON array","syntax":"{{COMPONENTS_JSON}}"}
+                {"name":"LANGUAGE","description":"Output language code. 'en'=English, 'vi'=Vietnamese. Questions and answers must be written in this language.","format":"ISO 639-1 language code","syntax":"{{LANGUAGE}}"},
+                {"name":"REQUIREMENTS_JSON","description":"JSON array of requirements. Each: {id, code, title, description, priority}","format":"JSON array","syntax":"{{REQUIREMENTS_JSON}}"},
+                {"name":"FUNCTIONS_JSON","description":"JSON array of functions/features. Each: {id, code, title, description, type}","format":"JSON array","syntax":"{{FUNCTIONS_JSON}}"},
+                {"name":"USE_CASES_JSON","description":"JSON array of use cases. Each: {id, key, name, goal}","format":"JSON array","syntax":"{{USE_CASES_JSON}}"},
+                {"name":"SCREENS_JSON","description":"JSON array of UI screens. Each: {id, code, name}","format":"JSON array","syntax":"{{SCREENS_JSON}}"},
+                {"name":"APIS_JSON","description":"JSON array of API endpoints. Each: {id, method, path, name}","format":"JSON array","syntax":"{{APIS_JSON}}"},
+                {"name":"ENTITIES_JSON","description":"JSON array of data entities. Each: {id, name, description}","format":"JSON array","syntax":"{{ENTITIES_JSON}}"},
+                {"name":"COMPONENTS_JSON","description":"JSON array of UI components. Each: {id, name, description}","format":"JSON array","syntax":"{{COMPONENTS_JSON}}"},
+                {"name":"ALL_QA_JSON","description":"All prior Q&A in this session. Each: {sequence, questionText, answerText, status, clarityLevel}. DO NOT repeat questions already covered here.","format":"JSON array","syntax":"{{ALL_QA_JSON}}"},
+                {"name":"ROUND_START_SEQ","description":"The sequence number to start from for this round's questions","format":"Integer","syntax":"{{ROUND_START_SEQ}}"}
               ]
             }
             """;
@@ -638,6 +670,7 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
 
     private static final String ELICIT_EVALUATE_USER = """
             Evaluate the answers from elicitation round {{ROUND_NUMBER}}.
+            Write all feedback and evaluationSummary in language: {{LANGUAGE}}
 
             Scope Context:
             {{SCOPE_CONTEXT_JSON}}

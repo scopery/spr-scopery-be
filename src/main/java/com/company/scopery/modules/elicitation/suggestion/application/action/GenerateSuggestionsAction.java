@@ -153,6 +153,7 @@ public class GenerateSuggestionsAction {
     protected ElicitationSuggestionResponse persistSuggestion(ElicitationRound round, UUID sessionId,
                                                                String overallSummary,
                                                                List<ElicitationSuggestionItem> items) {
+        suggestionRepository.deleteWithItemsByRoundId(round.id());
         ElicitationSuggestion suggestion = ElicitationSuggestion.create(round.id(), overallSummary, null);
         ElicitationSuggestion saved = suggestionRepository.save(suggestion);
 

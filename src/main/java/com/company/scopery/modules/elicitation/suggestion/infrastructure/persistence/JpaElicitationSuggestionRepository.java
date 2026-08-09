@@ -5,6 +5,7 @@ import com.company.scopery.modules.elicitation.suggestion.domain.model.Elicitati
 import com.company.scopery.modules.elicitation.suggestion.domain.model.ElicitationSuggestionRepository;
 import com.company.scopery.modules.elicitation.suggestion.infrastructure.mapper.ElicitationSuggestionPersistenceMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +54,15 @@ public class JpaElicitationSuggestionRepository implements ElicitationSuggestion
     public List<ElicitationSuggestionItem> saveAllItems(List<ElicitationSuggestionItem> items) {
         List<ElicitationSuggestionItemJpaEntity> entities = items.stream().map(mapper::toItemJpaEntity).toList();
         return itemRepo.saveAllAndFlush(entities).stream().map(mapper::toItemDomain).toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteWithItemsByRoundId(UUID roundId) {
+        suggestionRepo.findByRoundId(roundId).ifPresent(existing -> {
+            itemRepo.deleteBySuggestionId(existing.getId());
+            suggestionRepo.deleteById(existing.getId());
+        });
     }
 
     @Override
