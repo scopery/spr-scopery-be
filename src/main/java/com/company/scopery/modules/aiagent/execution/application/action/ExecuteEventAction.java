@@ -276,6 +276,9 @@ public class ExecuteEventAction {
         }
 
         String renderedPrompt = promptRenderer.render(promptVersion.resolvedPromptContent(), inputVariables);
+        String renderedSystemPrompt = promptVersion.systemPrompt() != null && !promptVersion.systemPrompt().isBlank()
+                ? promptRenderer.render(promptVersion.systemPrompt(), inputVariables)
+                : null;
 
         ExecutionLog log = ExecutionLog.create(
                 execRequestId, eventConfig.id(), eventConfig.eventDefinitionId(),
@@ -294,7 +297,8 @@ public class ExecuteEventAction {
             AiProviderAdapter adapter = adapterRegistry.getAdapter(provider.code().value());
             AiProviderRequest providerRequest = new AiProviderRequest(
                     provider.id(), deployment.providerDeploymentId(), renderedPrompt,
-                    deployment.defaultTemperature(), deployment.defaultMaxOutputTokens());
+                    deployment.defaultTemperature(), deployment.defaultMaxOutputTokens(),
+                    renderedSystemPrompt);
 
             AiProviderResponse providerResponse = adapter.call(providerRequest);
             outputText = providerResponse.outputText();

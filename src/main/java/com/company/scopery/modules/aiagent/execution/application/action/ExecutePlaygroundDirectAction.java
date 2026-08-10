@@ -152,6 +152,9 @@ public class ExecutePlaygroundDirectAction {
         }
 
         String renderedPrompt = promptRenderer.render(promptVersion.content(), command.inputVariables());
+        String renderedSystemPrompt = promptVersion.systemPrompt() != null && !promptVersion.systemPrompt().isBlank()
+                ? promptRenderer.render(promptVersion.systemPrompt(), command.inputVariables())
+                : null;
 
         ExecutionLog log = ExecutionLog.create(
                 execRequestId, null, null,
@@ -168,7 +171,8 @@ public class ExecutePlaygroundDirectAction {
             AiProviderAdapter adapter = adapterRegistry.getAdapter(provider.code().value());
             AiProviderRequest providerRequest = new AiProviderRequest(
                     provider.id(), deployment.providerDeploymentId(), renderedPrompt,
-                    deployment.defaultTemperature(), deployment.defaultMaxOutputTokens());
+                    deployment.defaultTemperature(), deployment.defaultMaxOutputTokens(),
+                    renderedSystemPrompt);
 
             AiProviderResponse providerResponse = adapter.call(providerRequest);
             outputText = providerResponse.outputText();
