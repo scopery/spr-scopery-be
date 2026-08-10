@@ -16,6 +16,7 @@ public record ElicitationSuggestionItemResponse(
         String rationale,
         String estimatedImpact,
         String status,
+        String changesJson,
         String errorMessage,
         Instant executedAt,
         Instant createdAt
@@ -32,6 +33,7 @@ public record ElicitationSuggestionItemResponse(
                 item.rationale(),
                 item.estimatedImpact().name(),
                 item.status().name(),
+                item.changesJson(),
                 item.errorMessage(),
                 item.executedAt(),
                 item.createdAt()
