@@ -1,6 +1,7 @@
 package com.company.scopery.integration.ai.anthropic;
 
 import com.company.scopery.integration.ai.AiChatMessage;
+import com.company.scopery.integration.ai.AiLlmToolDefinition;
 import com.company.scopery.integration.ai.AiStreamingProviderPort;
 import com.company.scopery.integration.ai.AiStreamingRequest;
 import com.company.scopery.integration.ai.StreamDeltaCallback;
@@ -103,6 +104,11 @@ public class AnthropicStreamingProviderAdapter implements AiStreamingProviderPor
         String stopReason = null;
         boolean finalSent = false;
 
+        // Tool call accumulation state
+        String currentToolCallId = null;
+        String currentToolName = null;
+        StringBuilder currentToolArgs = null;
+
         try {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -128,13 +134,35 @@ public class AnthropicStreamingProviderAdapter implements AiStreamingProviderPor
                             inputTokens = usage.path("input_tokens").asInt(0);
                         }
                     }
+                    case "content_block_start" -> {
+                        JsonNode block = event.path("content_block");
+                        if ("tool_use".equals(block.path("type").asText(null))) {
+                            currentToolCallId = block.path("id").asText(null);
+                            currentToolName = block.path("name").asText(null);
+                            currentToolArgs = new StringBuilder();
+                        }
+                    }
                     case "content_block_delta" -> {
                         JsonNode delta = event.path("delta");
-                        if ("text_delta".equals(delta.path("type").asText(null))) {
+                        String deltaType = delta.path("type").asText(null);
+                        if ("text_delta".equals(deltaType)) {
                             String text = delta.path("text").asText(null);
                             if (text != null && !text.isEmpty()) {
                                 callback.onDelta(text, false, null, null, null);
                             }
+                        } else if ("input_json_delta".equals(deltaType) && currentToolArgs != null) {
+                            String partial = delta.path("partial_json").asText(null);
+                            if (partial != null) {
+                                currentToolArgs.append(partial);
+                            }
+                        }
+                    }
+                    case "content_block_stop" -> {
+                        if (currentToolCallId != null && currentToolName != null && currentToolArgs != null) {
+                            callback.onToolCall(currentToolCallId, currentToolName, currentToolArgs.toString());
+                            currentToolCallId = null;
+                            currentToolName = null;
+                            currentToolArgs = null;
                         }
                     }
                     case "message_delta" -> {
@@ -173,11 +201,32 @@ public class AnthropicStreamingProviderAdapter implements AiStreamingProviderPor
             body.put("temperature", request.temperature());
         }
 
-        List<Map<String, String>> messages = new ArrayList<>();
+        // Extract system message and build Anthropic-format messages list
+        List<Map<String, Object>> messages = new ArrayList<>();
         for (AiChatMessage msg : request.messages()) {
-            messages.add(Map.of("role", msg.role(), "content", msg.content()));
+            if ("system".equals(msg.role())) {
+                body.put("system", msg.content());
+            } else {
+                Map<String, Object> m = new HashMap<>();
+                m.put("role", msg.role());
+                m.put("content", msg.content());
+                messages.add(m);
+            }
         }
         body.put("messages", messages);
+
+        // Add tools in Anthropic format if any
+        if (request.tools() != null && !request.tools().isEmpty()) {
+            List<Map<String, Object>> tools = new ArrayList<>();
+            for (AiLlmToolDefinition tool : request.tools()) {
+                Map<String, Object> toolDef = new HashMap<>();
+                toolDef.put("name", tool.name());
+                toolDef.put("description", tool.description());
+                toolDef.put("input_schema", tool.parameters());
+                tools.add(toolDef);
+            }
+            body.put("tools", tools);
+        }
 
         return body;
     }

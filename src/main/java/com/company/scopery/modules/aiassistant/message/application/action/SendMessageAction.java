@@ -94,8 +94,12 @@ public class SendMessageAction {
         conv.touchLastMessage(Instant.now());
         conversationRepository.save(conv);
 
+        // Resolve workspace and actor from conversation when headers were not provided
+        UUID resolvedWorkspaceId = cmd.workspaceId() != null ? cmd.workspaceId() : conv.workspaceId();
+        UUID resolvedActorId = cmd.actorId() != null ? cmd.actorId() : conv.ownerUserId();
+
         // 7. Reserve quota turn
-        quotaService.reserveTurn(cmd.actorId(), cmd.workspaceId());
+        quotaService.reserveTurn(resolvedActorId, resolvedWorkspaceId);
 
         // 8. Submit async turn execution
         UUID resolvedProjectId = cmd.projectId() != null ? cmd.projectId() : conv.projectId();
@@ -104,8 +108,8 @@ public class SendMessageAction {
                 savedAssistant.id(),
                 savedUser.id(),
                 turnId,
-                cmd.actorId(),
-                cmd.workspaceId(),
+                resolvedActorId,
+                resolvedWorkspaceId,
                 resolvedProjectId,
                 cmd.content(),
                 properties.getPromptProfileCode(),

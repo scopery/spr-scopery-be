@@ -18,6 +18,7 @@ import com.company.scopery.modules.aiassistant.domain.enums.CapabilityLevel;
 import com.company.scopery.modules.aiassistant.domain.enums.ConversationType;
 import com.company.scopery.modules.aiassistant.shared.constant.AiAssistantApiPaths;
 import com.company.scopery.modules.aiassistant.shared.util.AiAssistantEnumParser;
+import com.company.scopery.platform.security.SecurityContextUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -64,7 +65,7 @@ public class ConversationController {
                 CapabilityLevel.class, request.capabilityLevel(), "capabilityLevel");
 
         CreateConversationCommand command = new CreateConversationCommand(
-                actorId,
+                SecurityContextUtil.resolveActorId(actorId),
                 request.workspaceId() != null ? request.workspaceId() : workspaceId,
                 request.projectId(),
                 type,

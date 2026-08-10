@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import com.company.scopery.platform.security.SecurityContextUtil;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -55,9 +56,11 @@ public class MessageController {
             @RequestHeader(value = "X-Actor-Id", required = false) UUID actorId,
             @RequestHeader(value = "X-Workspace-Id", required = false) UUID workspaceId) {
 
+        UUID resolvedActorId = SecurityContextUtil.resolveActorId(actorId);
+
         SendMessageCommand command = new SendMessageCommand(
                 conversationId,
-                actorId,
+                resolvedActorId,
                 workspaceId,
                 request.sourceProjectId(),
                 request.content(),
