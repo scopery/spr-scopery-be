@@ -7,5 +7,7 @@ public record UpdatePromptVersionRequest(
         @NotBlank String content,
         @NotBlank String contentFormat,
         String variableSchema,
-        String changeNote
+        String changeNote,
+        String systemPrompt,
+        String userPromptTemplate
 ) {}

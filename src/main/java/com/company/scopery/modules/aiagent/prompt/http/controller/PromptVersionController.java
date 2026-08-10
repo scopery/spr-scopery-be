@@ -74,7 +74,8 @@ public class PromptVersionController {
 
         UpdatePromptVersionCommand command = new UpdatePromptVersionCommand(
                 id, request.title(), request.content(), request.contentFormat(),
-                request.variableSchema(), request.changeNote());
+                request.variableSchema(), request.changeNote(),
+                request.systemPrompt(), request.userPromptTemplate());
 
         return ResponseEntity.ok(ApiResponse.success(updateAction.execute(command)));
     }

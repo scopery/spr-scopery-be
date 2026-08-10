@@ -8,5 +8,7 @@ public record UpdatePromptVersionCommand(
         String content,
         String contentFormat,
         String variableSchema,
-        String changeNote
+        String changeNote,
+        String systemPrompt,
+        String userPromptTemplate
 ) {}

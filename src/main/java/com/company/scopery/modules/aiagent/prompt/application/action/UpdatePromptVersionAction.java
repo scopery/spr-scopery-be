@@ -55,7 +55,10 @@ public class UpdatePromptVersionAction {
         }
 
         version.update(command.title(), command.content(), contentFormat,
-                command.variableSchema(), command.changeNote());
+                command.variableSchema(), command.changeNote(),
+                command.systemPrompt(), command.userPromptTemplate(),
+                version.responseFormat(), version.responseSchemaJson(),
+                version.temperature(), version.topP(), version.maxTokens());
 
         PromptVersion saved = versionRepository.save(version);
 
