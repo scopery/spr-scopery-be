@@ -15,7 +15,8 @@ public final class IamApiPaths {
     public static final String IAM_ACCESS_GRANTS    = BASE + "/grants";
     public static final String IAM_ROLE_ASSIGNMENTS = BASE + "/role-assignments";
     public static final String IAM_AUTHORIZATION    = BASE + "/authorization";
-    public static final String IAM_ME               = BASE + "/me";
+    public static final String IAM_ME                        = BASE + "/me";
+    public static final String IAM_ME_EFFECTIVE_PERMISSIONS  = IAM_ME + "/effective-permissions";
     public static final String IAM_OWNER_POLICIES   = BASE + "/owner-policies";
     public static final String IAM_ACCESS           = BASE + "/access";
     public static final String IAM_AUDIT_EVENTS     = BASE + "/audit-events";

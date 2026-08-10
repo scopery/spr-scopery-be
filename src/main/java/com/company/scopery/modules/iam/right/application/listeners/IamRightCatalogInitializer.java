@@ -420,6 +420,14 @@ public class IamRightCatalogInitializer implements ApplicationListener<Applicati
                 new RightDef("AI_EVENT_CONFIG_MANAGE",     "AI Event Config Manage",    "Manage AI Agent event configurations",          "AI_AGENT"),
                 new RightDef("AI_TOOL_MANAGE",             "AI Tool Manage",            "Register and manage AiTool catalog, permissions, and agent bindings", "AI_AGENT"),
                 new RightDef("AI_TOOL_EXECUTE",            "AI Tool Execute",           "Execute registered AI tools and view tool execution logs", "AI_AGENT"),
+                // AI AGENT — FE wave-5 permission codes (W5-GAP-14)
+                new RightDef("AI_AGENT_CONFIG_VIEW",    "AI Agent Config View",    "View AI agent configuration",          "AI_AGENT"),
+                new RightDef("AI_AGENT_CONFIG_MANAGE",  "AI Agent Config Manage",  "Manage AI agent configuration",        "AI_AGENT"),
+                new RightDef("AI_PROVIDER_SECRET_VIEW", "AI Provider Secret View", "View AI provider API keys/secrets",    "AI_AGENT"),
+                new RightDef("AI_EXECUTION_RUN",        "AI Execution Run",        "Trigger AI execution runs",            "AI_AGENT"),
+                new RightDef("AI_EXECUTION_LOG_VIEW",   "AI Execution Log View",   "View AI execution logs",               "AI_AGENT"),
+                new RightDef("AI_PLAYGROUND_USE",       "AI Playground Use",       "Use AI playground",                   "AI_AGENT"),
+                new RightDef("AI_TOOL_VIEW",            "AI Tool View",            "View AI tools",                       "AI_AGENT"),
                 // QUALITY
                 new RightDef("QUALITY_VIEW",    "View Quality",    "View quality plans and checklists",  "QUALITY"),
                 new RightDef("QUALITY_CREATE",  "Create Quality",  "Create quality plans",               "QUALITY"),
