@@ -52,9 +52,7 @@ services:
       "
 
   scopery-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.prebuilt
+    build: .
     container_name: scopery-backend
     ports:
       - "127.0.0.1:8080:8080"
