@@ -15,6 +15,7 @@ public final class ElicitationActivityActions {
     public static final String GENERATE_SUGGESTIONS      = "GENERATE_ELICITATION_SUGGESTIONS";
     public static final String APPROVE_SUGGESTION_ITEM   = "APPROVE_ELICITATION_SUGGESTION_ITEM";
     public static final String REJECT_SUGGESTION_ITEM    = "REJECT_ELICITATION_SUGGESTION_ITEM";
+    public static final String EDIT_SUGGESTION_ITEM      = "EDIT_ELICITATION_SUGGESTION_ITEM";
 
     private ElicitationActivityActions() {}
 }

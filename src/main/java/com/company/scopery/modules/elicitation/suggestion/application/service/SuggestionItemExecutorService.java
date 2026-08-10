@@ -1,6 +1,7 @@
 package com.company.scopery.modules.elicitation.suggestion.application.service;
 
 import com.company.scopery.modules.elicitation.suggestion.domain.model.ElicitationSuggestionItem;
+import com.company.scopery.modules.traceability.businessrule.application.command.CreateBusinessRuleCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.action.CreateRegistryAppComponentAction;
 import com.company.scopery.modules.traceability.appcomponent.application.command.CreateRegistryAppComponentCommand;
 import com.company.scopery.modules.traceability.functionalitem.application.action.CreateFunctionalItemAction;
@@ -39,6 +40,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -187,7 +189,9 @@ public class SuggestionItemExecutorService {
         createFunction.execute(new CreateFunctionalItemCommand(
                 projectId, coalesce(uuid(c, "workspaceId"), workspaceId),
                 uuid(c, "moduleId"), text(c, "code"), text(c, "title"), text(c, "description"),
-                text(c, "priority"), text(c, "type"), null, null
+                text(c, "priority"), text(c, "type"),
+                parseStringList(c, "acceptanceCriteria"),
+                parseBusinessRules(c)
         ));
         return null;
     }
@@ -376,4 +380,30 @@ public class SuggestionItemExecutorService {
     private static UUID coalesceUuid(UUID a, Object b) { return a != null ? a : (UUID) b; }
     private static String coalesceStr(String a, Object b) { return a != null ? a : (b != null ? b.toString() : null); }
     private static String orEmpty(Object v) { return v != null ? v.toString() : ""; }
+
+    private static List<String> parseStringList(JsonNode node, String field) {
+        JsonNode arr = node.path(field);
+        if (!arr.isArray() || arr.isEmpty()) return null;
+        List<String> list = new ArrayList<>();
+        for (JsonNode item : arr) {
+            String v = item.asText(null);
+            if (v != null && !v.isBlank()) list.add(v);
+        }
+        return list.isEmpty() ? null : list;
+    }
+
+    private static List<CreateBusinessRuleCommand> parseBusinessRules(JsonNode node) {
+        JsonNode arr = node.path("businessRules");
+        if (!arr.isArray() || arr.isEmpty()) return null;
+        List<CreateBusinessRuleCommand> list = new ArrayList<>();
+        for (JsonNode br : arr) {
+            String code = text(br, "code");
+            String title = text(br, "title");
+            if (code == null || title == null) continue;
+            String severity = text(br, "severity");
+            list.add(new CreateBusinessRuleCommand(null, null, code, title,
+                    text(br, "description"), severity != null ? severity : "MEDIUM"));
+        }
+        return list.isEmpty() ? null : list;
+    }
 }

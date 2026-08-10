@@ -107,6 +107,7 @@ public class GenerateRoundAction {
                 .replace("{{USE_CASES_JSON}}", scope.useCasesJson())
                 .replace("{{SCREENS_JSON}}", scope.screensJson())
                 .replace("{{APIS_JSON}}", scope.apisJson())
+                .replace("{{NFR_JSON}}", scope.nfrJson())
                 .replace("{{ENTITIES_JSON}}", scope.entitiesJson())
                 .replace("{{COMPONENTS_JSON}}", scope.componentsJson())
                 .replace("{{ALL_QA_JSON}}", allQaJson)
@@ -200,7 +201,7 @@ public class GenerateRoundAction {
             snapshot.put("functions", objectMapper.readValue(scope.functionsJson(), Object.class));
             snapshot.put("useCases", objectMapper.readValue(scope.useCasesJson(), Object.class));
             snapshot.put("screens", objectMapper.readValue(scope.screensJson(), Object.class));
-            snapshot.put("components", objectMapper.readValue(scope.componentsJson(), Object.class));
+            snapshot.put("nfr", objectMapper.readValue(scope.nfrJson(), Object.class));
             return objectMapper.writeValueAsString(snapshot);
         } catch (JsonProcessingException e) {
             return "{}";

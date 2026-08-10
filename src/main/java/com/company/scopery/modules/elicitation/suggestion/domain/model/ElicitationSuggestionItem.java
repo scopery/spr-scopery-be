@@ -124,6 +124,18 @@ public class ElicitationSuggestionItem {
         this.updatedAt = Instant.now();
     }
 
+    public void editChanges(String changesJson) {
+        if (status != SuggestionItemStatus.PENDING && status != SuggestionItemStatus.FAILED) {
+            throw new IllegalStateException("Can only edit PENDING or FAILED items");
+        }
+        this.changesJson = changesJson;
+        if (status == SuggestionItemStatus.FAILED) {
+            this.status = SuggestionItemStatus.PENDING;
+            this.errorMessage = null;
+        }
+        this.updatedAt = Instant.now();
+    }
+
     public UUID id()                             { return id; }
     public UUID suggestionId()                   { return suggestionId; }
     public int sequence()                        { return sequence; }

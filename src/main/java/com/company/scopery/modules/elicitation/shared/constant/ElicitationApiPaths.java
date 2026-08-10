@@ -22,6 +22,7 @@ public final class ElicitationApiPaths {
     public static final String ROUND_SUGGESTIONS        = "/api/v1/elicitation-rounds/{roundId}/suggestions";
     public static final String SUGGESTION_ITEM_APPROVE  = "/api/v1/elicitation-suggestion-items/{itemId}/approve";
     public static final String SUGGESTION_ITEM_REJECT   = "/api/v1/elicitation-suggestion-items/{itemId}/reject";
+    public static final String SUGGESTION_ITEM_CHANGES  = "/api/v1/elicitation-suggestion-items/{itemId}/changes";
 
     private ElicitationApiPaths() {}
 }

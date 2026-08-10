@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -25,7 +24,8 @@ public class ElicitationScopeLoader {
             String screensJson,
             String apisJson,
             String entitiesJson,
-            String componentsJson
+            String componentsJson,
+            String nfrJson
     ) {}
 
     public ScopeContext load(UUID projectId, UUID scopePackageId) {
@@ -36,10 +36,9 @@ public class ElicitationScopeLoader {
         String useCasesJson = functionIds.isEmpty() ? "[]" : loadUseCasesJson(functionIds);
         String screensJson = functionIds.isEmpty() ? "[]" : loadScreensJson(functionIds);
         String apisJson = functionIds.isEmpty() ? "[]" : loadApisJson(functionIds);
-        String entitiesJson = "[]";
-        String componentsJson = "[]";
+        String nfrJson = loadNfrJson(projectId);
         return new ScopeContext(scopeName, requirementsJson, functionsJson, useCasesJson,
-                screensJson, apisJson, entitiesJson, componentsJson);
+                screensJson, apisJson, "[]", "[]", nfrJson);
     }
 
     private String loadScopeName(UUID scopePackageId) {
@@ -56,6 +55,7 @@ public class ElicitationScopeLoader {
                     'code', r.code,
                     'title', r.title,
                     'description', r.description,
+                    'type', r.requirement_type,
                     'priority', r.priority
                 )) AS result
                 FROM requirements_requirement r
@@ -89,7 +89,20 @@ public class ElicitationScopeLoader {
                     'code', f.code,
                     'title', f.title,
                     'description', f.description,
-                    'type', f.type
+                    'type', f.type,
+                    'priority', f.priority,
+                    'acceptanceCriteria', f.acceptance_criteria,
+                    'businessRules', (
+                        SELECT COALESCE(json_agg(json_build_object(
+                            'code', br.code,
+                            'title', br.title,
+                            'description', br.description,
+                            'severity', br.severity
+                        ) ORDER BY br.code), '[]'::json)
+                        FROM app_business_rule br
+                        WHERE br.functional_item_id = f.id
+                          AND br.status NOT IN ('ARCHIVED', 'DEPRECATED')
+                    )
                 )) AS result
                 FROM app_functional_item f
                 WHERE f.id = ANY(:ids)
@@ -104,10 +117,39 @@ public class ElicitationScopeLoader {
                     'id', u.id,
                     'key', u.key,
                     'name', u.name,
-                    'goal', u.goal
+                    'goal', u.goal,
+                    'primaryActor', u.primary_actor_name,
+                    'trigger', u.trigger_text,
+                    'conditions', (
+                        SELECT COALESCE(json_agg(json_build_object(
+                            'type', c.condition_type,
+                            'content', c.content
+                        ) ORDER BY c.display_order), '[]'::json)
+                        FROM app_use_case_condition c
+                        WHERE c.use_case_id = u.id
+                    ),
+                    'businessRules', (
+                        SELECT COALESCE(json_agg(json_build_object(
+                            'code', br.rule_code,
+                            'description', br.description
+                        ) ORDER BY br.display_order), '[]'::json)
+                        FROM app_use_case_business_rule br
+                        WHERE br.use_case_id = u.id
+                    ),
+                    'acceptanceCriteria', (
+                        SELECT COALESCE(json_agg(json_build_object(
+                            'title', ac.title,
+                            'given', ac.given_text,
+                            'when', ac.when_text,
+                            'then', ac.then_text
+                        ) ORDER BY ac.display_order), '[]'::json)
+                        FROM app_use_case_acceptance_criterion ac
+                        WHERE ac.use_case_id = u.id
+                    )
                 )) AS result
                 FROM (
-                    SELECT DISTINCT ON (uc.id) uc.id, uc.key, uc.name, uc.goal
+                    SELECT DISTINCT ON (uc.id) uc.id, uc.key, uc.name, uc.goal,
+                           uc.primary_actor_name, uc.trigger_text
                     FROM app_use_case_supporting_function ucsf
                     JOIN app_use_case uc ON uc.id = ucsf.use_case_id
                     WHERE ucsf.function_id = ANY(:ids)
@@ -151,6 +193,24 @@ public class ElicitationScopeLoader {
                 ) a
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource("ids", functionIds.toArray(new UUID[0]));
+        return queryJsonArray(sql, params);
+    }
+
+    private String loadNfrJson(UUID projectId) {
+        String sql = """
+                SELECT json_agg(json_build_object(
+                    'code', n.code,
+                    'title', n.title,
+                    'description', n.description,
+                    'category', n.category,
+                    'priority', n.priority,
+                    'targetMetric', n.target_metric
+                )) AS result
+                FROM app_non_functional_item n
+                WHERE n.project_id = :projectId
+                  AND n.status NOT IN ('ARCHIVED', 'DEPRECATED')
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource("projectId", projectId);
         return queryJsonArray(sql, params);
     }
 

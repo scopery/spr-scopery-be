@@ -306,7 +306,7 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
         }
 
         int nextVersion = promptVersionRepository.getMaxVersionNumber(template.id()) + 1;
-        String changeNote = nextVersion == 1 ? "Initial seed version" : "Auto-upgrade: added language and prior Q&A context";
+        String changeNote = nextVersion == 1 ? "Initial seed version" : "Auto-upgrade: enriched scope context with business rules, NFR, and use case details";
         PromptVersion version = PromptVersion.create(
                 template.id(), nextVersion, templateName + (nextVersion == 1 ? " — Initial" : " — v" + nextVersion),
                 userPromptTemplate, PromptContentFormat.TEXT,
@@ -567,8 +567,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             1. Output ONLY valid JSON. Never add prose.
             2. Generate exactly 5 questions per response, ordered by business criticality (most critical first).
             3. Read {{ALL_QA_JSON}} carefully — NEVER ask about anything already answered or clearly inferable from prior answers.
-            4. NEVER ask trivial questions that can be directly derived from requirement titles, function names, or use case keys alone.
-            5. Each question must target an UNKNOWN: a hidden business rule, an exception path, a constraint, an authorization requirement, a data lifecycle rule, or a conflicting assumption.
+            4. NEVER ask about things already documented in the scope. Before generating a question, check: is this covered in requirement descriptions, function businessRules[], use case conditions[], use case acceptanceCriteria[], or NFR descriptions? If yes, skip it and find a true gap instead.
+            5. Each question must target an UNKNOWN: a hidden business rule, an exception path, a constraint, an authorization requirement, a data lifecycle rule, or a conflicting assumption NOT captured in the provided scope data.
             6. Frame questions as a skilled BA interviewing a domain expert: specific, direct, non-technical unless the domain requires it.
             7. Provide 3-4 suggested answers per question — short (1-2 sentences), mutually exclusive, covering realistic stakeholder responses.
             8. Assign category: REQUIREMENT | FUNCTION | SCREEN | API | ENTITY | COMPONENT | BUSINESS_RULE
@@ -583,14 +583,17 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
 
             === CURRENT SCOPE ===
 
-            Requirements:
+            Requirements (each includes type, priority, description):
             {{REQUIREMENTS_JSON}}
 
-            Functions:
+            Functions (each includes priority, acceptanceCriteria, and businessRules[] with code/title/description/severity):
             {{FUNCTIONS_JSON}}
 
-            Use Cases:
+            Use Cases (each includes primaryActor, trigger, conditions[] by type PRECONDITION/ASSUMPTION/SUCCESS_POSTCONDITION/FAILURE_POSTCONDITION, businessRules[], and acceptanceCriteria[] in given/when/then format):
             {{USE_CASES_JSON}}
+
+            Non-Functional Requirements (performance, security, usability targets):
+            {{NFR_JSON}}
 
             Screens:
             {{SCREENS_JSON}}
@@ -598,19 +601,14 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             APIs:
             {{APIS_JSON}}
 
-            Data Entities:
-            {{ENTITIES_JSON}}
-
-            Components:
-            {{COMPONENTS_JSON}}
-
             === PRIOR Q&A — DO NOT REPEAT THESE (read carefully before generating) ===
             {{ALL_QA_JSON}}
 
             === INSTRUCTION ===
+            Read ALL scope data above carefully — requirements descriptions, function businessRules[], use case conditions[], acceptanceCriteria[], NFR descriptions, and prior Q&A.
             Generate the next 5 most valuable elicitation questions starting at sequence {{ROUND_START_SEQ}}.
-            Focus exclusively on gaps and unknowns that CANNOT be inferred from the scope above and have NOT been covered in prior Q&A.
-            Think like a BA who must produce a complete, unambiguous specification — what critical information is still missing?
+            ONLY ask about true GAPS: things not documented anywhere in the scope above and not covered in prior Q&A.
+            Think like a BA who must produce a complete, unambiguous specification — what critical information is still MISSING?
 
             Return JSON: { "questions": [{ "sequence": <int>, "questionText": "<string>", "category": "<CATEGORY>", "suggestedAnswers": ["<string>", "<string>", "<string>"] }] }
             """;
@@ -620,13 +618,12 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
               "variables": [
                 {"name":"SCOPE_NAME","description":"Name of the scope package being analyzed","format":"Plain text","syntax":"{{SCOPE_NAME}}"},
                 {"name":"LANGUAGE","description":"Output language code. 'en'=English, 'vi'=Vietnamese. Questions and answers must be written in this language.","format":"ISO 639-1 language code","syntax":"{{LANGUAGE}}"},
-                {"name":"REQUIREMENTS_JSON","description":"JSON array of requirements. Each: {id, code, title, description, priority}","format":"JSON array","syntax":"{{REQUIREMENTS_JSON}}"},
-                {"name":"FUNCTIONS_JSON","description":"JSON array of functions/features. Each: {id, code, title, description, type}","format":"JSON array","syntax":"{{FUNCTIONS_JSON}}"},
-                {"name":"USE_CASES_JSON","description":"JSON array of use cases. Each: {id, key, name, goal}","format":"JSON array","syntax":"{{USE_CASES_JSON}}"},
+                {"name":"REQUIREMENTS_JSON","description":"JSON array of requirements. Each: {id, code, title, description, type, priority}","format":"JSON array","syntax":"{{REQUIREMENTS_JSON}}"},
+                {"name":"FUNCTIONS_JSON","description":"JSON array of functional items. Each: {id, code, title, description, type, priority, acceptanceCriteria, businessRules[{code, title, description, severity}]}","format":"JSON array","syntax":"{{FUNCTIONS_JSON}}"},
+                {"name":"USE_CASES_JSON","description":"JSON array of use cases. Each: {id, key, name, goal, primaryActor, trigger, conditions[{type, content}], businessRules[{code, description}], acceptanceCriteria[{title, given, when, then}]}","format":"JSON array","syntax":"{{USE_CASES_JSON}}"},
+                {"name":"NFR_JSON","description":"JSON array of non-functional requirements. Each: {code, title, description, category, priority, targetMetric}","format":"JSON array","syntax":"{{NFR_JSON}}"},
                 {"name":"SCREENS_JSON","description":"JSON array of UI screens. Each: {id, code, name}","format":"JSON array","syntax":"{{SCREENS_JSON}}"},
                 {"name":"APIS_JSON","description":"JSON array of API endpoints. Each: {id, method, path, name}","format":"JSON array","syntax":"{{APIS_JSON}}"},
-                {"name":"ENTITIES_JSON","description":"JSON array of data entities. Each: {id, name, description}","format":"JSON array","syntax":"{{ENTITIES_JSON}}"},
-                {"name":"COMPONENTS_JSON","description":"JSON array of UI components. Each: {id, name, description}","format":"JSON array","syntax":"{{COMPONENTS_JSON}}"},
                 {"name":"ALL_QA_JSON","description":"All prior Q&A in this session. Each: {sequence, questionText, answerText, status, clarityLevel}. DO NOT repeat questions already covered here.","format":"JSON array","syntax":"{{ALL_QA_JSON}}"},
                 {"name":"ROUND_START_SEQ","description":"The sequence number to start from for this round's questions","format":"Integer","syntax":"{{ROUND_START_SEQ}}"}
               ]
@@ -758,6 +755,18 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             LINK_FUNCTION_SCREEN, LINK_FUNCTION_NOTIFICATION
             CREATE_COMPONENT, LINK_SCREEN_COMPONENT
 
+            changesJson schema per action:
+            - CREATE_FUNCTION: { "code": "F0XX", "title": "...", "description": "...", "priority": "HIGH|MEDIUM|LOW", "type": "FEATURE|...", "acceptanceCriteria": ["..."], "businessRules": [{"code": "BR0XX", "title": "...", "description": "...", "severity": "HIGH|MEDIUM|LOW|CRITICAL"}] }
+            - UPDATE_FUNCTION: include only fields that change; "businessRules" and "acceptanceCriteria" are not updated here
+            - CREATE_REQUIREMENT: { "code": "REQ0XX", "title": "...", "description": "...", "requirementType": "...", "priority": "HIGH|MEDIUM|LOW" }
+            - CREATE_USE_CASE: { "key": "UC0XX", "name": "...", "goal": "...", "primaryActorName": "...", "triggerText": "...", "primaryFunctionId": "<uuid>" }
+            - LINK_REQUIREMENT_FUNCTION / UNLINK_REQUIREMENT_FUNCTION: no changesJson; set targetEntityId to the functionId
+
+            Code uniqueness rules (CRITICAL):
+            - For CREATE_FUNCTION: check all existing function codes in the scope context. Choose a code that does NOT already exist. Use the next available number (e.g., if F001–F010 exist, use F011).
+            - For CREATE_REQUIREMENT: check all existing requirement codes in the scope context. Choose a code that does NOT already exist.
+            - For businessRules inside CREATE_FUNCTION: similarly, choose codes that don't already appear in that function's existing businessRules list.
+
             Relationship rules:
             - 1 Function belongs to exactly 1 Requirement
             - 1 Requirement can have many Functions
@@ -767,7 +776,7 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             - 1 Screen can have many AppComponents
             - 1 Function can trigger many Notifications
 
-            Rules:
+            General rules:
             - Output only valid JSON matching the requested schema.
             - Each suggestion must have a clear rationale linked to specific Q&A findings.
             - Do NOT suggest actions already covered in the accumulated suggestions for other requirements.
@@ -779,7 +788,7 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
     private static final String ELICIT_SUGGEST_USER = """
             Generate scope improvement suggestions for the following requirement.
 
-            Scope Context:
+            Scope Context (includes all existing functions with their codes, requirements with their codes, use cases, and business rules):
             {{SCOPE_CONTEXT_JSON}}
 
             All Q&A from elicitation session:
@@ -790,6 +799,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
 
             Suggestions already generated for other requirements (do NOT duplicate these):
             {{ACCUMULATED_SUGGESTIONS_JSON}}
+
+            IMPORTANT: Before using any code in changesJson (function code, requirement code, business rule code), verify it does NOT already exist in the Scope Context above. Pick the next available number.
 
             Return a JSON object with:
             - suggestions: array of {
