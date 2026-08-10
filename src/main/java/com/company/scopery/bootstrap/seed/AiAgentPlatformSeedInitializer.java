@@ -17,6 +17,7 @@ import com.company.scopery.modules.aiagent.deployment.domain.valueobject.ModelDe
 import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptContentFormat;
 import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplate;
 import com.company.scopery.modules.aiagent.prompt.domain.model.PromptTemplateRepository;
+import com.company.scopery.modules.aiagent.prompt.domain.enums.PromptVersionStatus;
 import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersion;
 import com.company.scopery.modules.aiagent.prompt.domain.model.PromptVersionRepository;
 import com.company.scopery.modules.aiagent.prompt.domain.valueobject.PromptTemplateCode;
@@ -284,14 +285,24 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             template = promptTemplateRepository.save(
                     PromptTemplate.create(agentId, templateName, code, templateDesc));
         } else {
-            // Template exists — skip if any version already present
+            // Template exists — skip if current active version already has the same user prompt
             var page = promptTemplateRepository.findAll(agentId, null, null, PageQuery.of(0, 100));
             template = page.content().stream()
                     .filter(t -> t.code().value().equals(templateCode))
                     .findFirst().orElse(null);
             if (template == null) return;
             var versionPage = promptVersionRepository.findAll(template.id(), null, null, PageQuery.of(0, 20));
-            if (!versionPage.content().isEmpty()) return;
+            boolean contentAlreadyCurrent = versionPage.content().stream()
+                    .anyMatch(v -> userPromptTemplate.equals(v.userPromptTemplate())
+                            || userPromptTemplate.equals(v.content()));
+            if (contentAlreadyCurrent) return;
+            // Content changed — archive existing active versions before creating new one
+            versionPage.content().stream()
+                    .filter(v -> v.status() == PromptVersionStatus.ACTIVE)
+                    .forEach(v -> {
+                        v.archive();
+                        promptVersionRepository.save(v);
+                    });
         }
 
         int nextVersion = promptVersionRepository.getMaxVersionNumber(template.id()) + 1;
@@ -561,10 +572,12 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             6. Frame questions as a skilled BA interviewing a domain expert: specific, direct, non-technical unless the domain requires it.
             7. Provide 3-4 suggested answers per question — short (1-2 sentences), mutually exclusive, covering realistic stakeholder responses.
             8. Assign category: REQUIREMENT | FUNCTION | SCREEN | API | ENTITY | COMPONENT | BUSINESS_RULE
-            9. Write questions and suggested answers in the language specified: {{LANGUAGE}} (vi=Vietnamese, en=English). If {{LANGUAGE}} is "vi", respond entirely in Vietnamese.
+            9. LANGUAGE RULE (CRITICAL): Write ALL output — questions, suggestedAnswers — in the language specified in the user prompt "Output language:" field. Never mix languages. If the language is "vi", every word must be Vietnamese.
             """;
 
     private static final String ELICIT_QUESTIONS_USER = """
+            LANGUAGE RULE (MANDATORY): Write ALL questions, all suggestedAnswers, and all text in this response in {{LANGUAGE}} (vi=Vietnamese, en=English). No exceptions.
+
             Conduct BABOK-style elicitation for scope: "{{SCOPE_NAME}}".
             Output language: {{LANGUAGE}}
 
@@ -666,11 +679,14 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
             - For any level other than CLEARED, provide a specific follow-up note as feedback.
             - CLEARED means no feedback needed (feedback: null).
             - Be strict: a vague answer on a critical requirement is BLOCKED or CRITICAL.
+            - LANGUAGE RULE (CRITICAL): Write ALL text fields — feedback, conflictNote, evaluationSummary — in the language specified in the user prompt "Write all output in:" field. Never mix languages.
             """;
 
     private static final String ELICIT_EVALUATE_USER = """
+            LANGUAGE RULE (MANDATORY): Write ALL text output — feedback, conflictNote, evaluationSummary — in {{LANGUAGE}} (vi=Vietnamese, en=English). No exceptions.
+
             Evaluate the answers from elicitation round {{ROUND_NUMBER}}.
-            Write all feedback and evaluationSummary in language: {{LANGUAGE}}
+            Write all output in: {{LANGUAGE}}
 
             Scope Context:
             {{SCOPE_CONTEXT_JSON}}
@@ -694,7 +710,8 @@ public class AiAgentPlatformSeedInitializer implements ApplicationListener<Appli
                 {"name":"SCOPE_CONTEXT_JSON","description":"Scope context including requirements, functions, and use cases","format":"JSON object","syntax":"{{SCOPE_CONTEXT_JSON}}"},
                 {"name":"ROUND_QUESTIONS_JSON","description":"JSON array of question-answer pairs for this round. Each: {questionId, sequence, questionText, answerText, status}","format":"JSON array","syntax":"{{ROUND_QUESTIONS_JSON}}"},
                 {"name":"ALL_QA_JSON","description":"JSON array of all Q&A across all rounds in this session for conflict detection","format":"JSON array","syntax":"{{ALL_QA_JSON}}"},
-                {"name":"ROUND_NUMBER","description":"The current round number being evaluated","format":"Integer","syntax":"{{ROUND_NUMBER}}"}
+                {"name":"ROUND_NUMBER","description":"The current round number being evaluated","format":"Integer","syntax":"{{ROUND_NUMBER}}"},
+                {"name":"LANGUAGE","description":"Output language code. 'en'=English, 'vi'=Vietnamese. All feedback and evaluationSummary must be written in this language.","format":"ISO 639-1 language code","syntax":"{{LANGUAGE}}"}
               ]
             }
             """;
