@@ -108,14 +108,15 @@ public class MessageController {
         long timeoutMs = properties.getEmitterTimeout().toMillis();
         SseEmitter emitter = sseStreamService.create(messageId, timeoutMs);
 
+        long afterSequence = -1L;
         if (lastEventId != null && !lastEventId.isBlank()) {
             try {
-                long afterSequence = Long.parseLong(lastEventId);
-                sseStreamService.replay(emitter, messageId, afterSequence);
+                afterSequence = Long.parseLong(lastEventId);
             } catch (NumberFormatException ignored) {
-                // Invalid Last-Event-ID — start fresh without replay
+                // Invalid Last-Event-ID — replay from beginning
             }
         }
+        sseStreamService.replay(emitter, messageId, afterSequence);
 
         return emitter;
     }

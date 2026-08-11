@@ -12,6 +12,8 @@ public interface BusinessRuleRepository {
 
     List<BusinessRule> findByFunctionalItemId(UUID functionalItemId);
 
+    List<BusinessRule> findAllByProjectId(UUID projectId);
+
     boolean existsByFunctionalItemIdAndCode(UUID functionalItemId, String code);
 
     void delete(UUID id, UUID functionalItemId);

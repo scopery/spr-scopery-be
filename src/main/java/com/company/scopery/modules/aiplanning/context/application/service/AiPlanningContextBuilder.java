@@ -10,6 +10,10 @@ import com.company.scopery.modules.project.shared.error.ProjectExceptions;
 import com.company.scopery.modules.project.task.domain.model.TaskRepository;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNode;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNodeRepository;
+import com.company.scopery.modules.traceability.businessrule.domain.model.BusinessRule;
+import com.company.scopery.modules.traceability.businessrule.domain.model.BusinessRuleRepository;
+import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItem;
+import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -19,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AiPlanningContextBuilder {
@@ -26,6 +31,8 @@ public class AiPlanningContextBuilder {
     private final ProjectPhaseRepository phases;
     private final WbsNodeRepository wbsNodes;
     private final TaskRepository tasks;
+    private final FunctionalItemRepository functionalItems;
+    private final BusinessRuleRepository businessRules;
     private final AiPlanningAuthorizationService authorization;
     private final ObjectMapper objectMapper;
 
@@ -33,12 +40,16 @@ public class AiPlanningContextBuilder {
                                     ProjectPhaseRepository phases,
                                     WbsNodeRepository wbsNodes,
                                     TaskRepository tasks,
+                                    FunctionalItemRepository functionalItems,
+                                    BusinessRuleRepository businessRules,
                                     AiPlanningAuthorizationService authorization,
                                     ObjectMapper objectMapper) {
         this.projects = projects;
         this.phases = phases;
         this.wbsNodes = wbsNodes;
         this.tasks = tasks;
+        this.functionalItems = functionalItems;
+        this.businessRules = businessRules;
         this.authorization = authorization;
         this.objectMapper = objectMapper;
     }
@@ -53,7 +64,7 @@ public class AiPlanningContextBuilder {
         Map<String, Object> accessScope = new LinkedHashMap<>();
 
         List<String> sections = requestedSections == null || requestedSections.isEmpty()
-                ? List.of("PROJECT", "PHASES", "WBS", "TASKS")
+                ? List.of("PROJECT", "PHASES", "WBS", "TASKS", "FUNCTIONAL_ITEMS")
                 : requestedSections;
 
         if (sections.contains("PROJECT")) {
@@ -100,6 +111,40 @@ public class AiPlanningContextBuilder {
             }
             payload.put("tasks", summarize(taskRows, 150));
         }
+        if (sections.contains("FUNCTIONAL_ITEMS")) {
+            included.add("FUNCTIONAL_ITEMS");
+            List<FunctionalItem> items = summarizeDomain(functionalItems.findByProjectId(projectId), 100);
+            Map<UUID, List<BusinessRule>> rulesByItem = businessRules.findAllByProjectId(projectId)
+                    .stream()
+                    .collect(Collectors.groupingBy(BusinessRule::functionalItemId));
+            List<Map<String, Object>> fiRows = new ArrayList<>();
+            for (FunctionalItem fi : items) {
+                List<Map<String, Object>> brRows = rulesByItem.getOrDefault(fi.id(), List.of())
+                        .stream()
+                        .map(br -> {
+                            Map<String, Object> brMap = new LinkedHashMap<>();
+                            brMap.put("code", br.code());
+                            brMap.put("title", br.title());
+                            brMap.put("description", br.description() == null ? "" : br.description());
+                            brMap.put("severity", br.severity() == null ? "" : br.severity().name());
+                            brMap.put("status", br.status().name());
+                            return brMap;
+                        })
+                        .toList();
+                Map<String, Object> fiMap = new LinkedHashMap<>();
+                fiMap.put("id", fi.id());
+                fiMap.put("code", fi.code() == null ? "" : fi.code());
+                fiMap.put("title", fi.title());
+                fiMap.put("description", fi.description() == null ? "" : fi.description());
+                fiMap.put("type", fi.type().name());
+                fiMap.put("priority", fi.priority() == null ? "" : fi.priority().name());
+                fiMap.put("status", fi.status().name());
+                fiMap.put("acceptanceCriteria", fi.acceptanceCriteria() == null ? List.of() : fi.acceptanceCriteria());
+                fiMap.put("businessRules", brRows);
+                fiRows.add(fiMap);
+            }
+            payload.put("functionalItems", fiRows);
+        }
         if (sections.contains("FINANCE_SUMMARY")) {
             if (authorization.canViewFinance(projectId)) {
                 included.add("FINANCE_SUMMARY");
@@ -133,6 +178,11 @@ public class AiPlanningContextBuilder {
     }
 
     private List<Map<String, Object>> summarize(List<Map<String, Object>> rows, int max) {
+        if (rows.size() <= max) return rows;
+        return rows.subList(0, max);
+    }
+
+    private <T> List<T> summarizeDomain(List<T> rows, int max) {
         if (rows.size() <= max) return rows;
         return rows.subList(0, max);
     }

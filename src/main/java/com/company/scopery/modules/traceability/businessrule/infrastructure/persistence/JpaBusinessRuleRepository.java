@@ -42,6 +42,11 @@ public class JpaBusinessRuleRepository implements BusinessRuleRepository {
     }
 
     @Override
+    public List<BusinessRule> findAllByProjectId(UUID projectId) {
+        return springData.findByProjectId(projectId).stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public boolean existsByFunctionalItemIdAndCode(UUID functionalItemId, String code) {
         return springData.existsByFunctionalItemIdAndCode(functionalItemId, code);
     }

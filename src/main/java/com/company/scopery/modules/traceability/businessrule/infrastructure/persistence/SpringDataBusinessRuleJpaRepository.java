@@ -10,6 +10,8 @@ public interface SpringDataBusinessRuleJpaRepository extends JpaRepository<Busin
 
     List<BusinessRuleJpaEntity> findByFunctionalItemIdOrderByCreatedAtDesc(UUID functionalItemId);
 
+    List<BusinessRuleJpaEntity> findByProjectId(UUID projectId);
+
     Optional<BusinessRuleJpaEntity> findByIdAndFunctionalItemId(UUID id, UUID functionalItemId);
 
     boolean existsByFunctionalItemIdAndCode(UUID functionalItemId, String code);
