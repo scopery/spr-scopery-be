@@ -129,7 +129,7 @@ class PromptVersionActionTest {
         when(versionRepository.findById(versionId)).thenReturn(Optional.of(activeVersion));
 
         UpdatePromptVersionCommand command = new UpdatePromptVersionCommand(
-                versionId, null, "New content", "TEXT", null, null);
+                versionId, null, "New content", "TEXT", null, null, null, null);
 
         assertThatThrownBy(() -> updatePromptVersionAction.execute(command))
                 .isInstanceOf(AppException.class)

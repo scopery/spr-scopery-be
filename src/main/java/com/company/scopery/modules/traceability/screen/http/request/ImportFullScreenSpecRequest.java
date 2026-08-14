@@ -29,7 +29,7 @@ public record ImportFullScreenSpecRequest(
         public record FieldItem(
                 @NotBlank String fieldKey,
                 @NotBlank String label,
-                String fieldType,
+                @NotBlank String fieldType,
                 String description,
                 boolean required,
                 int displayOrder,

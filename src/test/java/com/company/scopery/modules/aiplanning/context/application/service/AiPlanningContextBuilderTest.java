@@ -8,6 +8,8 @@ import com.company.scopery.modules.project.project.domain.model.ProjectRepositor
 import com.company.scopery.modules.project.projectphase.domain.model.ProjectPhaseRepository;
 import com.company.scopery.modules.project.task.domain.model.TaskRepository;
 import com.company.scopery.modules.project.wbs.domain.model.WbsNodeRepository;
+import com.company.scopery.modules.traceability.businessrule.domain.model.BusinessRuleRepository;
+import com.company.scopery.modules.traceability.functionalitem.domain.model.FunctionalItemRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +33,8 @@ class AiPlanningContextBuilderTest {
     @Mock private ProjectPhaseRepository phases;
     @Mock private WbsNodeRepository wbsNodes;
     @Mock private TaskRepository tasks;
+    @Mock private FunctionalItemRepository functionalItems;
+    @Mock private BusinessRuleRepository businessRules;
     @Mock private AiPlanningAuthorizationService authorization;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -42,7 +46,7 @@ class AiPlanningContextBuilderTest {
 
     @BeforeEach
     void setUp() {
-        builder = new AiPlanningContextBuilder(projects, phases, wbsNodes, tasks, authorization, objectMapper);
+        builder = new AiPlanningContextBuilder(projects, phases, wbsNodes, tasks, functionalItems, businessRules, authorization, objectMapper);
         Project project = new Project(
                 projectId, workspaceId, UUID.randomUUID(), "P-1", "Demo", "desc",
                 actorId, "USD", null, null, ProjectStatus.ACTIVE,
