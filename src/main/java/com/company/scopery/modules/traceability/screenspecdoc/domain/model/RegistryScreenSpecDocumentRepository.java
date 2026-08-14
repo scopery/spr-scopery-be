@@ -9,6 +9,7 @@ public interface RegistryScreenSpecDocumentRepository {
     Optional<RegistryScreenSpecDocument> findByIdAndProjectId(UUID id, UUID projectId);
     boolean existsByProjectIdAndDocumentCode(UUID projectId, String documentCode);
     List<RegistryScreenSpecDocument> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
+    List<RegistryScreenSpecDocument> findByWorkspaceIdOrderByCreatedAtDesc(UUID workspaceId);
     RegistryScreenSpecDocument save(RegistryScreenSpecDocument doc);
     void delete(UUID id);
 }

@@ -41,10 +41,10 @@ public class RegistryScreenSpecDocQueryService {
     @Transactional(readOnly = true)
     public List<RegistryScreenSpecDocResponse> list(UUID workspaceId, UUID projectId) {
         authorization.requireWorkspaceView(workspaceId);
-        return docRepo.findByProjectIdOrderByCreatedAtDesc(projectId)
-                .stream()
-                .map(RegistryScreenSpecDocResponse::from)
-                .toList();
+        var docs = projectId != null
+                ? docRepo.findByProjectIdOrderByCreatedAtDesc(projectId)
+                : docRepo.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId);
+        return docs.stream().map(RegistryScreenSpecDocResponse::from).toList();
     }
 
     @Transactional(readOnly = true)

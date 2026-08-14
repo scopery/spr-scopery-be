@@ -9,8 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import jakarta.persistence.OptimisticLockException;
@@ -100,6 +102,22 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ErrorCode.RESOURCE_CONFLICT,
                 "The resource was changed by another request; reload and retry", List.of(),
                 request.getRequestURI());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
+                                                             HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR,
+                "Required parameter '" + ex.getParameterName() + "' is missing",
+                List.of(ex.getParameterName() + ": required"), request.getRequestURI());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                             HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR,
+                "Invalid value for parameter '" + ex.getName() + "'",
+                List.of(ex.getName() + ": invalid format"), request.getRequestURI());
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)

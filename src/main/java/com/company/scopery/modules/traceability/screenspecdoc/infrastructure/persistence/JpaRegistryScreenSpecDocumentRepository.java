@@ -46,6 +46,14 @@ public class JpaRegistryScreenSpecDocumentRepository implements RegistryScreenSp
     }
 
     @Override
+    public List<RegistryScreenSpecDocument> findByWorkspaceIdOrderByCreatedAtDesc(UUID workspaceId) {
+        return springData.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public RegistryScreenSpecDocument save(RegistryScreenSpecDocument doc) {
         return mapper.toDomain(springData.saveAndFlush(mapper.toJpaEntity(doc)));
     }

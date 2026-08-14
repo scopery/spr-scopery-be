@@ -81,10 +81,10 @@ public class RegistryScreenSpecDocController {
     }
 
     @GetMapping
-    @Operation(summary = "List screen spec documents by project")
+    @Operation(summary = "List screen spec documents. Filter by projectId query param, or omit to list all in the workspace.")
     public ApiResponse<List<RegistryScreenSpecDocResponse>> list(
             @PathVariable UUID workspaceId,
-            @RequestParam UUID projectId) {
+            @RequestParam(required = false) UUID projectId) {
         return ApiResponse.success(query.list(workspaceId, projectId));
     }
 

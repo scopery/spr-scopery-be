@@ -16,4 +16,6 @@ public interface SpringDataRegistryScreenSpecDocumentJpaRepository
     boolean existsByProjectIdAndDocumentCode(UUID projectId, String documentCode);
 
     List<RegistryScreenSpecDocumentJpaEntity> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
+
+    List<RegistryScreenSpecDocumentJpaEntity> findByWorkspaceIdOrderByCreatedAtDesc(UUID workspaceId);
 }
