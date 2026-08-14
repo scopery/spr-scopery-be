@@ -130,7 +130,7 @@ public class CreateRegistryAppComponentToolAdapter implements AiActionToolAdapte
         String description = getString(input, "description");
         String componentType = getString(input, "componentType");
 
-        RegistryAppComponent component = RegistryAppComponent.create(applicationUuid, workspaceUuid, code, name, description, componentType);
+        RegistryAppComponent component = RegistryAppComponent.create(applicationUuid, workspaceUuid, code, name, description, componentType, "NONE", null, null, null, null);
         RegistryAppComponent saved = componentRepository.save(component);
 
         log.info("[CreateAppComponentTool] Component created — id={} code={} application={}", saved.id(), saved.code(), applicationUuid);

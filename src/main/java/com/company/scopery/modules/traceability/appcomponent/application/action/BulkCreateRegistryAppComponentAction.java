@@ -31,7 +31,8 @@ public class BulkCreateRegistryAppComponentAction {
         for (var item : cmd.items()) {
             results.add(RegistryAppComponentResponse.from(repo.save(
                     RegistryAppComponent.create(cmd.applicationId(), cmd.workspaceId(),
-                            item.code().trim(), item.name().trim(), item.description(), item.componentType())
+                            item.code().trim(), item.name().trim(), item.description(), item.componentType(),
+                            "NONE", null, null, null, null)
             )));
         }
         return results;

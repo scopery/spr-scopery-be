@@ -288,7 +288,7 @@ public class SuggestionItemExecutorService {
         UUID screenId = uuid(c, "screenId");
         if (functionId == null) throw new IllegalArgumentException("targetEntityId (functionId) required for LINK_FUNCTION_SCREEN");
         if (screenId == null) throw new IllegalArgumentException("changesJson.screenId required for LINK_FUNCTION_SCREEN");
-        linkFunctionScreen.execute(new LinkFunctionScreenCommand(projectId, functionId, screenId, text(c, "note")));
+        linkFunctionScreen.execute(new LinkFunctionScreenCommand(projectId, functionId, screenId, text(c, "note"), null, null, 0));
         return null;
     }
 
@@ -297,7 +297,8 @@ public class SuggestionItemExecutorService {
         if (appId == null) throw new IllegalArgumentException("changesJson.applicationId required for CREATE_COMPONENT");
         createComponent.execute(new CreateRegistryAppComponentCommand(
                 appId, coalesce(uuid(c, "workspaceId"), workspaceId),
-                text(c, "code"), text(c, "name"), text(c, "description"), text(c, "componentType")
+                text(c, "code"), text(c, "name"), text(c, "description"), text(c, "componentType"),
+                "NONE", null, null, null, null
         ));
         return null;
     }
