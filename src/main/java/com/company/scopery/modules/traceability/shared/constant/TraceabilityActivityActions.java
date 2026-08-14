@@ -79,5 +79,36 @@ public final class TraceabilityActivityActions {
     public static final String REQUIREMENT_FUNCTION_UNLINKED         = "REQUIREMENT_FUNCTION_UNLINKED";
     public static final String REQUIREMENT_USE_CASE_LINKED           = "REQUIREMENT_USE_CASE_LINKED";
     public static final String REQUIREMENT_USE_CASE_UNLINKED         = "REQUIREMENT_USE_CASE_UNLINKED";
+    // Screen Design Spec
+    public static final String SCREEN_MODE_CREATED              = "SCREEN_MODE_CREATED";
+    public static final String SCREEN_MODE_UPDATED              = "SCREEN_MODE_UPDATED";
+    public static final String SCREEN_MODE_DELETED              = "SCREEN_MODE_DELETED";
+    public static final String DATA_ENTITY_FIELD_CREATED        = "DATA_ENTITY_FIELD_CREATED";
+    public static final String DATA_ENTITY_FIELD_UPDATED        = "DATA_ENTITY_FIELD_UPDATED";
+    public static final String DATA_ENTITY_FIELD_DELETED        = "DATA_ENTITY_FIELD_DELETED";
+    public static final String VALIDATION_RULE_TYPE_CREATED     = "VALIDATION_RULE_TYPE_CREATED";
+    public static final String VALIDATION_RULE_TYPE_UPDATED     = "VALIDATION_RULE_TYPE_UPDATED";
+    public static final String VALIDATION_RULE_TYPE_DELETED     = "VALIDATION_RULE_TYPE_DELETED";
+    public static final String COMPONENT_OPTION_CREATED         = "COMPONENT_OPTION_CREATED";
+    public static final String COMPONENT_OPTION_UPDATED         = "COMPONENT_OPTION_UPDATED";
+    public static final String COMPONENT_OPTION_DELETED         = "COMPONENT_OPTION_DELETED";
+    public static final String FIELD_MODE_CONFIGS_REPLACED      = "FIELD_MODE_CONFIGS_REPLACED";
+    public static final String FIELD_VALIDATION_CREATED         = "FIELD_VALIDATION_CREATED";
+    public static final String FIELD_VALIDATION_UPDATED         = "FIELD_VALIDATION_UPDATED";
+    public static final String FIELD_VALIDATION_DELETED         = "FIELD_VALIDATION_DELETED";
+    public static final String SCREEN_SPEC_DOC_CREATED          = "SCREEN_SPEC_DOC_CREATED";
+    public static final String SCREEN_SPEC_DOC_UPDATED          = "SCREEN_SPEC_DOC_UPDATED";
+    public static final String SCREEN_SPEC_DOC_DELETED          = "SCREEN_SPEC_DOC_DELETED";
+    public static final String SPEC_DOC_SCREEN_ADDED            = "SPEC_DOC_SCREEN_ADDED";
+    public static final String SPEC_DOC_SCREEN_REMOVED          = "SPEC_DOC_SCREEN_REMOVED";
+    public static final String SPEC_DOC_REVISION_CREATED        = "SPEC_DOC_REVISION_CREATED";
+    public static final String SPEC_DOC_REVISION_UPDATED        = "SPEC_DOC_REVISION_UPDATED";
+    public static final String SPEC_DOC_REVISION_DELETED        = "SPEC_DOC_REVISION_DELETED";
+    public static final String SCREEN_PROCESS_ITEM_CREATED      = "SCREEN_PROCESS_ITEM_CREATED";
+    public static final String SCREEN_PROCESS_ITEM_UPDATED      = "SCREEN_PROCESS_ITEM_UPDATED";
+    public static final String SCREEN_PROCESS_ITEM_DELETED      = "SCREEN_PROCESS_ITEM_DELETED";
+    public static final String SCREEN_EVENT_ITEM_CREATED        = "SCREEN_EVENT_ITEM_CREATED";
+    public static final String SCREEN_EVENT_ITEM_UPDATED        = "SCREEN_EVENT_ITEM_UPDATED";
+    public static final String SCREEN_EVENT_ITEM_DELETED        = "SCREEN_EVENT_ITEM_DELETED";
     private TraceabilityActivityActions() {}
 }

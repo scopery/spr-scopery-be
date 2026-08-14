@@ -18,6 +18,6 @@ public class UpdateRegistryScreenFieldAction {
         authorization.requireWorkspaceCreate(c.workspaceId());
         var field = repo.findByIdAndWorkspaceId(c.fieldId(), c.workspaceId())
                 .orElseThrow(() -> TraceabilityExceptions.screenFieldNotFound(c.fieldId()));
-        return RegistryScreenFieldResponse.from(repo.save(field.withUpdated(c.label(), c.fieldType(), c.description(), c.required(), c.displayOrder())));
+        return RegistryScreenFieldResponse.from(repo.save(field.withUpdated(c.label(), c.fieldType(), c.description(), c.required(), c.displayOrder(), c.componentId(), c.dataEntityFieldId(), c.maxLength(), c.remark())));
     }
 }

@@ -1,0 +1,14 @@
+package com.company.scopery.modules.traceability.screenspecdoc.application.command;
+
+import java.util.UUID;
+
+public record UpdateRegistryScreenSpecDocCommand(
+        UUID workspaceId,
+        UUID documentId,
+        String documentName,
+        String projectName,
+        String systemName,
+        String phaseName,
+        String language,
+        String overview,
+        String figmaUrl) {}

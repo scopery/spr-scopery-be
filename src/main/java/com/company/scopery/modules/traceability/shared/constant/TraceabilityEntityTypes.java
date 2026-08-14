@@ -34,5 +34,16 @@ public final class TraceabilityEntityTypes {
     public static final String USE_CASE_CONDITION            = "USE_CASE_CONDITION";
     public static final String USE_CASE_BUSINESS_RULE        = "USE_CASE_BUSINESS_RULE";
     public static final String USE_CASE_ACCEPTANCE_CRITERION = "USE_CASE_ACCEPTANCE_CRITERION";
+    // Screen Design Spec
+    public static final String SCREEN_MODE              = "SCREEN_MODE";
+    public static final String DATA_ENTITY_FIELD        = "DATA_ENTITY_FIELD";
+    public static final String VALIDATION_RULE_TYPE     = "VALIDATION_RULE_TYPE";
+    public static final String COMPONENT_OPTION         = "COMPONENT_OPTION";
+    public static final String SCREEN_FIELD_MODE_CONFIG = "SCREEN_FIELD_MODE_CONFIG";
+    public static final String SCREEN_FIELD_VALIDATION  = "SCREEN_FIELD_VALIDATION";
+    public static final String SCREEN_SPEC_DOCUMENT     = "SCREEN_SPEC_DOCUMENT";
+    public static final String SPEC_DOC_REVISION        = "SPEC_DOC_REVISION";
+    public static final String SCREEN_PROCESS_ITEM      = "SCREEN_PROCESS_ITEM";
+    public static final String SCREEN_EVENT_ITEM        = "SCREEN_EVENT_ITEM";
     private TraceabilityEntityTypes() {}
 }

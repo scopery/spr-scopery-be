@@ -1,3 +1,6 @@
 package com.company.scopery.modules.traceability.appcomponent.application.command;
 import java.util.UUID;
-public record UpdateRegistryAppComponentCommand(UUID workspaceId, UUID appComponentId, String name, String description, String componentType) {}
+public record UpdateRegistryAppComponentCommand(
+        UUID workspaceId, UUID appComponentId, String name, String description,
+        String componentType, String optionSourceType,
+        UUID sourceEntityId, String sourceValueColumn, String sourceLabelColumn, String sourceFilterJson) {}

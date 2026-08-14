@@ -46,7 +46,7 @@ public class FunctionScreenController {
             @PathVariable UUID functionalItemId,
             @Valid @RequestBody LinkFunctionScreenRequest r) {
         return ApiResponse.success(link.execute(
-                new LinkFunctionScreenCommand(projectId, functionalItemId, r.screenId(), r.note())));
+                new LinkFunctionScreenCommand(projectId, functionalItemId, r.screenId(), r.note(), r.role(), r.modeCode(), r.displayOrder())));
     }
 
     @GetMapping

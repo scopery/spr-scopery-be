@@ -56,7 +56,7 @@ public class RegistryAppComponentController {
     @Operation(summary = "Create application component")
     public ApiResponse<RegistryAppComponentResponse> create(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                              @Valid @RequestBody CreateRegistryAppComponentRequest r) {
-        return ApiResponse.success(create.execute(new CreateRegistryAppComponentCommand(applicationId, workspaceId, r.code(), r.name(), r.description(), r.componentType())));
+        return ApiResponse.success(create.execute(new CreateRegistryAppComponentCommand(applicationId, workspaceId, r.code(), r.name(), r.description(), r.componentType(), r.optionSourceType(), r.sourceEntityId(), r.sourceValueColumn(), r.sourceLabelColumn(), r.sourceFilterJson())));
     }
 
     @PostMapping("/bulk")
@@ -65,7 +65,7 @@ public class RegistryAppComponentController {
     public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                     @Valid @RequestBody BulkCreateRegistryAppComponentRequest r) {
         var items = r.items().stream()
-                .map(i -> new CreateRegistryAppComponentCommand(applicationId, workspaceId, i.code(), i.name(), i.description(), i.componentType()))
+                .map(i -> new CreateRegistryAppComponentCommand(applicationId, workspaceId, i.code(), i.name(), i.description(), i.componentType(), null, null, null, null, null))
                 .toList();
         try {
             String payload = objectMapper.writeValueAsString(new BulkCreateRegistryAppComponentCommand(applicationId, workspaceId, items));
@@ -93,7 +93,7 @@ public class RegistryAppComponentController {
     @Operation(summary = "Update application component")
     public ApiResponse<RegistryAppComponentResponse> update(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                              @PathVariable UUID appComponentId, @Valid @RequestBody UpdateRegistryAppComponentRequest r) {
-        return ApiResponse.success(update.execute(new UpdateRegistryAppComponentCommand(workspaceId, appComponentId, r.name(), r.description(), r.componentType())));
+        return ApiResponse.success(update.execute(new UpdateRegistryAppComponentCommand(workspaceId, appComponentId, r.name(), r.description(), r.componentType(), r.optionSourceType(), r.sourceEntityId(), r.sourceValueColumn(), r.sourceLabelColumn(), r.sourceFilterJson())));
     }
 
     @DeleteMapping("/{appComponentId}")

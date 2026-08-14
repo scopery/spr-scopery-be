@@ -7,13 +7,21 @@ import org.springframework.stereotype.Component;
 public class RegistryAppComponentPersistenceMapper {
     public RegistryAppComponent toDomain(RegistryAppComponentJpaEntity e) {
         return new RegistryAppComponent(e.getId(), e.getApplicationId(), e.getWorkspaceId(), e.getCode(), e.getName(), e.getDescription(),
-                e.getComponentType(), RegistryAppComponentStatus.valueOf(e.getStatus()), e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getComponentType(), e.getOptionSourceType() != null ? e.getOptionSourceType() : "NONE",
+                e.getSourceEntityId(), e.getSourceValueColumn(), e.getSourceLabelColumn(), e.getSourceFilterJson(),
+                RegistryAppComponentStatus.valueOf(e.getStatus()), e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public RegistryAppComponentJpaEntity toJpaEntity(RegistryAppComponent d) {
         RegistryAppComponentJpaEntity e = new RegistryAppComponentJpaEntity();
         e.setId(d.id()); e.setApplicationId(d.applicationId()); e.setWorkspaceId(d.workspaceId());
         e.setCode(d.code()); e.setName(d.name()); e.setDescription(d.description());
-        e.setComponentType(d.componentType()); e.setStatus(d.status().name());
+        e.setComponentType(d.componentType());
+        e.setOptionSourceType(d.optionSourceType() != null ? d.optionSourceType() : "NONE");
+        e.setSourceEntityId(d.sourceEntityId());
+        e.setSourceValueColumn(d.sourceValueColumn());
+        e.setSourceLabelColumn(d.sourceLabelColumn());
+        e.setSourceFilterJson(d.sourceFilterJson());
+        e.setStatus(d.status().name());
         if (d.createdAt() != null) {
             e.setVersion(d.version());
             e.setCreatedAt(d.createdAt());

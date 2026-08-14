@@ -36,5 +36,17 @@ public final class TraceabilityTableNames {
     public static final String USE_CASE_ACCEPTANCE_CRITERION = "app_use_case_acceptance_criterion";
     public static final String REQUIREMENT_FUNCTION          = "app_requirement_function";
     public static final String REQUIREMENT_USE_CASE          = "app_requirement_use_case";
+    // Screen Design Spec
+    public static final String SCREEN_MODE                   = "app_registry_screen_mode";
+    public static final String DATA_ENTITY_FIELD             = "app_registry_data_entity_field";
+    public static final String VALIDATION_RULE_TYPE          = "app_registry_validation_rule_type";
+    public static final String COMPONENT_OPTION              = "app_registry_component_option";
+    public static final String SCREEN_FIELD_MODE_CONFIG      = "app_registry_screen_field_mode_config";
+    public static final String SCREEN_FIELD_VALIDATION       = "app_registry_screen_field_validation";
+    public static final String SCREEN_SPEC_DOCUMENT          = "app_registry_screen_spec_document";
+    public static final String SPEC_DOC_SCREEN               = "app_registry_spec_doc_screen";
+    public static final String SPEC_DOC_REVISION             = "app_registry_spec_doc_revision";
+    public static final String SCREEN_PROCESS_ITEM           = "app_registry_screen_process_item";
+    public static final String SCREEN_EVENT_ITEM             = "app_registry_screen_event_item";
     private TraceabilityTableNames() {}
 }

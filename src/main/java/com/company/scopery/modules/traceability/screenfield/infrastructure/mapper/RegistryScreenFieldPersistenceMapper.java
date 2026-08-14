@@ -8,7 +8,8 @@ public class RegistryScreenFieldPersistenceMapper {
     public RegistryScreenField toDomain(RegistryScreenFieldJpaEntity e) {
         return new RegistryScreenField(e.getId(), e.getScreenId(), e.getSectionId(), e.getWorkspaceId(),
                 e.getFieldKey(), e.getLabel(), e.getFieldType(), e.getDescription(), e.isRequired(),
-                e.getDisplayOrder(), RegistryScreenFieldStatus.valueOf(e.getStatus()),
+                e.getDisplayOrder(), e.getComponentId(), e.getDataEntityFieldId(), e.getMaxLength(), e.getRemark(),
+                RegistryScreenFieldStatus.valueOf(e.getStatus()),
                 e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public RegistryScreenFieldJpaEntity toJpaEntity(RegistryScreenField d) {
@@ -16,7 +17,10 @@ public class RegistryScreenFieldPersistenceMapper {
         e.setId(d.id()); e.setScreenId(d.screenId()); e.setSectionId(d.sectionId());
         e.setWorkspaceId(d.workspaceId()); e.setFieldKey(d.fieldKey()); e.setLabel(d.label());
         e.setFieldType(d.fieldType()); e.setDescription(d.description()); e.setRequired(d.required());
-        e.setDisplayOrder(d.displayOrder()); e.setStatus(d.status().name());
+        e.setDisplayOrder(d.displayOrder());
+        e.setComponentId(d.componentId()); e.setDataEntityFieldId(d.dataEntityFieldId());
+        e.setMaxLength(d.maxLength()); e.setRemark(d.remark());
+        e.setStatus(d.status().name());
         if (d.createdAt() != null) {
             e.setVersion(d.version());
             e.setCreatedAt(d.createdAt());

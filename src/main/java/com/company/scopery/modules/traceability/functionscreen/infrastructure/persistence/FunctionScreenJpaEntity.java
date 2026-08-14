@@ -24,6 +24,15 @@ public class FunctionScreenJpaEntity {
     @Column(columnDefinition = "text")
     private String note;
 
+    @Column(name = "role", length = 50)
+    private String role;
+
+    @Column(name = "mode_code", length = 50)
+    private String modeCode;
+
+    @Column(name = "display_order", nullable = false)
+    private int displayOrder;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

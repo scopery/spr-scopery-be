@@ -2,4 +2,4 @@ package com.company.scopery.modules.traceability.functionscreen.application.comm
 
 import java.util.UUID;
 
-public record LinkFunctionScreenCommand(UUID projectId, UUID functionalItemId, UUID screenId, String note) {}
+public record LinkFunctionScreenCommand(UUID projectId, UUID functionalItemId, UUID screenId, String note, String role, String modeCode, int displayOrder) {}

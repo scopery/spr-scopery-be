@@ -37,6 +37,7 @@ public final class TraceabilityExceptions {
     public static AppException structureRelationDuplicate(){return new AppException(TraceabilityErrorCatalog.STRUCTURE_RELATION_DUPLICATE);}
     public static AppException structureRelationSelfLoop(){return new AppException(TraceabilityErrorCatalog.STRUCTURE_RELATION_SELF_LOOP);}
     public static AppException functionScreenDuplicate(){return new AppException(TraceabilityErrorCatalog.FUNCTION_SCREEN_DUPLICATE);}
+    public static AppException invalidFunctionScreenRole(String role){return new AppException(TraceabilityErrorCatalog.INVALID_FUNCTION_SCREEN_ROLE,"Invalid function-screen role: "+role,Map.of("role",role==null?"":role));}
     public static AppException functionScreenNotFound(UUID functionId, UUID screenId){return new AppException(TraceabilityErrorCatalog.FUNCTION_SCREEN_NOT_FOUND,"Function-screen link not found",Map.of("functionId",functionId==null?"":functionId,"screenId",screenId==null?"":screenId));}
     public static AppException functionApiDuplicate(){return new AppException(TraceabilityErrorCatalog.FUNCTION_API_DUPLICATE);}
     public static AppException commSpecNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.COMM_SPEC_NOT_FOUND,"Communication specification not found: "+id,Map.of("id",id==null?"":id));}
@@ -69,4 +70,32 @@ public final class TraceabilityExceptions {
     public static AppException requirementUseCaseDuplicate(){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_DUPLICATE);}
     public static AppException requirementUseCaseNotFound(UUID reqId, UUID ucId){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_USE_CASE_NOT_FOUND,"Requirement-use case link not found",Map.of("requirementId",reqId==null?"":reqId,"useCaseId",ucId==null?"":ucId));}
     public static AppException requirementHasLinks(UUID id){return new AppException(TraceabilityErrorCatalog.REQUIREMENT_HAS_LINKS,"Requirement still has active links: "+id,Map.of("id",id==null?"":id));}
+    // Screen Design Spec
+    public static AppException screenModeNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_MODE_NOT_FOUND,"Screen mode not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException screenModeCodeExists(String code){return new AppException(TraceabilityErrorCatalog.SCREEN_MODE_CODE_EXISTS,"Screen mode code already exists: "+code,Map.of("code",code));}
+    public static AppException screenModeWrongScreen(UUID modeId){return new AppException(TraceabilityErrorCatalog.SCREEN_MODE_WRONG_SCREEN,"Mode does not belong to the specified screen: "+modeId,Map.of("modeId",modeId==null?"":modeId));}
+    public static AppException screenModeInactive(UUID modeId){return new AppException(TraceabilityErrorCatalog.SCREEN_MODE_INACTIVE,"Screen mode is inactive: "+modeId,Map.of("modeId",modeId==null?"":modeId));}
+    public static AppException dataEntityFieldNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_FIELD_NOT_FOUND,"Data entity field not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException dataEntityFieldColumnExists(String col){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_FIELD_COLUMN_EXISTS,"Column already exists: "+col,Map.of("columnName",col));}
+    public static AppException dataEntityFieldColumnNotFound(String col){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_FIELD_COLUMN_NOT_FOUND,"Column not found: "+col,Map.of("columnName",col));}
+    public static AppException dataEntityNotActive(UUID id){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_NOT_ACTIVE,"Data entity is not active: "+id,Map.of("id",id==null?"":id));}
+    public static AppException filterFieldNotInEntity(String field){return new AppException(TraceabilityErrorCatalog.FILTER_FIELD_NOT_IN_ENTITY,"Filter field not in entity: "+field,Map.of("field",field));}
+    public static AppException validationRuleTypeNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.VALIDATION_RULE_TYPE_NOT_FOUND,"Validation rule type not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException validationRuleTypeCodeExists(String code){return new AppException(TraceabilityErrorCatalog.VALIDATION_RULE_TYPE_CODE_EXISTS,"Validation rule type code already exists: "+code,Map.of("code",code==null?"":code));}
+    public static AppException fieldValidationNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.FIELD_VALIDATION_NOT_FOUND,"Field validation not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException fieldValidationRuleParamInvalid(String reason){return new AppException(TraceabilityErrorCatalog.FIELD_VALIDATION_RULE_PARAM_INVALID,reason,Map.of());}
+    public static AppException componentOptionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.COMPONENT_OPTION_NOT_FOUND,"Component option not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException componentOptionValueExists(String val){return new AppException(TraceabilityErrorCatalog.COMPONENT_OPTION_VALUE_EXISTS,"Option value already exists: "+val,Map.of("optionValue",val));}
+    public static AppException componentSourceTypeNotStatic(UUID id){return new AppException(TraceabilityErrorCatalog.COMPONENT_SOURCE_TYPE_NOT_STATIC,"Component option_source_type must be STATIC: "+id,Map.of("componentId",id==null?"":id));}
+    public static AppException componentDifferentApplication(UUID id){return new AppException(TraceabilityErrorCatalog.COMPONENT_DIFFERENT_APPLICATION,"Component belongs to a different application: "+id,Map.of("componentId",id==null?"":id));}
+    public static AppException dataEntityFieldDifferentApplication(UUID id){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_FIELD_DIFFERENT_APPLICATION,"Data entity field belongs to a different application: "+id,Map.of("dataEntityFieldId",id==null?"":id));}
+    public static AppException fieldModeConfigNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.FIELD_MODE_CONFIG_NOT_FOUND,"Field mode config not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException modeConfigPayloadEmpty(){return new AppException(TraceabilityErrorCatalog.MODE_CONFIG_PAYLOAD_EMPTY);}
+    public static AppException screenSpecDocNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_SPEC_DOC_NOT_FOUND,"Screen spec document not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException screenSpecDocCodeExists(String code){return new AppException(TraceabilityErrorCatalog.SCREEN_SPEC_DOC_CODE_EXISTS,"Document code already exists: "+code,Map.of("code",code));}
+    public static AppException specDocScreenDuplicate(){return new AppException(TraceabilityErrorCatalog.SPEC_DOC_SCREEN_DUPLICATE);}
+    public static AppException specDocScreenNotFound(UUID documentId, UUID screenId){return new AppException(TraceabilityErrorCatalog.SPEC_DOC_SCREEN_NOT_FOUND,"Screen not found in document",Map.of("documentId",documentId==null?"":documentId,"screenId",screenId==null?"":screenId));}
+    public static AppException specDocRevisionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SPEC_DOC_REVISION_NOT_FOUND,"Revision not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException screenProcessItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_PROCESS_ITEM_NOT_FOUND,"Process item not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException screenEventItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_EVENT_ITEM_NOT_FOUND,"Event item not found: "+id,Map.of("id",id==null?"":id));}
 }

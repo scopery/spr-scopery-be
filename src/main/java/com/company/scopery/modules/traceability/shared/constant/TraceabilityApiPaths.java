@@ -87,5 +87,18 @@ public final class TraceabilityApiPaths {
     public static final String TRACEABILITY_NFR              = BASE + "/traceability/nfr-verification";
     public static final String TRACEABILITY_EXPLORER         = BASE + "/traceability/explorer";
     public static final String REQUIREMENT_REQUIRES_USE_CASE = REQUIREMENTS + "/{requirementId}/requires-use-case";
+    // Screen Design Spec
+    public static final String SCREEN_MODES              = SCREEN_ITEM + "/{screenId}/modes";
+    public static final String DATA_ENTITY_FIELDS        = DATA_ENTITY_ITEM + "/{entityId}/fields";
+    public static final String VALIDATION_RULE_TYPES     = WS + "/validation-rule-types";
+    public static final String COMPONENT_OPTIONS         = APP_COMPONENT_ITEM + "/{componentId}/options";
+    public static final String SCREEN_FIELD_MODE_CONFIGS = SCREEN_ITEM + "/{screenId}/fields/{fieldId}/mode-configs";
+    public static final String SCREEN_FIELD_VALIDATIONS  = SCREEN_ITEM + "/{screenId}/fields/{fieldId}/validations";
+    public static final String SCREEN_FULL_SPEC          = SCREEN_ITEM + "/{screenId}/full-spec";
+    public static final String SCREEN_SPEC_DOCS          = WS + "/screen-spec-docs";
+    public static final String SPEC_DOC_REVISIONS        = WS + "/screen-spec-docs/{documentId}/revisions";
+    public static final String SPEC_DOC_FULL_SPEC        = WS + "/screen-spec-docs/{documentId}/full-spec";
+    public static final String SCREEN_PROCESS_ITEMS      = SCREEN_ITEM + "/{screenId}/process-items";
+    public static final String SCREEN_EVENT_ITEMS        = SCREEN_ITEM + "/{screenId}/event-items";
     private TraceabilityApiPaths() {}
 }

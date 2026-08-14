@@ -14,8 +14,13 @@ import com.company.scopery.modules.traceability.shared.error.TraceabilityExcepti
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Component
 public class LinkFunctionScreenAction {
+
+    private static final Set<String> VALID_ROLES = Set.of(
+            "ENTRY", "MAIN", "SUB", "RESULT", "DIALOG", "ERROR", "RELATED");
 
     private final FunctionScreenRepository repo;
     private final FunctionalItemRepository functionalItems;
@@ -46,11 +51,15 @@ public class LinkFunctionScreenAction {
             throw TraceabilityExceptions.screenNotFound(c.screenId());
         }
 
+        if (c.role() != null && !VALID_ROLES.contains(c.role())) {
+            throw TraceabilityExceptions.invalidFunctionScreenRole(c.role());
+        }
+
         if (repo.existsByFunctionIdAndScreenId(c.functionalItemId(), c.screenId())) {
             throw TraceabilityExceptions.functionScreenDuplicate();
         }
 
-        FunctionScreen saved = repo.save(FunctionScreen.create(c.functionalItemId(), c.screenId(), c.note()));
+        FunctionScreen saved = repo.save(FunctionScreen.create(c.functionalItemId(), c.screenId(), c.note(), c.role(), c.modeCode(), c.displayOrder()));
 
         activityLogger.logSuccess(TraceabilityEntityTypes.FUNCTION_SCREEN, c.functionalItemId(),
                 TraceabilityActivityActions.FUNCTION_SCREEN_LINKED, "Screen linked to function");
