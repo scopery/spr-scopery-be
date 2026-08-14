@@ -4,5 +4,5 @@ import java.util.UUID;
 public record CreateRegistryScreenFieldRequest(
         @NotBlank String fieldKey, @NotBlank String label,
         @NotBlank String fieldType, String description,
-        boolean required, int displayOrder, UUID sectionId,
+        Boolean required, Integer displayOrder, UUID sectionId,
         UUID componentId, UUID dataEntityFieldId, Integer maxLength, String remark) {}

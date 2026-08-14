@@ -31,7 +31,7 @@ public class RegistryScreenFieldController {
     public ApiResponse<RegistryScreenFieldResponse> create(@PathVariable UUID workspaceId, @PathVariable UUID screenId,
                                                             @Valid @RequestBody CreateRegistryScreenFieldRequest r) {
         return ApiResponse.success(create.execute(new CreateRegistryScreenFieldCommand(screenId, r.sectionId(), workspaceId,
-                r.fieldKey(), r.label(), r.fieldType(), r.description(), r.required(), r.displayOrder(),
+                r.fieldKey(), r.label(), r.fieldType(), r.description(), Boolean.TRUE.equals(r.required()), r.displayOrder() != null ? r.displayOrder() : 0,
                 r.componentId(), r.dataEntityFieldId(), r.maxLength(), r.remark())));
     }
     @GetMapping @Operation(summary = "List screen fields")
@@ -45,7 +45,7 @@ public class RegistryScreenFieldController {
     @PutMapping("/{fieldId}") @Operation(summary = "Update screen field")
     public ApiResponse<RegistryScreenFieldResponse> update(@PathVariable UUID workspaceId, @PathVariable UUID screenId,
                                                             @PathVariable UUID fieldId, @Valid @RequestBody UpdateRegistryScreenFieldRequest r) {
-        return ApiResponse.success(update.execute(new UpdateRegistryScreenFieldCommand(workspaceId, fieldId, r.label(), r.fieldType(), r.description(), r.required(), r.displayOrder(), r.componentId(), r.dataEntityFieldId(), r.maxLength(), r.remark())));
+        return ApiResponse.success(update.execute(new UpdateRegistryScreenFieldCommand(workspaceId, fieldId, r.label(), r.fieldType(), r.description(), Boolean.TRUE.equals(r.required()), r.displayOrder() != null ? r.displayOrder() : 0, r.componentId(), r.dataEntityFieldId(), r.maxLength(), r.remark())));
     }
     @DeleteMapping("/{fieldId}") @Operation(summary = "Delete screen field")
     public ApiResponse<Void> delete(@PathVariable UUID workspaceId, @PathVariable UUID screenId, @PathVariable UUID fieldId) {

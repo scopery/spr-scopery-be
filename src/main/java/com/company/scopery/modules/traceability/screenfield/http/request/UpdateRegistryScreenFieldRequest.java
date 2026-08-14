@@ -3,5 +3,5 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 public record UpdateRegistryScreenFieldRequest(
         @NotBlank String label, @NotBlank String fieldType, String description,
-        boolean required, int displayOrder,
+        Boolean required, Integer displayOrder,
         UUID componentId, UUID dataEntityFieldId, Integer maxLength, String remark) {}
