@@ -3,14 +3,18 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.screen.application.action.BulkCreateRegistryScreenJobHandler;
 import com.company.scopery.modules.traceability.screen.application.action.CreateRegistryScreenAction;
 import com.company.scopery.modules.traceability.screen.application.action.DeleteRegistryScreenAction;
+import com.company.scopery.modules.traceability.screen.application.action.ImportFullScreenSpecJobHandler;
 import com.company.scopery.modules.traceability.screen.application.action.UpdateRegistryScreenAction;
 import com.company.scopery.modules.traceability.screen.application.command.BulkCreateRegistryScreenCommand;
 import com.company.scopery.modules.traceability.screen.application.command.CreateRegistryScreenCommand;
+import com.company.scopery.modules.traceability.screen.application.command.ImportFullScreenSpecItemCommand;
+import com.company.scopery.modules.traceability.screen.application.command.ImportFullScreenSpecJobCommand;
 import com.company.scopery.modules.traceability.screen.application.command.UpdateRegistryScreenCommand;
 import com.company.scopery.modules.traceability.screen.application.response.RegistryScreenResponse;
 import com.company.scopery.modules.traceability.screen.application.service.RegistryScreenQueryService;
 import com.company.scopery.modules.traceability.screen.http.request.BulkCreateRegistryScreenRequest;
 import com.company.scopery.modules.traceability.screen.http.request.CreateRegistryScreenRequest;
+import com.company.scopery.modules.traceability.screen.http.request.ImportFullScreenSpecRequest;
 import com.company.scopery.modules.traceability.screen.http.request.UpdateRegistryScreenRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
@@ -98,5 +102,90 @@ public class RegistryScreenController {
     public ApiResponse<Void> delete(@PathVariable UUID workspaceId, @PathVariable UUID applicationId, @PathVariable UUID screenId) {
         delete.execute(workspaceId, applicationId, screenId);
         return ApiResponse.success(null);
+    }
+
+    @PostMapping("/import-full")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Import screens with full spec — modes, fields, mode configs, validations, process items, event items (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> importFull(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
+                                                    @Valid @RequestBody ImportFullScreenSpecRequest r) {
+        var items = r.items().stream()
+                .map(i -> new ImportFullScreenSpecItemCommand(
+                        workspaceId, applicationId, i.projectId(),
+                        i.code(), i.name(), i.routePath(),
+                        toModeItems(i.modes()),
+                        toFieldItems(i.fields()),
+                        toProcessItems(i.processItems()),
+                        toEventItems(i.eventItems())))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new ImportFullScreenSpecJobCommand(items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(ImportFullScreenSpecJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize import-full payload", e);
+        }
+    }
+
+    private static List<ImportFullScreenSpecItemCommand.ModeItem> toModeItems(
+            List<ImportFullScreenSpecRequest.ScreenImportItem.ModeItem> src) {
+        if (src == null) return null;
+        return src.stream()
+                .map(m -> new ImportFullScreenSpecItemCommand.ModeItem(m.modeCode(), m.name(), m.displayOrder()))
+                .toList();
+    }
+
+    private static List<ImportFullScreenSpecItemCommand.FieldItem> toFieldItems(
+            List<ImportFullScreenSpecRequest.ScreenImportItem.FieldItem> src) {
+        if (src == null) return null;
+        return src.stream()
+                .map(f -> new ImportFullScreenSpecItemCommand.FieldItem(
+                        f.fieldKey(), f.label(), f.fieldType(), f.description(),
+                        f.required(), f.displayOrder(), f.maxLength(), f.remark(),
+                        f.componentCode(),
+                        toModeConfigItems(f.modeConfigs()),
+                        toValidationItems(f.validations())))
+                .toList();
+    }
+
+    private static List<ImportFullScreenSpecItemCommand.FieldItem.ModeConfigItem> toModeConfigItems(
+            List<ImportFullScreenSpecRequest.ScreenImportItem.FieldItem.ModeConfigItem> src) {
+        if (src == null) return null;
+        return src.stream()
+                .map(mc -> new ImportFullScreenSpecItemCommand.FieldItem.ModeConfigItem(
+                        mc.modeCode(), mc.isVisible(), mc.isRequired(), mc.isReadonly(),
+                        mc.defaultValue(), mc.displayOrder()))
+                .toList();
+    }
+
+    private static List<ImportFullScreenSpecItemCommand.FieldItem.ValidationItem> toValidationItems(
+            List<ImportFullScreenSpecRequest.ScreenImportItem.FieldItem.ValidationItem> src) {
+        if (src == null) return null;
+        return src.stream()
+                .map(v -> new ImportFullScreenSpecItemCommand.FieldItem.ValidationItem(
+                        v.modeCode(), v.ruleTypeCode(), v.ruleParamJson(),
+                        v.conditionJson(), v.errorMessage(), v.remark(), v.displayOrder()))
+                .toList();
+    }
+
+    private static List<ImportFullScreenSpecItemCommand.ProcessItem> toProcessItems(
+            List<ImportFullScreenSpecRequest.ScreenImportItem.ProcessItem> src) {
+        if (src == null) return null;
+        return src.stream()
+                .map(p -> new ImportFullScreenSpecItemCommand.ProcessItem(
+                        p.modeCode(), p.targetFieldKey(), p.title(),
+                        p.content(), p.sourceTable(), p.conditionNote(), p.displayOrder()))
+                .toList();
+    }
+
+    private static List<ImportFullScreenSpecItemCommand.EventItem> toEventItems(
+            List<ImportFullScreenSpecRequest.ScreenImportItem.EventItem> src) {
+        if (src == null) return null;
+        return src.stream()
+                .map(e -> new ImportFullScreenSpecItemCommand.EventItem(
+                        e.modeCode(), e.triggerFieldKey(), e.triggerActionCode(),
+                        e.title(), e.content(), e.conditionNote(),
+                        e.targetScreenCode(), e.targetModeCode(), e.displayOrder()))
+                .toList();
     }
 }
