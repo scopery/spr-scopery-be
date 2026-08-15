@@ -68,7 +68,8 @@ public class RegistryApiEndpointController {
     public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                     @Valid @RequestBody BulkCreateRegistryApiEndpointRequest r) {
         var items = r.items().stream()
-                .map(i -> new CreateRegistryApiEndpointCommand(workspaceId, applicationId, i.projectId(), i.method(), i.pathPattern(), i.name(), null, null, null))
+                .map(i -> new CreateRegistryApiEndpointCommand(workspaceId, applicationId, i.projectId(), i.method(), i.pathPattern(), i.name(),
+                        i.description(), serializeParams(i.requestParams()), i.responseSchemaJson()))
                 .toList();
         try {
             String payload = objectMapper.writeValueAsString(new BulkCreateRegistryApiEndpointCommand(workspaceId, applicationId, items));

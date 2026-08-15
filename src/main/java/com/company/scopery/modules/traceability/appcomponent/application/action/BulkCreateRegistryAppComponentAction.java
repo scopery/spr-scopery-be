@@ -32,7 +32,7 @@ public class BulkCreateRegistryAppComponentAction {
             results.add(RegistryAppComponentResponse.from(repo.save(
                     RegistryAppComponent.create(cmd.applicationId(), cmd.workspaceId(),
                             item.code().trim(), item.name().trim(), item.description(), item.componentType(),
-                            "NONE", null, null, null, null)
+                            item.optionSourceType(), item.sourceEntityId(), item.sourceValueColumn(), item.sourceLabelColumn(), item.sourceFilterJson())
             )));
         }
         return results;

@@ -69,7 +69,7 @@ public class RegistryAppComponentController {
     public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                     @Valid @RequestBody BulkCreateRegistryAppComponentRequest r) {
         var items = r.items().stream()
-                .map(i -> new CreateRegistryAppComponentCommand(applicationId, workspaceId, i.code(), i.name(), i.description(), i.componentType(), null, null, null, null, null))
+                .map(i -> new CreateRegistryAppComponentCommand(applicationId, workspaceId, i.code(), i.name(), i.description(), i.componentType(), i.optionSourceType(), i.sourceEntityId(), i.sourceValueColumn(), i.sourceLabelColumn(), i.sourceFilterJson()))
                 .toList();
         try {
             String payload = objectMapper.writeValueAsString(new BulkCreateRegistryAppComponentCommand(applicationId, workspaceId, items));

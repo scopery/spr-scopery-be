@@ -38,7 +38,8 @@ public class BulkCreateRegistryApiEndpointAction {
         for (var item : cmd.items()) {
             results.add(RegistryApiEndpointResponse.from(repo.save(
                     RegistryApiEndpoint.create(cmd.applicationId(), item.projectId(),
-                            item.method().trim().toUpperCase(), item.pathPattern().trim(), item.name(), null, null, null)
+                            item.method().trim().toUpperCase(), item.pathPattern().trim(), item.name(),
+                            item.description(), item.requestParamsJson(), item.responseSchemaJson())
             )));
         }
         return results;
