@@ -17,6 +17,7 @@ public class RegistryScreenFieldJpaEntity extends AuditableJpaEntity {
     @Column(name="display_order", nullable=false) private int displayOrder;
     @Column(name="component_id") private UUID componentId;
     @Column(name="data_entity_field_id") private UUID dataEntityFieldId;
+    @Column(name="component_field_id") private UUID componentFieldId;
     @Column(name="max_length") private Integer maxLength;
     @Column(columnDefinition="text") private String remark;
     @Column(nullable=false) private String status;

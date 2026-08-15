@@ -18,6 +18,6 @@ public class CreateRegistryScreenFieldAction {
         authorization.requireWorkspaceCreate(c.workspaceId());
         return RegistryScreenFieldResponse.from(repo.save(RegistryScreenField.create(c.screenId(), c.sectionId(), c.workspaceId(),
                 c.fieldKey().trim(), c.label().trim(), c.fieldType().trim(), c.description(), c.required(), c.displayOrder(),
-                c.componentId(), c.dataEntityFieldId(), c.maxLength(), c.remark())));
+                c.componentId(), c.dataEntityFieldId(), c.maxLength(), c.remark(), null)));
     }
 }

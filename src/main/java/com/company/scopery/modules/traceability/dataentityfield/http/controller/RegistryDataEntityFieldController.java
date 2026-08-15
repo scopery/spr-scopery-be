@@ -53,7 +53,8 @@ public class RegistryDataEntityFieldController {
                                                                @Valid @RequestBody CreateRegistryDataEntityFieldRequest r) {
         return ApiResponse.success(create.execute(new CreateRegistryDataEntityFieldCommand(
                 entityId, workspaceId, r.columnName(), r.dataType(), r.maxLength(),
-                r.isNullable(), r.isUnique(), r.remark(), r.displayOrder())));
+                r.isNullable(), r.isUnique(), r.isPrimaryKey(), r.defaultValue(),
+                r.precision(), r.scale(), r.remark(), r.displayOrder())));
     }
 
     @GetMapping
@@ -78,7 +79,8 @@ public class RegistryDataEntityFieldController {
                                                                @Valid @RequestBody UpdateRegistryDataEntityFieldRequest r) {
         return ApiResponse.success(update.execute(new UpdateRegistryDataEntityFieldCommand(
                 workspaceId, fieldId, r.columnName(), r.dataType(), r.maxLength(),
-                r.isNullable(), r.isUnique(), r.remark(), r.displayOrder())));
+                r.isNullable(), r.isUnique(), r.isPrimaryKey(), r.defaultValue(),
+                r.precision(), r.scale(), r.remark(), r.displayOrder())));
     }
 
     @DeleteMapping("/{fieldId}")

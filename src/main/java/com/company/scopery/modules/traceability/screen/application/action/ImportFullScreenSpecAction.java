@@ -172,7 +172,7 @@ public class ImportFullScreenSpecAction {
             RegistryScreenField field = fieldRepo.save(
                     RegistryScreenField.create(screenId, null, cmd.workspaceId(),
                             f.fieldKey(), f.label(), f.fieldType(), f.description(),
-                            f.required(), f.displayOrder(), componentId, null, f.maxLength(), f.remark()));
+                            f.required(), f.displayOrder(), componentId, null, f.maxLength(), f.remark(), null));
             fieldByKey.put(f.fieldKey(), field);
             createModeConfigs(field.id(), f, modeByCode, cmd.workspaceId());
             createValidations(field.id(), f, modeByCode, ruleTypeByCode, cmd.workspaceId());

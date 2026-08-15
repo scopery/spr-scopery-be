@@ -46,5 +46,7 @@ public final class TraceabilityEntityTypes {
     public static final String SCREEN_PROCESS_ITEM      = "SCREEN_PROCESS_ITEM";
     public static final String SCREEN_EVENT_ITEM        = "SCREEN_EVENT_ITEM";
     public static final String COMPONENT_FIELD          = "COMPONENT_FIELD";
+    public static final String COMPONENT_API            = "COMPONENT_API";
+    public static final String DATA_ENTITY_RELATION     = "DATA_ENTITY_RELATION";
     private TraceabilityEntityTypes() {}
 }

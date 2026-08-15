@@ -40,7 +40,8 @@ public class UpdateRegistryDataEntityFieldAction {
 
         var saved = repo.save(field.withUpdated(
                 c.columnName().trim(), dataType.name(), c.maxLength(),
-                c.isNullable(), c.isUnique(), c.remark(), c.displayOrder()));
+                c.isNullable(), c.isUnique(), c.isPrimaryKey(),
+                c.defaultValue(), c.precision(), c.scale(), c.remark(), c.displayOrder()));
 
         activityLogger.logSuccess(TraceabilityEntityTypes.DATA_ENTITY_FIELD, saved.id(),
                 TraceabilityActivityActions.DATA_ENTITY_FIELD_UPDATED,

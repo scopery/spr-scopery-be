@@ -173,8 +173,10 @@ public class GenerateProjectBriefAction {
             String title = root.path("title").asText("Project Summary: " + projectName);
 
             List<ProjectBriefPreviewResponse.Section> sections = new ArrayList<>();
+
+            // Handle sections-based format (fallback prompt)
             JsonNode sectionsNode = root.path("sections");
-            if (sectionsNode.isArray()) {
+            if (sectionsNode.isArray() && !sectionsNode.isEmpty()) {
                 for (JsonNode s : sectionsNode) {
                     String heading = s.path("heading").asText(null);
                     String body = s.path("body").asText(null);
@@ -188,6 +190,58 @@ public class GenerateProjectBriefAction {
                             (body != null && !body.isBlank()) ? body : null,
                             bullets.isEmpty() ? null : bullets
                     ));
+                }
+            } else {
+                // Handle template schema: summary, objectives, scopeHighlights, risks, keyMetrics
+                String summary = root.path("summary").asText(null);
+                if (summary != null && !summary.isBlank()) {
+                    sections.add(new ProjectBriefPreviewResponse.Section("Executive Summary", summary, null));
+                }
+
+                JsonNode objectives = root.path("objectives");
+                if (objectives.isArray() && !objectives.isEmpty()) {
+                    List<String> bullets = new ArrayList<>();
+                    for (JsonNode o : objectives) bullets.add(o.asText());
+                    sections.add(new ProjectBriefPreviewResponse.Section("Objectives", null, bullets));
+                }
+
+                JsonNode highlights = root.path("scopeHighlights");
+                if (highlights.isArray() && !highlights.isEmpty()) {
+                    List<String> bullets = new ArrayList<>();
+                    for (JsonNode h : highlights) {
+                        String area = h.path("area").asText("");
+                        String desc = h.path("description").asText("");
+                        if (!area.isBlank()) bullets.add(area + ": " + desc);
+                    }
+                    if (!bullets.isEmpty()) {
+                        sections.add(new ProjectBriefPreviewResponse.Section("Scope Highlights", null, bullets));
+                    }
+                }
+
+                JsonNode risks = root.path("risks");
+                if (risks.isArray() && !risks.isEmpty()) {
+                    List<String> bullets = new ArrayList<>();
+                    for (JsonNode r : risks) {
+                        String risk = r.path("risk").asText("");
+                        String mitigation = r.path("mitigation").asText("");
+                        if (!risk.isBlank()) bullets.add(risk + (mitigation.isBlank() ? "" : " → " + mitigation));
+                    }
+                    if (!bullets.isEmpty()) {
+                        sections.add(new ProjectBriefPreviewResponse.Section("Risks & Mitigations", null, bullets));
+                    }
+                }
+
+                JsonNode metrics = root.path("keyMetrics");
+                if (metrics.isArray() && !metrics.isEmpty()) {
+                    List<String> bullets = new ArrayList<>();
+                    for (JsonNode m : metrics) {
+                        String metric = m.path("metric").asText("");
+                        String value = m.path("value").asText("");
+                        if (!metric.isBlank()) bullets.add(metric + ": " + value);
+                    }
+                    if (!bullets.isEmpty()) {
+                        sections.add(new ProjectBriefPreviewResponse.Section("Key Metrics", null, bullets));
+                    }
                 }
             }
 

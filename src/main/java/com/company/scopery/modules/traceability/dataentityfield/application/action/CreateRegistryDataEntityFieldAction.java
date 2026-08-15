@@ -46,7 +46,8 @@ public class CreateRegistryDataEntityFieldAction {
 
         RegistryDataEntityField saved = repo.save(RegistryDataEntityField.create(
                 c.entityId(), c.workspaceId(), c.columnName().trim(), dataType.name(),
-                c.maxLength(), c.isNullable(), c.isUnique(), c.remark(), c.displayOrder()));
+                c.maxLength(), c.isNullable(), c.isUnique(), c.isPrimaryKey(),
+                c.defaultValue(), c.precision(), c.scale(), c.remark(), c.displayOrder()));
 
         activityLogger.logSuccess(TraceabilityEntityTypes.DATA_ENTITY_FIELD, saved.id(),
                 TraceabilityActivityActions.DATA_ENTITY_FIELD_CREATED,

@@ -18,6 +18,7 @@ public class UpdateRegistryApiEndpointAction {
         authorization.requireWorkspaceCreate(c.workspaceId());
         var endpoint = repo.findByIdAndApplicationId(c.endpointId(), c.applicationId())
                 .orElseThrow(() -> TraceabilityExceptions.apiEndpointNotFound(c.endpointId()));
-        return RegistryApiEndpointResponse.from(repo.save(endpoint.withUpdated(c.method(), c.pathPattern(), c.name())));
+        return RegistryApiEndpointResponse.from(repo.save(endpoint.withUpdated(
+                c.method(), c.pathPattern(), c.name(), c.description(), c.requestParamsJson(), c.responseSchemaJson())));
     }
 }

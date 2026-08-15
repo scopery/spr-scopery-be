@@ -6,16 +6,18 @@ public record RegistryScreenField(
         String label, String fieldType, String description, boolean required,
         int displayOrder,
         UUID componentId, UUID dataEntityFieldId, Integer maxLength, String remark,
+        UUID componentFieldId,
         RegistryScreenFieldStatus status, int version,
         Instant createdAt, Instant updatedAt) {
 
     public static RegistryScreenField create(UUID screenId, UUID sectionId, UUID workspaceId, String fieldKey,
                                              String label, String fieldType, String description,
                                              boolean required, int displayOrder,
-                                             UUID componentId, UUID dataEntityFieldId, Integer maxLength, String remark) {
+                                             UUID componentId, UUID dataEntityFieldId, Integer maxLength, String remark,
+                                             UUID componentFieldId) {
         return new RegistryScreenField(UUID.randomUUID(), screenId, sectionId, workspaceId, fieldKey, label, fieldType,
                 description, required, displayOrder, componentId, dataEntityFieldId, maxLength, remark,
-                RegistryScreenFieldStatus.ACTIVE, 0, null, null);
+                componentFieldId, RegistryScreenFieldStatus.ACTIVE, 0, null, null);
     }
 
     public RegistryScreenField withUpdated(String label, String fieldType, String description, boolean required,
@@ -23,6 +25,6 @@ public record RegistryScreenField(
                                            Integer maxLength, String remark) {
         return new RegistryScreenField(id, screenId, sectionId, workspaceId, fieldKey, label, fieldType, description,
                 required, displayOrder, componentId, dataEntityFieldId, maxLength, remark,
-                status, version, createdAt, Instant.now());
+                componentFieldId, status, version, createdAt, Instant.now());
     }
 }

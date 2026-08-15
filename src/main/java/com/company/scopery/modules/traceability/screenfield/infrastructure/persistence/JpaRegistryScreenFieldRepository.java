@@ -18,4 +18,8 @@ public class JpaRegistryScreenFieldRepository implements RegistryScreenFieldRepo
         return springData.findByScreenIdOrderByDisplayOrderAsc(screenId).stream().map(mapper::toDomain).toList();
     }
     @Override public void delete(UUID id, UUID workspaceId) { springData.deleteByIdAndWorkspaceId(id, workspaceId); }
+    @Override public List<RegistryScreenField> findByScreenIdAndComponentFieldIdIn(UUID screenId, List<UUID> componentFieldIds) {
+        return springData.findByScreenIdAndComponentFieldIdIn(screenId, componentFieldIds).stream().map(mapper::toDomain).toList();
+    }
+    @Override public void deleteAllByIds(List<UUID> ids) { if (!ids.isEmpty()) springData.deleteAllByIdIn(ids); }
 }

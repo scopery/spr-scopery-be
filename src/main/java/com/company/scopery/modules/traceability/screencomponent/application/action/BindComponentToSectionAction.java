@@ -72,7 +72,8 @@ public class BindComponentToSectionAction {
                             c.screenId(), c.sectionId(), c.workspaceId(),
                             cf.fieldKey(), cf.label(), cf.fieldType(),
                             null, cf.required(), cf.displayOrder(),
-                            null, null, cf.maxLength(), cf.remark());
+                            null, null, cf.maxLength(), cf.remark(),
+                            cf.id());
                     screenFieldRepo.save(screenField);
                     return cf.fieldKey();
                 })

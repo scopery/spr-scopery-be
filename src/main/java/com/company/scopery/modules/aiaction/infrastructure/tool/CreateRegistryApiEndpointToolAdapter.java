@@ -147,7 +147,7 @@ public class CreateRegistryApiEndpointToolAdapter implements AiActionToolAdapter
             return AiActionToolResult.failed("INVALID_HTTP_METHOD", false);
         }
 
-        RegistryApiEndpoint endpoint = RegistryApiEndpoint.create(applicationUuid, projectUuid, normalizedMethod, pathPattern, name);
+        RegistryApiEndpoint endpoint = RegistryApiEndpoint.create(applicationUuid, projectUuid, normalizedMethod, pathPattern, name, null, null, null);
         RegistryApiEndpoint saved = apiEndpointRepository.save(endpoint);
 
         log.info("[CreateApiEndpointTool] API endpoint created — id={} method={} path={} application={}", saved.id(), saved.method(), saved.pathPattern(), applicationUuid);

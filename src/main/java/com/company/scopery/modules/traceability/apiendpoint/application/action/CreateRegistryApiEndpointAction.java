@@ -20,6 +20,8 @@ public class CreateRegistryApiEndpointAction {
     public RegistryApiEndpointResponse execute(CreateRegistryApiEndpointCommand c) {
         authorization.requireWorkspaceCreate(c.workspaceId());
         applications.findByIdAndWorkspaceId(c.applicationId(), c.workspaceId()).orElseThrow(() -> TraceabilityExceptions.applicationNotFound(c.applicationId()));
-        return RegistryApiEndpointResponse.from(repo.save(RegistryApiEndpoint.create(c.applicationId(), c.projectId(), c.method().trim().toUpperCase(), c.pathPattern().trim(), c.name())));
+        return RegistryApiEndpointResponse.from(repo.save(RegistryApiEndpoint.create(
+                c.applicationId(), c.projectId(), c.method().trim().toUpperCase(), c.pathPattern().trim(),
+                c.name(), c.description(), c.requestParamsJson(), c.responseSchemaJson())));
     }
 }

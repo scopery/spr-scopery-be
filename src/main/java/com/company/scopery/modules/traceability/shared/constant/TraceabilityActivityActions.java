@@ -114,5 +114,11 @@ public final class TraceabilityActivityActions {
     public static final String COMPONENT_FIELD_UPDATED          = "COMPONENT_FIELD_UPDATED";
     public static final String COMPONENT_FIELD_DELETED          = "COMPONENT_FIELD_DELETED";
     public static final String COMPONENT_BOUND_TO_SECTION       = "COMPONENT_BOUND_TO_SECTION";
+    public static final String COMPONENT_API_LINKED             = "COMPONENT_API_LINKED";
+    public static final String COMPONENT_API_UPDATED            = "COMPONENT_API_UPDATED";
+    public static final String COMPONENT_API_UNLINKED           = "COMPONENT_API_UNLINKED";
+    public static final String DATA_ENTITY_RELATION_CREATED     = "DATA_ENTITY_RELATION_CREATED";
+    public static final String DATA_ENTITY_RELATION_UPDATED     = "DATA_ENTITY_RELATION_UPDATED";
+    public static final String DATA_ENTITY_RELATION_DELETED     = "DATA_ENTITY_RELATION_DELETED";
     private TraceabilityActivityActions() {}
 }

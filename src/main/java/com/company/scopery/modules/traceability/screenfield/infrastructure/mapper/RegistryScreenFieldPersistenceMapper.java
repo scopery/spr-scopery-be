@@ -9,6 +9,7 @@ public class RegistryScreenFieldPersistenceMapper {
         return new RegistryScreenField(e.getId(), e.getScreenId(), e.getSectionId(), e.getWorkspaceId(),
                 e.getFieldKey(), e.getLabel(), e.getFieldType(), e.getDescription(), e.isRequired(),
                 e.getDisplayOrder(), e.getComponentId(), e.getDataEntityFieldId(), e.getMaxLength(), e.getRemark(),
+                e.getComponentFieldId(),
                 RegistryScreenFieldStatus.valueOf(e.getStatus()),
                 e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
@@ -19,6 +20,7 @@ public class RegistryScreenFieldPersistenceMapper {
         e.setFieldType(d.fieldType()); e.setDescription(d.description()); e.setRequired(d.required());
         e.setDisplayOrder(d.displayOrder());
         e.setComponentId(d.componentId()); e.setDataEntityFieldId(d.dataEntityFieldId());
+        e.setComponentFieldId(d.componentFieldId());
         e.setMaxLength(d.maxLength()); e.setRemark(d.remark());
         e.setStatus(d.status().name());
         if (d.createdAt() != null) {

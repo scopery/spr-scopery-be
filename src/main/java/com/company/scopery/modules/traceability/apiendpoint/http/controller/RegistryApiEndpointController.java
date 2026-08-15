@@ -56,7 +56,10 @@ public class RegistryApiEndpointController {
     @Operation(summary = "Create API endpoint")
     public ApiResponse<RegistryApiEndpointResponse> create(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                             @Valid @RequestBody CreateRegistryApiEndpointRequest r) {
-        return ApiResponse.success(create.execute(new CreateRegistryApiEndpointCommand(workspaceId, applicationId, r.projectId(), r.method(), r.pathPattern(), r.name())));
+        String paramsJson = serializeParams(r.requestParams());
+        return ApiResponse.success(create.execute(new CreateRegistryApiEndpointCommand(
+                workspaceId, applicationId, r.projectId(), r.method(), r.pathPattern(), r.name(),
+                r.description(), paramsJson, r.responseSchemaJson())));
     }
 
     @PostMapping("/bulk")
@@ -65,7 +68,7 @@ public class RegistryApiEndpointController {
     public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                     @Valid @RequestBody BulkCreateRegistryApiEndpointRequest r) {
         var items = r.items().stream()
-                .map(i -> new CreateRegistryApiEndpointCommand(workspaceId, applicationId, i.projectId(), i.method(), i.pathPattern(), i.name()))
+                .map(i -> new CreateRegistryApiEndpointCommand(workspaceId, applicationId, i.projectId(), i.method(), i.pathPattern(), i.name(), null, null, null))
                 .toList();
         try {
             String payload = objectMapper.writeValueAsString(new BulkCreateRegistryApiEndpointCommand(workspaceId, applicationId, items));
@@ -93,7 +96,19 @@ public class RegistryApiEndpointController {
     @Operation(summary = "Update API endpoint")
     public ApiResponse<RegistryApiEndpointResponse> update(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
                                                             @PathVariable UUID endpointId, @Valid @RequestBody UpdateRegistryApiEndpointRequest r) {
-        return ApiResponse.success(update.execute(new UpdateRegistryApiEndpointCommand(workspaceId, applicationId, endpointId, r.method(), r.pathPattern(), r.name())));
+        String paramsJson = serializeParams(r.requestParams());
+        return ApiResponse.success(update.execute(new UpdateRegistryApiEndpointCommand(
+                workspaceId, applicationId, endpointId, r.method(), r.pathPattern(), r.name(),
+                r.description(), paramsJson, r.responseSchemaJson())));
+    }
+
+    private String serializeParams(java.util.List<com.company.scopery.modules.traceability.apiendpoint.http.request.ApiParamItemRequest> params) {
+        if (params == null || params.isEmpty()) return null;
+        try {
+            return objectMapper.writeValueAsString(params);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize request params", e);
+        }
     }
 
     @DeleteMapping("/{endpointId}")

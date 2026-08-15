@@ -14,6 +14,10 @@ public record RegistryDataEntityField(
         Integer maxLength,
         boolean isNullable,
         boolean isUnique,
+        boolean isPrimaryKey,
+        String defaultValue,
+        Integer precision,
+        Integer scale,
         String remark,
         int displayOrder,
         RegistryDataEntityFieldStatus status,
@@ -23,16 +27,19 @@ public record RegistryDataEntityField(
 
     public static RegistryDataEntityField create(UUID entityId, UUID workspaceId, String columnName,
                                                   String dataType, Integer maxLength, boolean isNullable,
-                                                  boolean isUnique, String remark, int displayOrder) {
+                                                  boolean isUnique, boolean isPrimaryKey, String defaultValue,
+                                                  Integer precision, Integer scale, String remark, int displayOrder) {
         return new RegistryDataEntityField(UUID.randomUUID(), entityId, workspaceId, columnName, dataType,
-                maxLength, isNullable, isUnique, remark, displayOrder,
+                maxLength, isNullable, isUnique, isPrimaryKey, defaultValue, precision, scale, remark, displayOrder,
                 RegistryDataEntityFieldStatus.ACTIVE, 0, null, null);
     }
 
     public RegistryDataEntityField withUpdated(String columnName, String dataType, Integer maxLength,
-                                                boolean isNullable, boolean isUnique, String remark,
-                                                int displayOrder) {
+                                                boolean isNullable, boolean isUnique, boolean isPrimaryKey,
+                                                String defaultValue, Integer precision, Integer scale,
+                                                String remark, int displayOrder) {
         return new RegistryDataEntityField(id, entityId, workspaceId, columnName, dataType, maxLength,
-                isNullable, isUnique, remark, displayOrder, status, version, createdAt, Instant.now());
+                isNullable, isUnique, isPrimaryKey, defaultValue, precision, scale, remark, displayOrder,
+                status, version, createdAt, Instant.now());
     }
 }

@@ -100,4 +100,9 @@ public final class TraceabilityExceptions {
     public static AppException screenEventItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_EVENT_ITEM_NOT_FOUND,"Event item not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException componentFieldNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.COMPONENT_FIELD_NOT_FOUND,"Component field not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException componentFieldKeyExists(String key){return new AppException(TraceabilityErrorCatalog.COMPONENT_FIELD_KEY_EXISTS,"Field key already exists: "+key,Map.of("fieldKey",key));}
+    public static AppException componentApiNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.COMPONENT_API_NOT_FOUND,"Component API link not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException componentApiDuplicate(UUID componentId,UUID apiId,String role){return new AppException(TraceabilityErrorCatalog.COMPONENT_API_DUPLICATE,"API already linked with role "+role,Map.of("componentId",componentId,"apiId",apiId,"role",role));}
+    public static AppException apiEndpointNotInWorkspace(UUID apiId){return new AppException(TraceabilityErrorCatalog.API_ENDPOINT_NOT_IN_WORKSPACE,"API endpoint not found: "+apiId,Map.of("apiId",apiId==null?"":apiId));}
+    public static AppException dataEntityRelationNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_RELATION_NOT_FOUND,"Data entity relation not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException dataEntityRelationDuplicate(UUID sourceEntityId, UUID targetEntityId, String relationType){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_RELATION_DUPLICATE,"Relation already exists",Map.of("sourceEntityId",sourceEntityId,"targetEntityId",targetEntityId,"relationType",relationType));}
 }

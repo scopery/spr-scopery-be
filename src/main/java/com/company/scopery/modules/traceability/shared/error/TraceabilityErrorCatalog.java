@@ -109,7 +109,12 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     SCREEN_PROCESS_ITEM_NOT_FOUND("SCREEN_PROCESS_ITEM_NOT_FOUND", "Screen process item not found", HttpStatus.NOT_FOUND),
     SCREEN_EVENT_ITEM_NOT_FOUND("SCREEN_EVENT_ITEM_NOT_FOUND", "Screen event item not found", HttpStatus.NOT_FOUND),
     COMPONENT_FIELD_NOT_FOUND("COMPONENT_FIELD_NOT_FOUND", "Component field not found", HttpStatus.NOT_FOUND),
-    COMPONENT_FIELD_KEY_EXISTS("COMPONENT_FIELD_KEY_ALREADY_EXISTS", "Field key already exists in this component", HttpStatus.CONFLICT);
+    COMPONENT_FIELD_KEY_EXISTS("COMPONENT_FIELD_KEY_ALREADY_EXISTS", "Field key already exists in this component", HttpStatus.CONFLICT),
+    COMPONENT_API_NOT_FOUND("COMPONENT_API_NOT_FOUND", "Component API link not found", HttpStatus.NOT_FOUND),
+    COMPONENT_API_DUPLICATE("COMPONENT_API_DUPLICATE", "This API is already linked to the component with the same role", HttpStatus.CONFLICT),
+    API_ENDPOINT_NOT_IN_WORKSPACE("API_ENDPOINT_NOT_IN_WORKSPACE", "API endpoint not found in this workspace", HttpStatus.NOT_FOUND),
+    DATA_ENTITY_RELATION_NOT_FOUND("DATA_ENTITY_RELATION_NOT_FOUND", "Data entity relation not found", HttpStatus.NOT_FOUND),
+    DATA_ENTITY_RELATION_DUPLICATE("DATA_ENTITY_RELATION_DUPLICATE", "A relation between these entities with the same type already exists", HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

@@ -44,6 +44,18 @@ public class RegistryDataEntityFieldJpaEntity extends AuditableJpaEntity {
     @Column(name = "is_unique", nullable = false)
     private boolean isUnique;
 
+    @Column(name = "is_primary_key", nullable = false)
+    private boolean isPrimaryKey;
+
+    @Column(name = "default_value", columnDefinition = "text")
+    private String defaultValue;
+
+    @Column
+    private Integer precision;
+
+    @Column
+    private Integer scale;
+
     @Column(columnDefinition = "text")
     private String remark;
 

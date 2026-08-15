@@ -9,6 +9,8 @@ public interface SpringDataRegistryScreenFieldJpaRepository extends JpaRepositor
     Optional<RegistryScreenFieldJpaEntity> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
     List<RegistryScreenFieldJpaEntity> findByScreenIdOrderByDisplayOrderAsc(UUID screenId);
     void deleteByIdAndWorkspaceId(UUID id, UUID workspaceId);
+    List<RegistryScreenFieldJpaEntity> findByScreenIdAndComponentFieldIdIn(UUID screenId, List<UUID> componentFieldIds);
+    void deleteAllByIdIn(List<UUID> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM RegistryScreenFieldJpaEntity f WHERE f.id = :id AND f.screenId = :screenId AND f.workspaceId = :workspaceId")

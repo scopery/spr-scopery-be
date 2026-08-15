@@ -93,6 +93,7 @@ public final class TraceabilityApiPaths {
     public static final String VALIDATION_RULE_TYPES     = WS + "/validation-rule-types";
     public static final String COMPONENT_OPTIONS         = APP_COMPONENT_ITEM + "/{componentId}/options";
     public static final String COMPONENT_FIELDS          = APP_COMPONENT_ITEM + "/{componentId}/fields";
+    public static final String COMPONENT_API             = APP_COMPONENT_ITEM + "/{componentId}/apis";
     public static final String SECTION_BIND_COMPONENT    = SCREEN_ITEM + "/{screenId}/sections/{sectionId}/bind-component";
     public static final String SCREEN_FIELD_MODE_CONFIGS = SCREEN_ITEM + "/{screenId}/fields/{fieldId}/mode-configs";
     public static final String SCREEN_FIELD_VALIDATIONS  = SCREEN_ITEM + "/{screenId}/fields/{fieldId}/validations";
@@ -102,5 +103,6 @@ public final class TraceabilityApiPaths {
     public static final String SPEC_DOC_FULL_SPEC        = WS + "/screen-spec-docs/{documentId}/full-spec";
     public static final String SCREEN_PROCESS_ITEMS      = SCREEN_ITEM + "/{screenId}/process-items";
     public static final String SCREEN_EVENT_ITEMS        = SCREEN_ITEM + "/{screenId}/event-items";
+    public static final String DATA_ENTITY_RELATIONS     = DATA_ENTITY_ITEM + "/{entityId}/relations";
     private TraceabilityApiPaths() {}
 }
