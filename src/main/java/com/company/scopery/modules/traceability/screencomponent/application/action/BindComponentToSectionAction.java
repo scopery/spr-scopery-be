@@ -17,6 +17,8 @@ import com.company.scopery.modules.traceability.shared.error.TraceabilityExcepti
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class BindComponentToSectionAction {
@@ -65,6 +67,16 @@ public class BindComponentToSectionAction {
         // Load and copy component fields as screen fields
         List<RegistryComponentField> componentFields =
                 componentFieldRepo.findByComponentIdOrderByDisplayOrderAsc(c.componentId());
+
+        if (!componentFields.isEmpty()) {
+            Set<String> existingKeys = screenFieldRepo.findByScreenId(c.screenId()).stream()
+                    .map(f -> f.fieldKey().toLowerCase())
+                    .collect(Collectors.toSet());
+            componentFields.stream()
+                    .filter(cf -> existingKeys.contains(cf.fieldKey().toLowerCase()))
+                    .findFirst()
+                    .ifPresent(cf -> { throw TraceabilityExceptions.screenFieldKeyExists(cf.fieldKey()); });
+        }
 
         List<String> importedKeys = componentFields.stream()
                 .map(cf -> {

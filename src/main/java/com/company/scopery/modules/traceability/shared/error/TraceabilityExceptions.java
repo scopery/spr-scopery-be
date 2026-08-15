@@ -17,6 +17,7 @@ public final class TraceabilityExceptions {
     public static AppException screenNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_NOT_FOUND,"Screen not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException screenSectionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_SECTION_NOT_FOUND,"Section not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException screenFieldNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_FIELD_NOT_FOUND,"Field not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException screenFieldKeyExists(String key){return new AppException(TraceabilityErrorCatalog.SCREEN_FIELD_KEY_EXISTS,"Screen field key already exists: "+key,Map.of("fieldKey",key));}
     public static AppException screenActionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_ACTION_NOT_FOUND,"Action not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException apiEndpointNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.API_ENDPOINT_NOT_FOUND,"API endpoint not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException dataEntityNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.DATA_ENTITY_NOT_FOUND,"Data entity not found: "+id,Map.of("id",id==null?"":id));}
