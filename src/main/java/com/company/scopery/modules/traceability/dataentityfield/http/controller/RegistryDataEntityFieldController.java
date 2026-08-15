@@ -1,19 +1,26 @@
 package com.company.scopery.modules.traceability.dataentityfield.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.modules.traceability.dataentityfield.application.action.BulkCreateRegistryDataEntityFieldJobHandler;
 import com.company.scopery.modules.traceability.dataentityfield.application.action.CreateRegistryDataEntityFieldAction;
 import com.company.scopery.modules.traceability.dataentityfield.application.action.DeleteRegistryDataEntityFieldAction;
 import com.company.scopery.modules.traceability.dataentityfield.application.action.UpdateRegistryDataEntityFieldAction;
+import com.company.scopery.modules.traceability.dataentityfield.application.command.BulkCreateRegistryDataEntityFieldCommand;
 import com.company.scopery.modules.traceability.dataentityfield.application.command.CreateRegistryDataEntityFieldCommand;
 import com.company.scopery.modules.traceability.dataentityfield.application.command.UpdateRegistryDataEntityFieldCommand;
 import com.company.scopery.modules.traceability.dataentityfield.application.response.RegistryDataEntityFieldResponse;
 import com.company.scopery.modules.traceability.dataentityfield.application.service.RegistryDataEntityFieldQueryService;
+import com.company.scopery.modules.traceability.dataentityfield.http.request.BulkCreateRegistryDataEntityFieldRequest;
 import com.company.scopery.modules.traceability.dataentityfield.http.request.CreateRegistryDataEntityFieldRequest;
 import com.company.scopery.modules.traceability.dataentityfield.http.request.UpdateRegistryDataEntityFieldRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -35,15 +43,43 @@ public class RegistryDataEntityFieldController {
     private final UpdateRegistryDataEntityFieldAction update;
     private final DeleteRegistryDataEntityFieldAction delete;
     private final RegistryDataEntityFieldQueryService query;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public RegistryDataEntityFieldController(CreateRegistryDataEntityFieldAction create,
                                              UpdateRegistryDataEntityFieldAction update,
                                              DeleteRegistryDataEntityFieldAction delete,
-                                             RegistryDataEntityFieldQueryService query) {
+                                             RegistryDataEntityFieldQueryService query,
+                                             BulkJobService bulkJobService,
+                                             ObjectMapper objectMapper) {
         this.create = create;
         this.update = update;
         this.delete = delete;
         this.query = query;
+        this.bulkJobService = bulkJobService;
+        this.objectMapper = objectMapper;
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk create data entity fields (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID workspaceId,
+                                                    @PathVariable UUID entityId,
+                                                    @Valid @RequestBody BulkCreateRegistryDataEntityFieldRequest r) {
+        var items = r.items().stream()
+                .map(i -> new CreateRegistryDataEntityFieldCommand(
+                        entityId, workspaceId, i.columnName(), i.dataType(), i.maxLength(),
+                        i.isNullable(), i.isUnique(), i.isPrimaryKey(), i.defaultValue(),
+                        i.precision(), i.scale(), i.remark(), i.displayOrder()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(
+                    new BulkCreateRegistryDataEntityFieldCommand(entityId, workspaceId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateRegistryDataEntityFieldJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @PostMapping

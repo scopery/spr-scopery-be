@@ -4,14 +4,18 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.dataentity.application.action.BulkCreateRegistryDataEntityJobHandler;
 import com.company.scopery.modules.traceability.dataentity.application.action.CreateRegistryDataEntityAction;
 import com.company.scopery.modules.traceability.dataentity.application.action.DeleteRegistryDataEntityAction;
+import com.company.scopery.modules.traceability.dataentity.application.action.ImportFullDataEntityJobHandler;
 import com.company.scopery.modules.traceability.dataentity.application.action.UpdateRegistryDataEntityAction;
 import com.company.scopery.modules.traceability.dataentity.application.command.BulkCreateRegistryDataEntityCommand;
 import com.company.scopery.modules.traceability.dataentity.application.command.CreateRegistryDataEntityCommand;
+import com.company.scopery.modules.traceability.dataentity.application.command.ImportFullDataEntityItemCommand;
+import com.company.scopery.modules.traceability.dataentity.application.command.ImportFullDataEntityJobCommand;
 import com.company.scopery.modules.traceability.dataentity.application.command.UpdateRegistryDataEntityCommand;
 import com.company.scopery.modules.traceability.dataentity.application.response.RegistryDataEntityResponse;
 import com.company.scopery.modules.traceability.dataentity.application.service.RegistryDataEntityQueryService;
 import com.company.scopery.modules.traceability.dataentity.http.request.BulkCreateRegistryDataEntityRequest;
 import com.company.scopery.modules.traceability.dataentity.http.request.CreateRegistryDataEntityRequest;
+import com.company.scopery.modules.traceability.dataentity.http.request.ImportFullDataEntityRequest;
 import com.company.scopery.modules.traceability.dataentity.http.request.UpdateRegistryDataEntityRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
@@ -73,6 +77,32 @@ public class RegistryDataEntityController {
                     bulkJobService.submit(BulkCreateRegistryDataEntityJobHandler.JOB_TYPE, r.items().size(), payload)));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
+    }
+
+    @PostMapping("/import-full")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Import full data entities with fields (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> importFull(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
+                                                    @Valid @RequestBody ImportFullDataEntityRequest r) {
+        var items = r.items().stream()
+                .map(i -> new ImportFullDataEntityItemCommand(
+                        applicationId, workspaceId, i.moduleId(),
+                        i.code(), i.name(), i.description(), i.tableName(),
+                        i.fields() == null ? null : i.fields().stream()
+                                .map(f -> new ImportFullDataEntityItemCommand.FieldItem(
+                                        f.columnName(), f.dataType(), f.maxLength(),
+                                        f.isNullable(), f.isUnique(), f.isPrimaryKey(),
+                                        f.defaultValue(), f.precision(), f.scale(),
+                                        f.remark(), f.displayOrder()))
+                                .toList()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new ImportFullDataEntityJobCommand(items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(ImportFullDataEntityJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize import-full payload", e);
         }
     }
 

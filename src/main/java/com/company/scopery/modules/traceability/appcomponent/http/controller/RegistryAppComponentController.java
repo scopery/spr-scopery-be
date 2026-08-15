@@ -4,14 +4,18 @@ import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.appcomponent.application.action.BulkCreateRegistryAppComponentJobHandler;
 import com.company.scopery.modules.traceability.appcomponent.application.action.CreateRegistryAppComponentAction;
 import com.company.scopery.modules.traceability.appcomponent.application.action.DeleteRegistryAppComponentAction;
+import com.company.scopery.modules.traceability.appcomponent.application.action.ImportFullAppComponentJobHandler;
 import com.company.scopery.modules.traceability.appcomponent.application.action.UpdateRegistryAppComponentAction;
 import com.company.scopery.modules.traceability.appcomponent.application.command.BulkCreateRegistryAppComponentCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.command.CreateRegistryAppComponentCommand;
+import com.company.scopery.modules.traceability.appcomponent.application.command.ImportFullAppComponentItemCommand;
+import com.company.scopery.modules.traceability.appcomponent.application.command.ImportFullAppComponentJobCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.command.UpdateRegistryAppComponentCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.response.RegistryAppComponentResponse;
 import com.company.scopery.modules.traceability.appcomponent.application.service.RegistryAppComponentQueryService;
 import com.company.scopery.modules.traceability.appcomponent.http.request.BulkCreateRegistryAppComponentRequest;
 import com.company.scopery.modules.traceability.appcomponent.http.request.CreateRegistryAppComponentRequest;
+import com.company.scopery.modules.traceability.appcomponent.http.request.ImportFullAppComponentRequest;
 import com.company.scopery.modules.traceability.appcomponent.http.request.UpdateRegistryAppComponentRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
@@ -73,6 +77,34 @@ public class RegistryAppComponentController {
                     bulkJobService.submit(BulkCreateRegistryAppComponentJobHandler.JOB_TYPE, r.items().size(), payload)));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
+    }
+
+    @PostMapping("/import-full")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Import full app components with fields (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> importFull(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
+                                                    @Valid @RequestBody ImportFullAppComponentRequest r) {
+        var items = r.items().stream()
+                .map(i -> new ImportFullAppComponentItemCommand(
+                        applicationId, workspaceId,
+                        i.code(), i.name(), i.description(),
+                        i.componentType(), i.optionSourceType(),
+                        i.sourceEntityId(), i.sourceValueColumn(), i.sourceLabelColumn(), i.sourceFilterJson(),
+                        i.fields() == null ? null : i.fields().stream()
+                                .map(f -> new ImportFullAppComponentItemCommand.FieldItem(
+                                        f.fieldKey(), f.label(), f.fieldType(),
+                                        Boolean.TRUE.equals(f.required()),
+                                        f.maxLength(), f.remark(),
+                                        f.displayOrder() != null ? f.displayOrder() : 0))
+                                .toList()))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(new ImportFullAppComponentJobCommand(items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(ImportFullAppComponentJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize import-full payload", e);
         }
     }
 

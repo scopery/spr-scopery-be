@@ -1,19 +1,26 @@
 package com.company.scopery.modules.traceability.componentfield.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.modules.traceability.componentfield.application.action.BulkCreateRegistryComponentFieldJobHandler;
 import com.company.scopery.modules.traceability.componentfield.application.action.CreateRegistryComponentFieldAction;
 import com.company.scopery.modules.traceability.componentfield.application.action.DeleteRegistryComponentFieldAction;
 import com.company.scopery.modules.traceability.componentfield.application.action.UpdateRegistryComponentFieldAction;
+import com.company.scopery.modules.traceability.componentfield.application.command.BulkCreateRegistryComponentFieldCommand;
 import com.company.scopery.modules.traceability.componentfield.application.command.CreateRegistryComponentFieldCommand;
 import com.company.scopery.modules.traceability.componentfield.application.command.UpdateRegistryComponentFieldCommand;
 import com.company.scopery.modules.traceability.componentfield.application.response.RegistryComponentFieldResponse;
 import com.company.scopery.modules.traceability.componentfield.application.service.RegistryComponentFieldQueryService;
+import com.company.scopery.modules.traceability.componentfield.http.request.BulkCreateRegistryComponentFieldRequest;
 import com.company.scopery.modules.traceability.componentfield.http.request.CreateRegistryComponentFieldRequest;
 import com.company.scopery.modules.traceability.componentfield.http.request.UpdateRegistryComponentFieldRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
+import com.company.scopery.platform.bulkjob.BulkJobResponse;
+import com.company.scopery.platform.bulkjob.BulkJobService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -27,15 +34,43 @@ public class RegistryComponentFieldController {
     private final UpdateRegistryComponentFieldAction update;
     private final DeleteRegistryComponentFieldAction delete;
     private final RegistryComponentFieldQueryService query;
+    private final BulkJobService bulkJobService;
+    private final ObjectMapper objectMapper;
 
     public RegistryComponentFieldController(CreateRegistryComponentFieldAction create,
                                              UpdateRegistryComponentFieldAction update,
                                              DeleteRegistryComponentFieldAction delete,
-                                             RegistryComponentFieldQueryService query) {
+                                             RegistryComponentFieldQueryService query,
+                                             BulkJobService bulkJobService,
+                                             ObjectMapper objectMapper) {
         this.create = create;
         this.update = update;
         this.delete = delete;
         this.query = query;
+        this.bulkJobService = bulkJobService;
+        this.objectMapper = objectMapper;
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Bulk create component fields (async — poll GET /api/bulk-jobs/{id} for status)")
+    public ApiResponse<BulkJobResponse> bulkCreate(@PathVariable UUID workspaceId,
+                                                    @PathVariable UUID componentId,
+                                                    @Valid @RequestBody BulkCreateRegistryComponentFieldRequest r) {
+        var items = r.items().stream()
+                .map(i -> new CreateRegistryComponentFieldCommand(
+                        workspaceId, componentId, i.fieldKey(), i.label(), i.fieldType(),
+                        Boolean.TRUE.equals(i.required()), i.maxLength(), i.remark(),
+                        i.displayOrder() != null ? i.displayOrder() : 0))
+                .toList();
+        try {
+            String payload = objectMapper.writeValueAsString(
+                    new BulkCreateRegistryComponentFieldCommand(componentId, workspaceId, items));
+            return ApiResponse.success(BulkJobResponse.from(
+                    bulkJobService.submit(BulkCreateRegistryComponentFieldJobHandler.JOB_TYPE, r.items().size(), payload)));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize bulk create payload", e);
+        }
     }
 
     @PostMapping
