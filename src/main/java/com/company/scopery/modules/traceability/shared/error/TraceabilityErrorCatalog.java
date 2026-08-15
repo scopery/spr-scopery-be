@@ -107,7 +107,9 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     SPEC_DOC_SCREEN_NOT_FOUND("SPEC_DOC_SCREEN_NOT_FOUND", "Screen not found in this document", HttpStatus.NOT_FOUND),
     SPEC_DOC_REVISION_NOT_FOUND("SPEC_DOC_REVISION_NOT_FOUND", "Spec document revision not found", HttpStatus.NOT_FOUND),
     SCREEN_PROCESS_ITEM_NOT_FOUND("SCREEN_PROCESS_ITEM_NOT_FOUND", "Screen process item not found", HttpStatus.NOT_FOUND),
-    SCREEN_EVENT_ITEM_NOT_FOUND("SCREEN_EVENT_ITEM_NOT_FOUND", "Screen event item not found", HttpStatus.NOT_FOUND);
+    SCREEN_EVENT_ITEM_NOT_FOUND("SCREEN_EVENT_ITEM_NOT_FOUND", "Screen event item not found", HttpStatus.NOT_FOUND),
+    COMPONENT_FIELD_NOT_FOUND("COMPONENT_FIELD_NOT_FOUND", "Component field not found", HttpStatus.NOT_FOUND),
+    COMPONENT_FIELD_KEY_EXISTS("COMPONENT_FIELD_KEY_ALREADY_EXISTS", "Field key already exists in this component", HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

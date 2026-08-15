@@ -48,5 +48,6 @@ public final class TraceabilityTableNames {
     public static final String SPEC_DOC_REVISION             = "app_registry_spec_doc_revision";
     public static final String SCREEN_PROCESS_ITEM           = "app_registry_screen_process_item";
     public static final String SCREEN_EVENT_ITEM             = "app_registry_screen_event_item";
+    public static final String COMPONENT_FIELD               = "app_registry_component_field";
     private TraceabilityTableNames() {}
 }

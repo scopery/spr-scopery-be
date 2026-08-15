@@ -92,6 +92,8 @@ public final class TraceabilityApiPaths {
     public static final String DATA_ENTITY_FIELDS        = DATA_ENTITY_ITEM + "/{entityId}/fields";
     public static final String VALIDATION_RULE_TYPES     = WS + "/validation-rule-types";
     public static final String COMPONENT_OPTIONS         = APP_COMPONENT_ITEM + "/{componentId}/options";
+    public static final String COMPONENT_FIELDS          = APP_COMPONENT_ITEM + "/{componentId}/fields";
+    public static final String SECTION_BIND_COMPONENT    = SCREEN_ITEM + "/{screenId}/sections/{sectionId}/bind-component";
     public static final String SCREEN_FIELD_MODE_CONFIGS = SCREEN_ITEM + "/{screenId}/fields/{fieldId}/mode-configs";
     public static final String SCREEN_FIELD_VALIDATIONS  = SCREEN_ITEM + "/{screenId}/fields/{fieldId}/validations";
     public static final String SCREEN_FULL_SPEC          = SCREEN_ITEM + "/{screenId}/full-spec";

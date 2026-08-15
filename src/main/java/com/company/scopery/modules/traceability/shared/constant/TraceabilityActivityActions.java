@@ -110,5 +110,9 @@ public final class TraceabilityActivityActions {
     public static final String SCREEN_EVENT_ITEM_CREATED        = "SCREEN_EVENT_ITEM_CREATED";
     public static final String SCREEN_EVENT_ITEM_UPDATED        = "SCREEN_EVENT_ITEM_UPDATED";
     public static final String SCREEN_EVENT_ITEM_DELETED        = "SCREEN_EVENT_ITEM_DELETED";
+    public static final String COMPONENT_FIELD_CREATED          = "COMPONENT_FIELD_CREATED";
+    public static final String COMPONENT_FIELD_UPDATED          = "COMPONENT_FIELD_UPDATED";
+    public static final String COMPONENT_FIELD_DELETED          = "COMPONENT_FIELD_DELETED";
+    public static final String COMPONENT_BOUND_TO_SECTION       = "COMPONENT_BOUND_TO_SECTION";
     private TraceabilityActivityActions() {}
 }

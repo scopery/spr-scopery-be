@@ -40,8 +40,8 @@ public class ValidationRuleTypeCatalogInitializer implements ApplicationListener
             new Seed("URL", "URL Format", "FORMAT", null, "Invalid URL format"),
             new Seed("HALF_WIDTH", "Half-width Characters", "FORMAT", null, "Must be half-width characters"),
             new Seed("EMAIL_FORMAT", "Email Format", "FORMAT", null, "Invalid email format"),
-            new Seed("POSTAL_CODE_JP", "Japanese Postal Code", "FORMAT", null, "Invalid postal code format"),
-            new Seed("PHONE_NUMBER_JP", "Japanese Phone Number", "FORMAT", null, "Invalid phone number format"),
+            new Seed("POSTAL_CODE", "Postal Code", "FORMAT", null, "Invalid postal code format"),
+            new Seed("PHONE_NUMBER", "Phone Number", "FORMAT", null, "Invalid phone number format"),
             new Seed("MATCHING", "Field Matching", "REFERENCE", "{\"targetFieldKey\":\"string\"}", "Fields do not match"),
             new Seed("REQUIRED", "Conditional Required", "CONDITIONAL", "{\"condition\":{\"fieldKey\":\"string\",\"op\":\"string\"}}", "This field is required"),
             new Seed("UNIQUE", "Unique Value", "REFERENCE", null, "Value must be unique")

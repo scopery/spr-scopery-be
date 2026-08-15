@@ -98,4 +98,6 @@ public final class TraceabilityExceptions {
     public static AppException specDocRevisionNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SPEC_DOC_REVISION_NOT_FOUND,"Revision not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException screenProcessItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_PROCESS_ITEM_NOT_FOUND,"Process item not found: "+id,Map.of("id",id==null?"":id));}
     public static AppException screenEventItemNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.SCREEN_EVENT_ITEM_NOT_FOUND,"Event item not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException componentFieldNotFound(UUID id){return new AppException(TraceabilityErrorCatalog.COMPONENT_FIELD_NOT_FOUND,"Component field not found: "+id,Map.of("id",id==null?"":id));}
+    public static AppException componentFieldKeyExists(String key){return new AppException(TraceabilityErrorCatalog.COMPONENT_FIELD_KEY_EXISTS,"Field key already exists: "+key,Map.of("fieldKey",key));}
 }
