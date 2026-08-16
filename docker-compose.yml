@@ -34,6 +34,9 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-scopery}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-scopery-local-secret}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio-data:/data
 
@@ -62,6 +65,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scopery
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
     depends_on:
       postgres:
         condition: service_healthy
