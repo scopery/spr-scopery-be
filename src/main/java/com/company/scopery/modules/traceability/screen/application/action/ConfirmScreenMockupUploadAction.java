@@ -35,7 +35,9 @@ public class ConfirmScreenMockupUploadAction {
     @Transactional
     public ScreenMockupConfirmResponse execute(ConfirmScreenMockupUploadCommand c) {
         authorization.requireWorkspaceCreate(c.workspaceId());
-        RegistryScreen screen = screenRepo.findByIdAndApplicationId(c.screenId(), c.applicationId())
+        RegistryScreen screen = (c.applicationId() != null
+                ? screenRepo.findByIdAndApplicationId(c.screenId(), c.applicationId())
+                : screenRepo.findById(c.screenId()))
                 .orElseThrow(() -> TraceabilityExceptions.screenNotFound(c.screenId()));
 
         var location = TraceabilityStorageLocations.SCREEN_MOCKUP;

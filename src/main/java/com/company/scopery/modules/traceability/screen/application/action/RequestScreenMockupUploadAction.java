@@ -29,8 +29,13 @@ public class RequestScreenMockupUploadAction {
     @Transactional(readOnly = true)
     public ScreenMockupUploadResponse execute(RequestScreenMockupUploadCommand c) {
         authorization.requireWorkspaceCreate(c.workspaceId());
-        screenRepo.findByIdAndApplicationId(c.screenId(), c.applicationId())
-                .orElseThrow(() -> TraceabilityExceptions.screenNotFound(c.screenId()));
+        if (c.applicationId() != null) {
+            screenRepo.findByIdAndApplicationId(c.screenId(), c.applicationId())
+                    .orElseThrow(() -> TraceabilityExceptions.screenNotFound(c.screenId()));
+        } else {
+            screenRepo.findById(c.screenId())
+                    .orElseThrow(() -> TraceabilityExceptions.screenNotFound(c.screenId()));
+        }
 
         var location = TraceabilityStorageLocations.SCREEN_MOCKUP;
         String objectKey = location.keyFor(c.screenId(), UUID.randomUUID() + extensionFor(c.contentType()));
