@@ -19,6 +19,7 @@ public class RegistryAppComponentJpaEntity extends AuditableJpaEntity {
     @Column(name="source_value_column") private String sourceValueColumn;
     @Column(name="source_label_column") private String sourceLabelColumn;
     @JdbcTypeCode(SqlTypes.JSON) @Column(name="source_filter_json", columnDefinition="jsonb") private String sourceFilterJson;
+    @Column(name="screenshot_object_key") private String screenshotObjectKey;
     @Column(nullable=false) private String status;
     @Version private Integer version;
 }

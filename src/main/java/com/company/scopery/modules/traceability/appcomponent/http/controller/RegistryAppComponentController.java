@@ -2,20 +2,28 @@ package com.company.scopery.modules.traceability.appcomponent.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
 import com.company.scopery.modules.traceability.appcomponent.application.action.BulkCreateRegistryAppComponentJobHandler;
+import com.company.scopery.modules.traceability.appcomponent.application.action.ConfirmComponentScreenshotUploadAction;
 import com.company.scopery.modules.traceability.appcomponent.application.action.CreateRegistryAppComponentAction;
 import com.company.scopery.modules.traceability.appcomponent.application.action.DeleteRegistryAppComponentAction;
 import com.company.scopery.modules.traceability.appcomponent.application.action.ImportFullAppComponentJobHandler;
+import com.company.scopery.modules.traceability.appcomponent.application.action.RequestComponentScreenshotUploadAction;
 import com.company.scopery.modules.traceability.appcomponent.application.action.UpdateRegistryAppComponentAction;
 import com.company.scopery.modules.traceability.appcomponent.application.command.BulkCreateRegistryAppComponentCommand;
+import com.company.scopery.modules.traceability.appcomponent.application.command.ConfirmComponentScreenshotUploadCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.command.CreateRegistryAppComponentCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.command.ImportFullAppComponentItemCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.command.ImportFullAppComponentJobCommand;
+import com.company.scopery.modules.traceability.appcomponent.application.command.RequestComponentScreenshotUploadCommand;
 import com.company.scopery.modules.traceability.appcomponent.application.command.UpdateRegistryAppComponentCommand;
+import com.company.scopery.modules.traceability.appcomponent.application.response.ComponentScreenshotConfirmResponse;
+import com.company.scopery.modules.traceability.appcomponent.application.response.ComponentScreenshotUploadResponse;
 import com.company.scopery.modules.traceability.appcomponent.application.response.RegistryAppComponentResponse;
 import com.company.scopery.modules.traceability.appcomponent.application.service.RegistryAppComponentQueryService;
 import com.company.scopery.modules.traceability.appcomponent.http.request.BulkCreateRegistryAppComponentRequest;
+import com.company.scopery.modules.traceability.appcomponent.http.request.ConfirmComponentScreenshotUploadRequest;
 import com.company.scopery.modules.traceability.appcomponent.http.request.CreateRegistryAppComponentRequest;
 import com.company.scopery.modules.traceability.appcomponent.http.request.ImportFullAppComponentRequest;
+import com.company.scopery.modules.traceability.appcomponent.http.request.RequestComponentScreenshotUploadRequest;
 import com.company.scopery.modules.traceability.appcomponent.http.request.UpdateRegistryAppComponentRequest;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.platform.bulkjob.BulkJobResponse;
@@ -41,19 +49,25 @@ public class RegistryAppComponentController {
     private final RegistryAppComponentQueryService query;
     private final BulkJobService bulkJobService;
     private final ObjectMapper objectMapper;
+    private final RequestComponentScreenshotUploadAction requestScreenshotUpload;
+    private final ConfirmComponentScreenshotUploadAction confirmScreenshotUpload;
 
     public RegistryAppComponentController(CreateRegistryAppComponentAction create,
                                            UpdateRegistryAppComponentAction update,
                                            DeleteRegistryAppComponentAction delete,
                                            RegistryAppComponentQueryService query,
                                            BulkJobService bulkJobService,
-                                           ObjectMapper objectMapper) {
+                                           ObjectMapper objectMapper,
+                                           RequestComponentScreenshotUploadAction requestScreenshotUpload,
+                                           ConfirmComponentScreenshotUploadAction confirmScreenshotUpload) {
         this.create = create;
         this.update = update;
         this.delete = delete;
         this.query = query;
         this.bulkJobService = bulkJobService;
         this.objectMapper = objectMapper;
+        this.requestScreenshotUpload = requestScreenshotUpload;
+        this.confirmScreenshotUpload = confirmScreenshotUpload;
     }
 
     @PostMapping
@@ -133,5 +147,19 @@ public class RegistryAppComponentController {
     public ApiResponse<Void> delete(@PathVariable UUID workspaceId, @PathVariable UUID applicationId, @PathVariable UUID appComponentId) {
         delete.execute(workspaceId, appComponentId);
         return ApiResponse.success(null);
+    }
+
+    @PostMapping("/{appComponentId}/screenshot/upload-url")
+    @Operation(summary = "Request presigned URL to upload component screenshot image")
+    public ApiResponse<ComponentScreenshotUploadResponse> requestScreenshotUpload(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
+                                                                                   @PathVariable UUID appComponentId, @Valid @RequestBody RequestComponentScreenshotUploadRequest r) {
+        return ApiResponse.success(requestScreenshotUpload.execute(new RequestComponentScreenshotUploadCommand(workspaceId, applicationId, appComponentId, r.contentType())));
+    }
+
+    @PostMapping("/{appComponentId}/screenshot/confirm")
+    @Operation(summary = "Confirm component screenshot upload and save object key")
+    public ApiResponse<ComponentScreenshotConfirmResponse> confirmScreenshotUpload(@PathVariable UUID workspaceId, @PathVariable UUID applicationId,
+                                                                                    @PathVariable UUID appComponentId, @Valid @RequestBody ConfirmComponentScreenshotUploadRequest r) {
+        return ApiResponse.success(confirmScreenshotUpload.execute(new ConfirmComponentScreenshotUploadCommand(workspaceId, applicationId, appComponentId, r.objectKey())));
     }
 }

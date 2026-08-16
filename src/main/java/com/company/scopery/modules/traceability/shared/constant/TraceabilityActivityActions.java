@@ -117,8 +117,12 @@ public final class TraceabilityActivityActions {
     public static final String COMPONENT_API_LINKED             = "COMPONENT_API_LINKED";
     public static final String COMPONENT_API_UPDATED            = "COMPONENT_API_UPDATED";
     public static final String COMPONENT_API_UNLINKED           = "COMPONENT_API_UNLINKED";
-    public static final String DATA_ENTITY_RELATION_CREATED     = "DATA_ENTITY_RELATION_CREATED";
-    public static final String DATA_ENTITY_RELATION_UPDATED     = "DATA_ENTITY_RELATION_UPDATED";
-    public static final String DATA_ENTITY_RELATION_DELETED     = "DATA_ENTITY_RELATION_DELETED";
+    public static final String DATA_ENTITY_RELATION_CREATED      = "DATA_ENTITY_RELATION_CREATED";
+    public static final String DATA_ENTITY_RELATION_UPDATED      = "DATA_ENTITY_RELATION_UPDATED";
+    public static final String DATA_ENTITY_RELATION_DELETED      = "DATA_ENTITY_RELATION_DELETED";
+    public static final String SCREEN_MOCKUP_UPLOADED            = "SCREEN_MOCKUP_UPLOADED";
+    public static final String SCREEN_MOCKUP_DELETED             = "SCREEN_MOCKUP_DELETED";
+    public static final String COMPONENT_SCREENSHOT_UPLOADED     = "COMPONENT_SCREENSHOT_UPLOADED";
+    public static final String COMPONENT_SCREENSHOT_DELETED      = "COMPONENT_SCREENSHOT_DELETED";
     private TraceabilityActivityActions() {}
 }

@@ -9,6 +9,7 @@ public class ObjectStorageConfig {
 
     private String provider;
     private String endpoint;
+    private String publicEndpoint;
     private String region;
     private String bucket;
     private String accessKey;
@@ -23,6 +24,9 @@ public class ObjectStorageConfig {
 
     public String getEndpoint() { return endpoint; }
     public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
+
+    public String getPublicEndpoint() { return publicEndpoint != null ? publicEndpoint : endpoint; }
+    public void setPublicEndpoint(String publicEndpoint) { this.publicEndpoint = publicEndpoint; }
 
     public String getRegion() { return region; }
     public void setRegion(String region) { this.region = region; }

@@ -121,6 +121,7 @@ scopery:
   storage:
     provider: s3-compatible
     endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    public-endpoint: ${MINIO_PUBLIC_ENDPOINT:${MINIO_ENDPOINT:http://localhost:9000}}
     region: ${MINIO_REGION:us-east-1}
     bucket: ${MINIO_BUCKET:scopery-local}
     access-key: ${MINIO_ACCESS_KEY:scopery}
@@ -227,6 +228,13 @@ notification:
       fixed-delay-ms: ${NOTIFICATION_EMAIL_OUTBOX_FIXED_DELAY_MS:10000}
 
 logging:
+  file:
+    name: logs/app.log
+  logback:
+    rollingpolicy:
+      max-history: 7
+      total-size-cap: 2GB
+      max-file-size: 500MB
   level:
     root: INFO
     com.company.scopery: INFO

@@ -27,6 +27,7 @@ import com.company.scopery.modules.traceability.screenprocessitem.domain.model.R
 import com.company.scopery.modules.traceability.screenprocessitem.domain.model.RegistryScreenProcessItemRepository;
 import com.company.scopery.modules.traceability.screensection.domain.model.RegistryScreenSection;
 import com.company.scopery.modules.traceability.screensection.domain.model.RegistryScreenSectionRepository;
+import com.company.scopery.modules.knowledge.shared.storage.ObjectStorageProvider;
 import com.company.scopery.modules.traceability.shared.authorization.TraceabilityAuthorizationService;
 import com.company.scopery.modules.traceability.shared.error.TraceabilityExceptions;
 import com.company.scopery.modules.traceability.validationruletype.domain.model.RegistryValidationRuleType;
@@ -55,6 +56,7 @@ public class RegistryScreenQueryService {
     private final RegistryScreenProcessItemRepository processItemRepo;
     private final RegistryScreenEventItemRepository eventItemRepo;
     private final TraceabilityAuthorizationService authorization;
+    private final ObjectStorageProvider storageProvider;
 
     public RegistryScreenQueryService(
             RegistryScreenRepository repo,
@@ -70,7 +72,8 @@ public class RegistryScreenQueryService {
             RegistryValidationRuleTypeRepository ruleTypeRepo,
             RegistryScreenProcessItemRepository processItemRepo,
             RegistryScreenEventItemRepository eventItemRepo,
-            TraceabilityAuthorizationService authorization) {
+            TraceabilityAuthorizationService authorization,
+            ObjectStorageProvider storageProvider) {
         this.repo = repo;
         this.modeRepo = modeRepo;
         this.sectionRepo = sectionRepo;
@@ -85,19 +88,28 @@ public class RegistryScreenQueryService {
         this.processItemRepo = processItemRepo;
         this.eventItemRepo = eventItemRepo;
         this.authorization = authorization;
+        this.storageProvider = storageProvider;
     }
 
     @Transactional(readOnly = true)
     public List<RegistryScreenResponse> list(UUID workspaceId, UUID applicationId) {
         authorization.requireWorkspaceView(workspaceId);
-        return repo.findByApplicationId(applicationId).stream().map(RegistryScreenResponse::from).toList();
+        return repo.findByApplicationId(applicationId).stream()
+                .map(s -> RegistryScreenResponse.from(s, mockupUrlFor(s.mockupObjectKey())))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public RegistryScreenResponse get(UUID workspaceId, UUID applicationId, UUID id) {
         authorization.requireWorkspaceView(workspaceId);
-        return repo.findByIdAndApplicationId(id, applicationId).map(RegistryScreenResponse::from)
+        return repo.findByIdAndApplicationId(id, applicationId)
+                .map(s -> RegistryScreenResponse.from(s, mockupUrlFor(s.mockupObjectKey())))
                 .orElseThrow(() -> TraceabilityExceptions.applicationNotFound(id));
+    }
+
+    private String mockupUrlFor(String objectKey) {
+        if (objectKey == null) return null;
+        return storageProvider.createPresignedDownload(objectKey, null).downloadUrl();
     }
 
     @Transactional(readOnly = true)

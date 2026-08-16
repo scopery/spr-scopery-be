@@ -11,6 +11,7 @@ public class RegistryScreenJpaEntity extends AuditableJpaEntity {
     @Column(nullable=false) private String code;
     @Column(nullable=false) private String name;
     @Column(name="route_path") private String routePath;
+    @Column(name="mockup_object_key") private String mockupObjectKey;
     @Column(nullable=false) private String status;
     @Version private Integer version;
 }

@@ -57,7 +57,7 @@ public class BindComponentToSectionAction {
 
         // Prevent duplicate link
         if (screenComponentRepo.existsByScreenIdAndComponentId(c.screenId(), c.componentId())) {
-            throw TraceabilityExceptions.screenComponentDuplicate();
+            throw TraceabilityExceptions.screenComponentDuplicate(c.componentId());
         }
 
         // Create link record

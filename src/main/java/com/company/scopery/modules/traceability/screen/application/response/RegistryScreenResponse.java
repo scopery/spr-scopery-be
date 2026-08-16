@@ -5,9 +5,14 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record RegistryScreenResponse(UUID id, UUID applicationId, String code, String name,
-                                      String routePath, String status, Instant createdAt) {
+                                      String routePath, String mockupObjectKey, String mockupUrl,
+                                      String status, Instant createdAt) {
     public static RegistryScreenResponse from(RegistryScreen e) {
         return new RegistryScreenResponse(e.id(), e.applicationId(), e.code(), e.name(),
-                e.routePath(), e.status().name(), e.createdAt());
+                e.routePath(), e.mockupObjectKey(), null, e.status().name(), e.createdAt());
+    }
+    public static RegistryScreenResponse from(RegistryScreen e, String mockupUrl) {
+        return new RegistryScreenResponse(e.id(), e.applicationId(), e.code(), e.name(),
+                e.routePath(), e.mockupObjectKey(), mockupUrl, e.status().name(), e.createdAt());
     }
 }

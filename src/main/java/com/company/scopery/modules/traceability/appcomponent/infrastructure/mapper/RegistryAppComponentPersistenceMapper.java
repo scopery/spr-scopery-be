@@ -9,6 +9,7 @@ public class RegistryAppComponentPersistenceMapper {
         return new RegistryAppComponent(e.getId(), e.getApplicationId(), e.getWorkspaceId(), e.getCode(), e.getName(), e.getDescription(),
                 e.getComponentType(), e.getOptionSourceType() != null ? e.getOptionSourceType() : "NONE",
                 e.getSourceEntityId(), e.getSourceValueColumn(), e.getSourceLabelColumn(), e.getSourceFilterJson(),
+                e.getScreenshotObjectKey(),
                 RegistryAppComponentStatus.valueOf(e.getStatus()), e.getVersion()==null?0:e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
     }
     public RegistryAppComponentJpaEntity toJpaEntity(RegistryAppComponent d) {
@@ -21,6 +22,7 @@ public class RegistryAppComponentPersistenceMapper {
         e.setSourceValueColumn(d.sourceValueColumn());
         e.setSourceLabelColumn(d.sourceLabelColumn());
         e.setSourceFilterJson(d.sourceFilterJson());
+        e.setScreenshotObjectKey(d.screenshotObjectKey());
         e.setStatus(d.status().name());
         if (d.createdAt() != null) {
             e.setVersion(d.version());

@@ -6,6 +6,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -44,7 +45,8 @@ public class S3CompatibleObjectStorageProvider implements ObjectStorageProvider 
         this.presigner = S3Presigner.builder()
                 .credentialsProvider(credentials)
                 .region(region)
-                .endpointOverride(endpoint)
+                .endpointOverride(URI.create(config.getPublicEndpoint()))
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(config.isPathStyleAccess()).build())
                 .build();
     }
 
@@ -75,11 +77,13 @@ public class S3CompatibleObjectStorageProvider implements ObjectStorageProvider 
     public PresignedDownload createPresignedDownload(String objectKey, String contentDispositionFilename) {
         try {
             var duration = Duration.ofMinutes(config.getPresignedDownloadExpiryMinutes());
-            var getRequest = GetObjectRequest.builder()
+            var getRequestBuilder = GetObjectRequest.builder()
                     .bucket(config.getBucket())
-                    .key(objectKey)
-                    .responseContentDisposition("attachment; filename=\"" + contentDispositionFilename + "\"")
-                    .build();
+                    .key(objectKey);
+            if (contentDispositionFilename != null && !contentDispositionFilename.isBlank()) {
+                getRequestBuilder.responseContentDisposition("attachment; filename=\"" + contentDispositionFilename + "\"");
+            }
+            var getRequest = getRequestBuilder.build();
             var presignRequest = GetObjectPresignRequest.builder()
                     .signatureDuration(duration)
                     .getObjectRequest(getRequest)

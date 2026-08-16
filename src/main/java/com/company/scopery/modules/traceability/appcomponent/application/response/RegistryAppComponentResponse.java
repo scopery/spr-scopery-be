@@ -5,11 +5,20 @@ public record RegistryAppComponentResponse(
         UUID id, UUID applicationId, UUID workspaceId, String code, String name, String description,
         String componentType, String optionSourceType,
         UUID sourceEntityId, String sourceValueColumn, String sourceLabelColumn, String sourceFilterJson,
+        String screenshotObjectKey, String screenshotUrl,
         String status, Instant createdAt) {
     public static RegistryAppComponentResponse from(RegistryAppComponent e) {
         return new RegistryAppComponentResponse(e.id(), e.applicationId(), e.workspaceId(), e.code(), e.name(),
                 e.description(), e.componentType(), e.optionSourceType(),
                 e.sourceEntityId(), e.sourceValueColumn(), e.sourceLabelColumn(), e.sourceFilterJson(),
+                e.screenshotObjectKey(), null,
+                e.status().name(), e.createdAt());
+    }
+    public static RegistryAppComponentResponse from(RegistryAppComponent e, String screenshotUrl) {
+        return new RegistryAppComponentResponse(e.id(), e.applicationId(), e.workspaceId(), e.code(), e.name(),
+                e.description(), e.componentType(), e.optionSourceType(),
+                e.sourceEntityId(), e.sourceValueColumn(), e.sourceLabelColumn(), e.sourceFilterJson(),
+                e.screenshotObjectKey(), screenshotUrl,
                 e.status().name(), e.createdAt());
     }
 }

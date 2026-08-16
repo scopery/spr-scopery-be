@@ -114,7 +114,10 @@ public enum TraceabilityErrorCatalog implements ErrorCatalog {
     COMPONENT_API_DUPLICATE("COMPONENT_API_DUPLICATE", "This API is already linked to the component with the same role", HttpStatus.CONFLICT),
     API_ENDPOINT_NOT_IN_WORKSPACE("API_ENDPOINT_NOT_IN_WORKSPACE", "API endpoint not found in this workspace", HttpStatus.NOT_FOUND),
     DATA_ENTITY_RELATION_NOT_FOUND("DATA_ENTITY_RELATION_NOT_FOUND", "Data entity relation not found", HttpStatus.NOT_FOUND),
-    DATA_ENTITY_RELATION_DUPLICATE("DATA_ENTITY_RELATION_DUPLICATE", "A relation between these entities with the same type already exists", HttpStatus.CONFLICT);
+    DATA_ENTITY_RELATION_DUPLICATE("DATA_ENTITY_RELATION_DUPLICATE", "A relation between these entities with the same type already exists", HttpStatus.CONFLICT),
+    UPLOAD_FILE_TOO_LARGE("UPLOAD_FILE_TOO_LARGE", "Uploaded file exceeds maximum allowed size", HttpStatus.UNPROCESSABLE_ENTITY),
+    UPLOAD_OBJECT_NOT_FOUND("UPLOAD_OBJECT_NOT_FOUND", "Uploaded object not found in storage — upload may have failed or expired", HttpStatus.UNPROCESSABLE_ENTITY),
+    UPLOAD_INVALID_CONTENT_TYPE("UPLOAD_INVALID_CONTENT_TYPE", "Content type is not allowed for image upload", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String defaultMessage;
