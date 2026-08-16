@@ -32,7 +32,7 @@ public class LinkScreenComponentAction {
         authorization.requireWorkspaceCreate(c.workspaceId());
 
         if (repo.existsByScreenIdAndComponentId(c.screenId(), c.componentId())) {
-            throw TraceabilityExceptions.screenComponentDuplicate();
+            throw TraceabilityExceptions.screenComponentDuplicate(c.componentId());
         }
 
         ScreenComponent saved = repo.save(
