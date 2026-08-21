@@ -3,6 +3,7 @@ import java.util.*;
 public interface TestCaseRepository {
     TestCase save(TestCase e);
     Optional<TestCase> findByIdAndProjectId(UUID id, UUID projectId);
+    void delete(UUID id, UUID projectId);
     List<TestCase> findByProjectId(UUID projectId);
     boolean existsByProjectIdAndCode(UUID projectId, String code);
 

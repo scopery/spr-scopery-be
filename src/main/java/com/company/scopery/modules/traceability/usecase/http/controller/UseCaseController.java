@@ -1,9 +1,11 @@
 package com.company.scopery.modules.traceability.usecase.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.common.response.BulkDeleteResponse;
 import com.company.scopery.modules.traceability.shared.constant.TraceabilityApiPaths;
 import com.company.scopery.modules.traceability.usecase.application.action.AddSupportingFunctionAction;
 import com.company.scopery.modules.traceability.usecase.application.action.BulkCreateUseCaseJobHandler;
+import com.company.scopery.modules.traceability.usecase.application.action.BulkDeleteUseCaseAction;
 import com.company.scopery.modules.traceability.usecase.application.action.BulkLinkRequirementFunctionJobHandler;
 import com.company.scopery.modules.traceability.usecase.application.action.CreateUseCaseAction;
 import com.company.scopery.modules.traceability.usecase.application.action.DeleteUseCaseAction;
@@ -16,6 +18,7 @@ import com.company.scopery.modules.traceability.usecase.application.action.Unlin
 import com.company.scopery.modules.traceability.usecase.application.action.UpdateUseCaseAction;
 import com.company.scopery.modules.traceability.usecase.application.command.AddSupportingFunctionCommand;
 import com.company.scopery.modules.traceability.usecase.application.command.BulkCreateUseCaseCommand;
+import com.company.scopery.modules.traceability.usecase.application.command.BulkDeleteUseCaseCommand;
 import com.company.scopery.modules.traceability.usecase.application.command.CreateUseCaseCommand;
 import com.company.scopery.modules.traceability.usecase.application.command.DeleteUseCaseCommand;
 import com.company.scopery.modules.traceability.usecase.application.command.ImportUseCaseNestedCommand;
@@ -31,6 +34,7 @@ import com.company.scopery.modules.traceability.usecase.application.response.Use
 import com.company.scopery.modules.traceability.usecase.application.service.UseCaseQueryService;
 import com.company.scopery.modules.traceability.usecase.http.request.AddSupportingFunctionRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.BulkCreateUseCaseRequest;
+import com.company.scopery.modules.traceability.usecase.http.request.BulkDeleteUseCaseRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.CreateUseCaseRequest;
 import com.company.scopery.modules.traceability.usecase.http.request.ImportUseCaseNestedRequest;
 import com.company.scopery.modules.traceability.usecase.application.command.BulkLinkRequirementFunctionCommand;
@@ -67,6 +71,7 @@ public class UseCaseController {
     private final ImportUseCaseNestedAction importNestedAction;
     private final UpdateUseCaseAction updateAction;
     private final DeleteUseCaseAction deleteAction;
+    private final BulkDeleteUseCaseAction bulkDeleteAction;
     private final AddSupportingFunctionAction addSupportingFnAction;
     private final RemoveSupportingFunctionAction removeSupportingFnAction;
     private final LinkRequirementToUseCaseAction linkReqToUcAction;
@@ -82,6 +87,7 @@ public class UseCaseController {
                              ImportUseCaseNestedAction importNestedAction,
                              UpdateUseCaseAction updateAction,
                              DeleteUseCaseAction deleteAction,
+                             BulkDeleteUseCaseAction bulkDeleteAction,
                              AddSupportingFunctionAction addSupportingFnAction,
                              RemoveSupportingFunctionAction removeSupportingFnAction,
                              LinkRequirementToUseCaseAction linkReqToUcAction,
@@ -96,6 +102,7 @@ public class UseCaseController {
         this.importNestedAction = importNestedAction;
         this.updateAction = updateAction;
         this.deleteAction = deleteAction;
+        this.bulkDeleteAction = bulkDeleteAction;
         this.addSupportingFnAction = addSupportingFnAction;
         this.removeSupportingFnAction = removeSupportingFnAction;
         this.linkReqToUcAction = linkReqToUcAction;
@@ -244,6 +251,13 @@ public class UseCaseController {
             @PathVariable UUID useCaseId) {
         deleteAction.execute(new DeleteUseCaseCommand(projectId, useCaseId));
         return ApiResponse.success(null);
+    }
+
+    @PostMapping(TraceabilityApiPaths.USE_CASES + "/bulk-delete")
+    @Operation(summary = "Bulk delete use cases")
+    public ApiResponse<BulkDeleteResponse> bulkDelete(@PathVariable UUID projectId,
+                                                       @Valid @RequestBody BulkDeleteUseCaseRequest r) {
+        return ApiResponse.success(bulkDeleteAction.execute(new BulkDeleteUseCaseCommand(projectId, r.ids())));
     }
 
     @GetMapping(TraceabilityApiPaths.FUNCTION_USE_CASES)

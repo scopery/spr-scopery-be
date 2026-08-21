@@ -1,6 +1,7 @@
 package com.company.scopery.modules.traceability.requirement.http.controller;
 
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.common.response.BulkDeleteResponse;
 import com.company.scopery.modules.traceability.requirement.application.action.*;
 import com.company.scopery.modules.traceability.requirement.application.command.SetRequiresUseCaseCommand;
 import com.company.scopery.modules.traceability.requirement.http.request.SetRequiresUseCaseRequest;
@@ -11,6 +12,7 @@ import com.company.scopery.modules.traceability.requirement.application.response
 import com.company.scopery.modules.traceability.requirement.application.response.RequirementResponse;
 import com.company.scopery.modules.traceability.requirement.application.service.RequirementQueryService;
 import com.company.scopery.modules.traceability.requirement.http.request.BulkCreateRequirementRequest;
+import com.company.scopery.modules.traceability.requirement.http.request.BulkDeleteRequirementRequest;
 import com.company.scopery.modules.traceability.requirement.http.request.CreateRequirementRequest;
 import com.company.scopery.modules.traceability.requirement.http.request.LinkTestCasesRequest;
 import com.company.scopery.modules.traceability.requirement.http.request.UpdateRequirementRequest;
@@ -42,6 +44,7 @@ public class RequirementController {
     private final MarkImplementedRequirementAction markImplemented;
     private final ArchiveRequirementAction archive;
     private final DeleteRequirementAction delete;
+    private final BulkDeleteRequirementAction bulkDelete;
     private final LinkTestCasesToRequirementAction linkTestCases;
     private final SetRequiresUseCaseAction setRequiresUseCase;
     private final RequirementQueryService query;
@@ -54,6 +57,7 @@ public class RequirementController {
                                   MarkImplementedRequirementAction markImplemented,
                                   ArchiveRequirementAction archive,
                                   DeleteRequirementAction delete,
+                                  BulkDeleteRequirementAction bulkDelete,
                                   LinkTestCasesToRequirementAction linkTestCases,
                                   SetRequiresUseCaseAction setRequiresUseCase,
                                   RequirementQueryService query,
@@ -61,7 +65,7 @@ public class RequirementController {
                                   ObjectMapper objectMapper) {
         this.create = create; this.update = update; this.approve = approve; this.reject = reject;
         this.defer = defer; this.markImplemented = markImplemented; this.archive = archive;
-        this.delete = delete; this.linkTestCases = linkTestCases;
+        this.delete = delete; this.bulkDelete = bulkDelete; this.linkTestCases = linkTestCases;
         this.setRequiresUseCase = setRequiresUseCase; this.query = query;
         this.bulkJobService = bulkJobService; this.objectMapper = objectMapper;
     }
@@ -151,6 +155,13 @@ public class RequirementController {
     public ApiResponse<Void> delete(@PathVariable UUID projectId, @PathVariable UUID requirementId) {
         delete.execute(new DeleteRequirementCommand(projectId, requirementId));
         return ApiResponse.success(null);
+    }
+
+    @PostMapping("/bulk-delete")
+    @Operation(summary = "Bulk delete requirements")
+    public ApiResponse<BulkDeleteResponse> bulkDelete(@PathVariable UUID projectId,
+                                                       @Valid @RequestBody BulkDeleteRequirementRequest r) {
+        return ApiResponse.success(bulkDelete.execute(new BulkDeleteRequirementCommand(projectId, r.ids())));
     }
 
     @PostMapping("/{requirementId}/test-case-links")

@@ -1,6 +1,7 @@
 package com.company.scopery.modules.quality.testcase.http.controller;
 import com.company.scopery.common.pagination.PageResponse;
 import com.company.scopery.common.response.ApiResponse;
+import com.company.scopery.common.response.BulkDeleteResponse;
 import com.company.scopery.modules.quality.shared.constant.QualityApiPaths;
 import com.company.scopery.modules.quality.testcase.application.action.*;
 import com.company.scopery.modules.quality.testcase.application.command.*;
@@ -23,6 +24,8 @@ public class TestCaseController {
     private final UpdateTestCaseAction update;
     private final ApproveTestCaseAction approve;
     private final ArchiveTestCaseAction archive;
+    private final DeleteTestCaseAction deleteAction;
+    private final BulkDeleteTestCaseAction bulkDeleteAction;
     private final BatchUpdateTestCasesAction batchUpdate;
     private final BatchCreateTestCasesAction batchCreate;
     private final UpdateRequirementLinksAction updateReqLinks;
@@ -32,10 +35,12 @@ public class TestCaseController {
     private final ObjectMapper objectMapper;
     public TestCaseController(CreateTestCaseAction create, UpdateTestCaseAction update,
             ApproveTestCaseAction approve, ArchiveTestCaseAction archive,
+            DeleteTestCaseAction deleteAction, BulkDeleteTestCaseAction bulkDeleteAction,
             BatchUpdateTestCasesAction batchUpdate, BatchCreateTestCasesAction batchCreate,
             UpdateRequirementLinksAction updateReqLinks, UpdateUseCaseLinksAction updateUcLinks,
             TestCaseQueryService query, BulkJobService bulkJobService, ObjectMapper objectMapper) {
         this.create=create; this.update=update; this.approve=approve; this.archive=archive;
+        this.deleteAction=deleteAction; this.bulkDeleteAction=bulkDeleteAction;
         this.batchUpdate=batchUpdate; this.batchCreate=batchCreate;
         this.updateReqLinks=updateReqLinks; this.updateUcLinks=updateUcLinks; this.query=query;
         this.bulkJobService=bulkJobService; this.objectMapper=objectMapper;
@@ -87,6 +92,16 @@ public class TestCaseController {
     public ApiResponse<BatchCreateResult> batchCreate(@PathVariable UUID projectId, @Valid @RequestBody BatchCreateTestCasesRequest r) {
         var commands = r.items().stream().map(i -> new CreateTestCaseCommand(projectId, i.testSuiteId(), i.useCaseId(), i.code(), i.title(), i.description(), i.type(), i.priority(), i.preconditions(), i.expectedResult(), i.assigneeId(), i.automationStatus())).toList();
         return ApiResponse.success(batchCreate.execute(projectId, commands));
+    }
+    @DeleteMapping("/{testCaseId}") @Operation(summary="Delete test case")
+    public ApiResponse<Void> delete(@PathVariable UUID projectId, @PathVariable UUID testCaseId) {
+        deleteAction.execute(new DeleteTestCaseCommand(testCaseId, projectId));
+        return ApiResponse.success(null);
+    }
+    @PostMapping("/bulk-delete") @Operation(summary="Bulk delete test cases")
+    public ApiResponse<BulkDeleteResponse> bulkDelete(@PathVariable UUID projectId,
+                                                       @Valid @RequestBody BulkDeleteTestCaseRequest r) {
+        return ApiResponse.success(bulkDeleteAction.execute(new BulkDeleteTestCaseCommand(projectId, r.ids())));
     }
     @PostMapping("/bulk") @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(summary="Bulk create test cases (async — poll GET /api/bulk-jobs/{id} for status). Optional steps[] are applied by BE after each shell.")

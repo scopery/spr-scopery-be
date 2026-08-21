@@ -7,4 +7,8 @@ public record RegistryApplication(UUID id, UUID workspaceId, String code, String
         // Leave createdAt/updatedAt null so AuditableJpaEntity.isNew() stays true on first persist.
         return new RegistryApplication(UUID.randomUUID(), workspaceId, code, name, description, RegistryApplicationStatus.ACTIVE, ownerUserId, 0, null, null);
     }
+
+    public RegistryApplication withUpdated(String name, String description) {
+        return new RegistryApplication(id, workspaceId, code, name, description, status, ownerUserId, version, createdAt, updatedAt);
+    }
 }

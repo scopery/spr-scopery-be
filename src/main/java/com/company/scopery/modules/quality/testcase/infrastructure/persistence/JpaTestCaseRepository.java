@@ -22,6 +22,9 @@ public class JpaTestCaseRepository implements TestCaseRepository {
     @Override public Optional<TestCase> findByIdAndProjectId(UUID id, UUID projectId) { return springData.findByIdAndProjectId(id, projectId).map(mapper::toDomain); }
     @Override public List<TestCase> findByProjectId(UUID projectId) { return springData.findByProjectIdOrderByCreatedAtDesc(projectId).stream().map(mapper::toDomain).toList(); }
     @Override public boolean existsByProjectIdAndCode(UUID projectId, String code) { return code != null && springData.existsByProjectIdAndCode(projectId, code); }
+    @Override public void delete(UUID id, UUID projectId) {
+        springData.findByIdAndProjectId(id, projectId).ifPresent(springData::delete);
+    }
 
     @Override
     public List<TestCaseListRow> searchList(UUID projectId, String q, String type, String priority,
